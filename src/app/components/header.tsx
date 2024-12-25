@@ -46,7 +46,7 @@ const Navbar = () => {
           {/* Sign In Button */}
           <div className="hidden md:flex">
             <Link href="/auth/sign-in">
-              <button className="bg-white text-black py-2 px-4 rounded-lg hover:bg-gray-300">
+              <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
                 Sign In
               </button>
             </Link>
