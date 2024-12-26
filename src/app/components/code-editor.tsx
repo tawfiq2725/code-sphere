@@ -5,19 +5,22 @@ export function CodeEditor() {
         <code>
           <span className="text-purple-400">function</span>{" "}
           <span className="text-blue-400">learnToCode</span>() {"{"}
+          <br />
         </code>
         <code>
           {" "}
           <span className="text-green-400">// Start your journey</span>
+          <br />
         </code>
         <code>
           {" "}
           <span className="text-purple-400">const</span> success ={" "}
           <span className="text-orange-400">true</span>;
+          <br />
         </code>
         <code>
-          {" "}
-          <span className="text-purple-400">return</span> success;
+          <span className="text-purple-400"> return</span> success;
+          <br />
         </code>
         <code>{"}"}</code>
       </pre>

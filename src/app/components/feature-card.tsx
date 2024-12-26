@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import Image from "next/image";
 
 interface FeatureCardProps {
   title: string;
@@ -28,7 +29,12 @@ export function FeatureCard({
       <div className="flex-1 relative">
         {imageUrl && (
           <div className="relative w-full aspect-square max-w-[400px] mx-auto">
-            <img src={imageUrl} alt={title} className="object-contain" />
+            <Image
+              src={imageUrl}
+              alt={title}
+              layout="fill"
+              objectFit="contain"
+            />
           </div>
         )}
       </div>

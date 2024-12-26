@@ -1,10 +1,11 @@
 import { StatItem } from "@/app/components/stat-item";
 import { FeatureCard } from "@/app/components/feature-card";
 import { CodeEditor } from "@/app/components/code-editor";
+import TrustedSection from "./components/end-hero";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black text-white px-5">
+    <div className="min-h-screen bg-black text-white px-10">
       <main className="container mx-auto px-4 py-16 space-y-24">
         {/* Hero Section */}
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -47,16 +48,19 @@ export default function Home() {
           <FeatureCard
             title="Perfectly Structured Courses"
             description="No more jumping between random YouTube tutorials. Follow a clear, logical path designed to build your skills step by step."
-            imageUrl="/placeholder.svg?height=400&width=400"
+            imageUrl="/img-1.png?height=400&width=400"
             align="left"
           />
           <FeatureCard
             title="Clear and Bite-Sized Lessons"
             description="Each lesson is focused and fast-paced, so you can make real progress every day with a bite-sized learning approach averaging 5 minutes."
-            imageUrl="/placeholder.svg?height=400&width=400"
+            imageUrl="/img-2.png?height=400&width=400"
             align="right"
           />
         </section>
+
+        {/* Hero end Section */}
+        <TrustedSection />
       </main>
     </div>
   );
