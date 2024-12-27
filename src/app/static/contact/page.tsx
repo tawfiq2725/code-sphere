@@ -3,6 +3,7 @@ export default function Contact() {
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
       <h1 className="text-4xl font-bold mb-4">
         <title>Contact Us</title>
+        Contact
       </h1>
       <p className="text-center text-gray-300 mb-8 max-w-2xl">
         We're here for you: Connect with us for any questions or concerns.

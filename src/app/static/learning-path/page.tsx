@@ -35,6 +35,7 @@ export default function LearningPaths() {
     <div className="min-h-screen bg-black text-white px-10 py-10">
       <h1 className="text-center text-4xl font-bold mb-6">
         <title>Learning Paths</title>
+        Learning Paths
       </h1>
       <p className="text-center text-gray-300 mb-10 max-w-3xl mx-auto">
         Discover your optimal learning path to reach your full potential.
