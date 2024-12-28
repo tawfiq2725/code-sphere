@@ -1,9 +1,23 @@
+"use client";
+
 import { StatItem } from "@/app/components/stat-item";
 import { FeatureCard } from "@/app/components/feature-card";
 import { CodeEditor } from "@/app/components/code-editor";
 import TrustedSection from "./components/end-hero";
+import { useEffect } from "react";
+import { showToast } from "@/utils/toastUtil";
 
 export default function Home() {
+  useEffect(() => {
+    const data = async () => {
+      const response = await fetch("http://localhost:5000");
+      const json = await response.json();
+      showToast("Data fetched successfully", "success");
+      console.log(json);
+    };
+    data();
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white px-10">
       <main className="container mx-auto px-4 py-16 space-y-24">
@@ -48,13 +62,13 @@ export default function Home() {
           <FeatureCard
             title="Perfectly Structured Courses"
             description="No more jumping between random YouTube tutorials. Follow a clear, logical path designed to build your skills step by step."
-            imageUrl="/img-1.png?height=400&width=400"
+            imageUrl="/img-1.png"
             align="left"
           />
           <FeatureCard
             title="Clear and Bite-Sized Lessons"
             description="Each lesson is focused and fast-paced, so you can make real progress every day with a bite-sized learning approach averaging 5 minutes."
-            imageUrl="/img-2.png?height=400&width=400"
+            imageUrl="/img-2.png"
             align="right"
           />
         </section>
