@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Code Sphere
 
-## Getting Started
+This repository contains the **Code Sphere** platform, which facilitates online learning with roles for **Students**, **Teachers**, and **Admins**.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Frontend: Next.js Application
+
+### Features:
+- User-friendly interface for students, teachers, and admins.
+- Integration with APIs for user authentication, course management, and chat features.
+- Responsive design for seamless experience across devices.
+
+### Installation:
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd code-sphere-frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Open `http://localhost:3000` in your browser.
+
+### Folder Structure:
+```
+/my-nextjs-project
+│
+├── /public
+│   └── (static files like images, icons, etc.)
+│
+├── /src
+│   ├── /app                  # Pages and frontend components
+│   │   ├── /components       # Reusable components
+│   │   ├── /hooks            # Custom React hooks
+│   │   ├── /pages            # Pages and route-specific components
+│   │   └── /styles           # Global styles (CSS, SCSS, etc.)
+│   │
+│   └── /utils                # Utility functions (validators, helpers, etc.)
+│
+├── /tests                    # Unit and integration tests
+│
+├── /node_modules             # Node modules
+│
+├── /package.json
+└── /tsconfig.json            # If using TypeScript
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Deployment:
+1. Build the production version:
+   ```bash
+   npm run build
+   ```
+2. Start the production server:
+   ```bash
+   npm start
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Backend: Node.js + Express.js Application (Clean Architecture)
 
-## Learn More
+### Features:
+- RESTful API for handling authentication, course management, and messaging.
+- Secure with middleware for validation and authentication.
+- Scalable architecture following clean code principles.
 
-To learn more about Next.js, take a look at the following resources:
+### Installation:
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd code-sphere-backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. The API will be available at `http://localhost:5000` (or the port specified in `.env`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Folder Structure:
+```
+/my-backend-project
+│
+├── /src
+│   ├── /domain                  # Core business logic (entities, interfaces)
+│   │   ├── /entities            # Business entities (e.g., User, Order)
+│   │   ├── /interfaces          # Repository interfaces, service contracts
+│   │   └── /valueObjects        # Value objects, like email or price
+│   │
+│   ├── /application             # Application-specific business logic
+│   │   ├── /useCases            # Use case implementations (e.g., CreateUser)
+│   │   └── /dtos                # Data Transfer Objects
+│   │
+│   ├── /infrastructure          # Framework and infrastructure code
+│   │   ├── /database            # Database configuration and ORM setup
+│   │   ├── /repositories        # Implementation of repository interfaces
+│   │   ├── /routes              # Express routes
+│   │   └── /services            # External services (e.g., email, third-party APIs)
+│   │
+│   ├── /presentation            # Web layer (controllers, middlewares)
+│   │   ├── /controllers         # API controllers
+│   │   ├── /middlewares         # Express middlewares
+│   │   └── /validators          # Request validation logic
+│   │
+│   ├── /config                  # App configuration (e.g., env variables)
+│   │   └── config.ts
+│   │
+│   └── /utils                   # Helper functions, utilities
+│
+├── /tests                       # Unit and integration tests
+├── /node_modules                # Node modules
+├── /package.json
+├── /tsconfig.json               # TypeScript configuration
+├── /eslint.json                 # Linter configuration
+├── /prettier.config.js          # Prettier configuration
+└── /dist                        # Compiled JavaScript code
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Deployment:
+1. Build the production version:
+   ```bash
+   npm run build
+   ```
+2. Start the production server:
+   ```bash
+   npm start
+   ```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+For further details, refer to the individual README files in each folder.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
