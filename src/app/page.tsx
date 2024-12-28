@@ -12,7 +12,9 @@ export default function Home() {
     const data = async () => {
       const response = await fetch("http://localhost:5000");
       const json = await response.json();
-      showToast("Data fetched successfully", "success");
+      if (json.success) {
+        showToast(json.message, "success");
+      }
       console.log(json);
     };
     data();
