@@ -6,11 +6,14 @@ import { CodeEditor } from "@/app/components/code-editor";
 import TrustedSection from "./components/end-hero";
 import { useEffect } from "react";
 import { showToast } from "@/utils/toastUtil";
+import { getBackendUrl } from "@/utils/backendUrl";
 
 export default function Home() {
   useEffect(() => {
     const data = async () => {
-      const response = await fetch("http://localhost:5000");
+      const url = getBackendUrl();
+      console.log(`${url}/working}`, "workingggggggggggggggg");
+      const response = await fetch(`${url}/working}`);
       const json = await response.json();
       if (json.success) {
         showToast(json.message, "success");
