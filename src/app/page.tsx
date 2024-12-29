@@ -7,13 +7,17 @@ import TrustedSection from "./components/end-hero";
 import { useEffect } from "react";
 import { showToast } from "@/utils/toastUtil";
 import { getBackendUrl } from "@/utils/backendUrl";
+import { url } from "inspector";
 
 export default function Home() {
   useEffect(() => {
     const data = async () => {
-      const url = getBackendUrl();
-      console.log(`${url}/working}`, "workingggggggggggggggg");
-      const response = await fetch(`${url}/working}`);
+      const url = process.env.NEXT_PUBLIC_BACKEND_URL;
+      console.log(
+        process.env.NEXT_PUBLIC_BACKEND_URL,
+        "workingggggggggggggggg"
+      );
+      const response = await fetch(url + "/check");
       const json = await response.json();
       if (json.success) {
         showToast(json.message, "success");

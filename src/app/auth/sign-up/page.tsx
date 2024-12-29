@@ -4,11 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import Common from "@/app/components/Common";
+import { showToast } from "@/utils/toastUtil";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    student_name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -31,6 +34,34 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     // Simulate API call
+    try {
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_BACKEND_URL + "/user",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+      const data = await response.json();
+      if (!data.success) {
+        showToast(data.message, "error");
+      } else {
+        showToast(data.message, "success");
+        setFormData({
+          student_name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          role: "",
+        });
+        router.push("/auth/otp-verification");
+      }
+    } catch (error) {
+      showToast((error as any).message, "error");
+    }
     setTimeout(() => setIsLoading(false), 1000);
   }
 
@@ -55,10 +86,10 @@ export default function SignupPage() {
               Name
             </label>
             <input
-              id="name"
-              name="name"
+              id="student_name"
+              name="student_name"
               type="text"
-              value={formData.name}
+              value={formData.student_name}
               onChange={handleChange}
               placeholder="Jane Smith"
               required
