@@ -6,12 +6,17 @@ import { Eye, EyeOff } from "lucide-react";
 import Common from "@/app/components/Common";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
+import {
+  validateConfirmPassword,
+  validateEmail,
+  validatePassword,
+} from "@/utils/validators";
 
 export default function SignupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    student_name: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -33,6 +38,38 @@ export default function SignupPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
+    const allFieldsFilled = Object.values(formData).every(
+      (field) => field.trim() !== ""
+    );
+    if (!allFieldsFilled) {
+      showToast("All fields are required", "error");
+      setIsLoading(false);
+      return;
+    }
+    // Validate the email, password, and confirm password
+    const emailError = validateEmail(formData.email);
+    if (emailError !== true) {
+      showToast(emailError as string, "error");
+      setIsLoading(false);
+      return;
+    }
+
+    const passwordError = validatePassword(formData.password);
+    if (passwordError !== true) {
+      showToast(passwordError as string, "error");
+      setIsLoading(false);
+      return;
+    }
+
+    const confirmPasswordError = validateConfirmPassword(
+      formData.password,
+      formData.confirmPassword
+    );
+    if (confirmPasswordError !== true) {
+      showToast(confirmPasswordError as string, "error");
+      setIsLoading(false);
+      return;
+    }
     // Simulate API call
     try {
       const response = await fetch(
@@ -51,7 +88,7 @@ export default function SignupPage() {
       } else {
         showToast(data.message, "success");
         setFormData({
-          student_name: "",
+          name: "",
           email: "",
           password: "",
           confirmPassword: "",
@@ -86,13 +123,12 @@ export default function SignupPage() {
               Name
             </label>
             <input
-              id="student_name"
-              name="student_name"
+              id="name"
+              name="name"
               type="text"
-              value={formData.student_name}
+              value={formData.name}
               onChange={handleChange}
               placeholder="Jane Smith"
-              required
               className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
@@ -107,11 +143,10 @@ export default function SignupPage() {
             <input
               id="email"
               name="email"
-              type="email"
+              type="text"
               value={formData.email}
               onChange={handleChange}
               placeholder="jane@example.com"
-              required
               className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
@@ -131,7 +166,6 @@ export default function SignupPage() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="********"
-                required
                 className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <p
@@ -165,7 +199,6 @@ export default function SignupPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Same as password"
-                required
                 className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <p
@@ -196,14 +229,13 @@ export default function SignupPage() {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              required
               className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="" disabled>
                 Select...
               </option>
               <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
+              <option value="tutor">Teacher</option>
             </select>
           </div>
 

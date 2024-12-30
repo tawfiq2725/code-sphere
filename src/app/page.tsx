@@ -6,8 +6,6 @@ import { CodeEditor } from "@/app/components/code-editor";
 import TrustedSection from "./components/end-hero";
 import { useEffect } from "react";
 import { showToast } from "@/utils/toastUtil";
-import { getBackendUrl } from "@/utils/backendUrl";
-import { url } from "inspector";
 
 export default function Home() {
   useEffect(() => {
