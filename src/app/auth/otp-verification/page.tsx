@@ -1,7 +1,7 @@
 "use client";
 
 import { showToast } from "@/utils/toastUtil";
-
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
 export default function OTPVerification() {
@@ -10,7 +10,7 @@ export default function OTPVerification() {
   const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
+  const router = useRouter();
   useEffect(() => {
     // Focus first input on mount
     inputRefs.current[0]?.focus();
@@ -77,6 +77,26 @@ export default function OTPVerification() {
     e.preventDefault();
     setIsLoading(true);
     // Simulate API call
+    let email = localStorage.getItem("email");
+    let otpFormated = otp.join("");
+    try {
+      let response = await fetch("http://localhost:5000/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp: otpFormated }),
+      });
+      let data = await response.json();
+      if (!response.ok) {
+        showToast(data.message, "error");
+      } else {
+        router.push("/auth/sign-in");
+        showToast(data.message, "success");
+      }
+    } catch (error) {
+      showToast("Otp Wrong", "error");
+    }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsLoading(false);
   };
