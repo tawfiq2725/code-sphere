@@ -6,6 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import Common from "@/app/components/Common";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import {
   validateConfirmPassword,
   validateEmail,
@@ -82,6 +83,9 @@ export default function SignupPage() {
           body: JSON.stringify(formData),
         }
       );
+      console.log(formData);
+      const { email } = formData;
+      localStorage.setItem("email", email);
       const data = await response.json();
       if (!data.success) {
         showToast(data.message, "error");
@@ -94,12 +98,36 @@ export default function SignupPage() {
           confirmPassword: "",
           role: "",
         });
-        router.push("/auth/otp-verification");
       }
     } catch (error) {
       showToast((error as any).message, "error");
     }
     setTimeout(() => setIsLoading(false), 1000);
+    let email = localStorage.getItem("email");
+    if (email) {
+      const url = "http://localhost:5000/send-otp";
+      const sendOtp = async () => {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+          if (!response.ok) {
+            showToast("Failed to send OTP", "error");
+          } else {
+            showToast("OTP sent successfully", "success");
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      // Send OTP
+      sendOtp();
+      router.push("/auth/otp-verification");
+    }
   }
 
   return (
@@ -125,6 +153,7 @@ export default function SignupPage() {
             <input
               id="name"
               name="name"
+              autoComplete="off"
               type="text"
               value={formData.name}
               onChange={handleChange}
@@ -144,6 +173,7 @@ export default function SignupPage() {
               id="email"
               name="email"
               type="text"
+              autoComplete="off"
               value={formData.email}
               onChange={handleChange}
               placeholder="jane@example.com"
@@ -164,6 +194,7 @@ export default function SignupPage() {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
+                autoComplete="off"
                 onChange={handleChange}
                 placeholder="********"
                 className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -195,6 +226,7 @@ export default function SignupPage() {
               <input
                 id="confirmPassword"
                 name="confirmPassword"
+                autoComplete="off"
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={handleChange}
