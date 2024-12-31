@@ -9,20 +9,7 @@ import { showToast } from "@/utils/toastUtil";
 
 export default function Home() {
   useEffect(() => {
-    const data = async () => {
-      const url = process.env.NEXT_PUBLIC_BACKEND_URL;
-      console.log(
-        process.env.NEXT_PUBLIC_BACKEND_URL,
-        "workingggggggggggggggg"
-      );
-      const response = await fetch(url + "/check");
-      const json = await response.json();
-      if (json.success) {
-        showToast(json.message, "success");
-      }
-      console.log(json);
-    };
-    data();
+    showToast("Welcome to CodeSphere", "success");
   }, []);
 
   return (

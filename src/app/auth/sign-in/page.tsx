@@ -3,16 +3,44 @@
 import { useState } from "react";
 import Link from "next/link";
 import Common from "@/app/components/Common";
+import { useRouter } from "next/navigation";
+import { showToast } from "@/utils/toastUtil";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const { login } = useAuth();
+  const router = useRouter();
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     // Simulate API call
+    try {
+      const respone = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+      const data = await respone.json();
+      console.log(data);
+      console.log(data.data);
+      if (!data.success) {
+        showToast(data.message, "error");
+      } else {
+        showToast(data.message, "success");
+        login(data.data);
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(error);
+    }
     setTimeout(() => setIsLoading(false), 1000);
   }
 

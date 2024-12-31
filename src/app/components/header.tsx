@@ -1,13 +1,13 @@
-// src/components/Navbar.tsx
 "use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  const { user, logout } = useAuth();
   return (
     <nav className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,12 +44,22 @@ const Navbar = () => {
           </div>
 
           {/* Sign In Button */}
+          {/* Auth Buttons */}
           <div className="hidden md:flex">
-            <Link href="/auth/sign-in">
-              <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
-                Sign In
+            {user ? (
+              <button
+                onClick={logout}
+                className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300"
+              >
+                Logout
               </button>
-            </Link>
+            ) : (
+              <Link href="/auth/sign-in">
+                <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
+                  Sign In
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
