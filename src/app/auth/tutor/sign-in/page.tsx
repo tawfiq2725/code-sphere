@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-6 text-white">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">Welcome back</h1>
+          <h1 className="text-2xl font-bold">Welcome back Tutor</h1>
           <p className="text-zinc-400 text-sm">
             Enter your email to sign in to your account
           </p>
@@ -117,7 +117,7 @@ export default function LoginPage() {
         <Common />
         {/* Footer Links */}
         <div className="space-y-4">
-          <div className="text-center text-sm text-zinc-400 mb-2">
+          <div className="text-center text-sm text-zinc-400">
             Don&apos;t have an account?{" "}
             <Link
               href="/auth/sign-up"
@@ -126,14 +126,6 @@ export default function LoginPage() {
               Sign up
             </Link>
           </div>
-          <Link href="/auth/tutor/sign-in">
-            <button
-              type="button"
-              className="w-full px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors text-sm"
-            >
-              Login as Teacher
-            </button>
-          </Link>
         </div>
       </div>
     </div>
