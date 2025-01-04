@@ -1,5 +1,6 @@
 "use client";
 
+import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -66,11 +67,30 @@ export default function OTPVerification() {
     setOtp(newOtp);
   };
 
-  const handleResend = () => {
+  // ithu vandhu otp resend pannum
+  const handleResend = async () => {
     if (!canResend) return;
     setTimeLeft(30);
     setCanResend(false);
-    // Add your resend logic here
+    // Simulate API call
+    let email = localStorage.getItem("email");
+    try {
+      const response = await fetch(backendUrl + "/resend-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        showToast(data.message, "error");
+      } else {
+        showToast(data.message, "success");
+      }
+    } catch (error) {
+      showToast("Otp Resend Failed", "error");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +100,7 @@ export default function OTPVerification() {
     let email = localStorage.getItem("email");
     let otpFormated = otp.join("");
     try {
-      let response = await fetch("http://localhost:5000/verify-otp", {
+      let response = await fetch(backendUrl + "/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,6 +112,7 @@ export default function OTPVerification() {
         showToast(data.message, "error");
       } else {
         router.push("/auth/sign-in");
+        localStorage.clear();
         showToast(data.message, "success");
       }
     } catch (error) {

@@ -5,20 +5,24 @@ import Link from "next/link";
 import Common from "@/app/components/Common";
 import { useRouter } from "next/navigation";
 import { showToast } from "@/utils/toastUtil";
-import { useAuth } from "@/context/AuthContext";
+import { backendUrl } from "@/utils/backendUrl";
+import { allFieldsValidation } from "@/utils/validators";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "@/store/slice/authSlice";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
   const router = useRouter();
+  const dispatch = useDispatch();
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
+    allFieldsValidation({ email, password }, showToast, setIsLoading);
+    // ithu form submission
     try {
-      const respone = await fetch("http://localhost:5000/login", {
+      const respone = await fetch(backendUrl + "/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -30,13 +34,23 @@ export default function LoginPage() {
       });
       const data = await respone.json();
       console.log(data);
-      console.log(data.data);
+      console.log(data.data.role);
+      // inga role handle pandra
       if (!data.success) {
         showToast(data.message, "error");
-      } else {
+      } else if (data.data.role === "student") {
+        console.log("ithuuuuuu token inga check pannu " + data.data.jwt_token);
+        dispatch(
+          loginSuccess({ token: data.data.jwt_token, role: data.data.role })
+        );
         showToast(data.message, "success");
-        login(data.data);
         router.push("/");
+      } else if (data.data.role === "admin") {
+        showToast(data.message, "success");
+        router.push("/auth/admin/dashboard");
+      } else {
+        showToast("Wrong Page It is redirected into Respective Page", "error");
+        router.push("/auth/tutor/sign-in");
       }
     } catch (error) {
       console.log(error);

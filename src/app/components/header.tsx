@@ -3,11 +3,23 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from "@/context/AuthContext";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/store/store";
+import { logout } from "@/store/slice/authSlice";
+import { showToast } from "@/utils/toastUtil";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const dispatch = useDispatch();
+  const { isAuthenticated, role } = useSelector(
+    (state: RootState) => state.auth
+  );
+
+  const handleLogout = () => {
+    dispatch(logout());
+    showToast("Logged out successfully", "success");
+  };
+
   return (
     <nav className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,13 +55,12 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Sign In Button */}
           {/* Auth Buttons */}
           <div className="hidden md:flex">
-            {user ? (
+            {isAuthenticated && role === "student" ? (
               <button
-                onClick={logout}
-                className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300"
+                className="bg-red-500 text-white py-1 px-4 rounded-lg hover:bg-red-600"
+                onClick={handleLogout}
               >
                 Logout
               </button>
@@ -93,24 +104,45 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <Link href="/courses" className="block py-2 hover:text-gray-400">
+            <Link
+              href="/static/courses"
+              className="block py-2 hover:text-gray-400"
+            >
               Courses
             </Link>
-            <Link href="/membership" className="block py-2 hover:text-gray-400">
+            <Link
+              href="/static/membership"
+              className="block py-2 hover:text-gray-400"
+            >
               Membership
             </Link>
             <Link
-              href="/learning-path"
+              href="/static/learning-path"
               className="block py-2 hover:text-gray-400"
             >
               Learning Path
             </Link>
-            <Link href="/contact" className="block py-2 hover:text-gray-400">
+            <Link
+              href="/static/contact"
+              className="block py-2 hover:text-gray-400"
+            >
               Contact
             </Link>
-            <Link href="/signin" className="block py-2 hover:text-gray-400">
-              Sign In
-            </Link>
+            {isAuthenticated && role === "student" ? (
+              <button
+                className="block py-2 text-red-500 hover:text-red-600"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/auth/sign-in"
+                className="block py-2 hover:text-gray-400"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         )}
       </div>

@@ -6,7 +6,6 @@ import { Eye, EyeOff } from "lucide-react";
 import Common from "@/app/components/Common";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import {
   validateConfirmPassword,
   validateEmail,
@@ -39,6 +38,7 @@ export default function SignupPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
+    // inga form validation nadakuthu
     const allFieldsFilled = Object.values(formData).every(
       (field) => field.trim() !== ""
     );
@@ -47,7 +47,6 @@ export default function SignupPage() {
       setIsLoading(false);
       return;
     }
-    // Validate the email, password, and confirm password
     const emailError = validateEmail(formData.email);
     if (emailError !== true) {
       showToast(emailError as string, "error");
@@ -119,6 +118,7 @@ export default function SignupPage() {
             showToast("Failed to send OTP", "error");
           } else {
             showToast("OTP sent successfully", "success");
+            router.push("/auth/otp-verification");
           }
         } catch (error) {
           console.error(error);
@@ -126,7 +126,6 @@ export default function SignupPage() {
       };
       // Send OTP
       sendOtp();
-      router.push("/auth/otp-verification");
     }
   }
 

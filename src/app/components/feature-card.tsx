@@ -29,7 +29,13 @@ export function FeatureCard({
       <div className="flex-1 relative">
         {imageUrl && (
           <div className="relative w-full aspect-square max-w-[400px] mx-auto">
-            <Image src={imageUrl} alt={title} width={400} height={400} />
+            <Image
+              src={imageUrl}
+              alt={title}
+              width={400}
+              height={400}
+              style={{ width: "auto", height: "auto" }}
+            />
           </div>
         )}
       </div>

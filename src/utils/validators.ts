@@ -15,3 +15,18 @@ export const validateConfirmPassword = (
 ) => {
   return password === confirmPassword || "Passwords do not match";
 };
+
+export const allFieldsValidation = (
+  formData: Record<string, string>,
+  showToast: any,
+  stateV: any
+) => {
+  const allFieldsFilled = Object.values(formData).every(
+    (field) => field.trim() !== ""
+  );
+  if (!allFieldsFilled) {
+    showToast("All fields are required", "error");
+    stateV(false);
+    return;
+  }
+};
