@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Common from "@/app/components/Common";
+import Common from "@/app/components/common/Common";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 
@@ -45,13 +45,16 @@ export default function LoginPage() {
           loginSuccess({ token: data.data.jwt_token, role: data.data.role })
         );
         showToast(data.message, "success");
-        router.push("/");
+        router.push("/student");
       } else if (data.data.role === "admin") {
+        dispatch(
+          loginSuccess({ token: data.data.jwt_token, role: data.data.role })
+        );
         showToast(data.message, "success");
-        router.push("/auth/admin/dashboard");
+        router.push("/admin/dashboard");
       } else {
         showToast("Wrong Page It is redirected into Respective Page", "error");
-        router.push("/auth/tutor/sign-in");
+        router.push("/tutor/sign-in");
       }
     } catch (error) {
       console.log(error);
@@ -135,13 +138,13 @@ export default function LoginPage() {
           <div className="text-center text-sm text-zinc-400 mb-2">
             Don&apos;t have an account?{" "}
             <Link
-              href="/auth/sign-up"
+              href="/student/sign-up"
               className="text-purple-400 hover:text-purple-300 hover:underline underline-offset-4"
             >
               Sign up
             </Link>
           </div>
-          <Link href="/auth/tutor/sign-in">
+          <Link href="/tutor/sign-in">
             <button
               type="button"
               className="w-full px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors text-sm"

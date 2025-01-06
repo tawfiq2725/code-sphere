@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Common from "@/app/components/Common";
+import Common from "@/app/components/common/Common";
 import { useRouter } from "next/navigation";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
@@ -38,19 +38,19 @@ export default function LoginPage() {
       // inga role handle pandra
       if (!data.success) {
         showToast(data.message, "error");
-      } else if (data.data.role === "student") {
+      } else if (data.data.role === "tutor") {
         console.log("ithuuuuuu token inga check pannu " + data.data.jwt_token);
         dispatch(
           loginSuccess({ token: data.data.jwt_token, role: data.data.role })
         );
         showToast(data.message, "success");
-        router.push("/");
+        router.push("/tutor/dashboard");
       } else if (data.data.role === "admin") {
         showToast(data.message, "success");
-        router.push("/auth/admin/dashboard");
+        router.push("/admin/dashboard");
       } else {
         showToast("Wrong Page It is redirected into Respective Page", "error");
-        router.push("/auth/tutor/sign-in");
+        router.push("/student/sign-in");
       }
     } catch (error) {
       console.log(error);
@@ -134,7 +134,7 @@ export default function LoginPage() {
           <div className="text-center text-sm text-zinc-400">
             Don&apos;t have an account?{" "}
             <Link
-              href="/auth/sign-up"
+              href="/student/sign-up"
               className="text-purple-400 hover:text-purple-300 hover:underline underline-offset-4"
             >
               Sign up

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import Common from "@/app/components/Common";
+import Common from "@/app/components/common/Common";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
 import {
@@ -118,7 +118,7 @@ export default function SignupPage() {
             showToast("Failed to send OTP", "error");
           } else {
             showToast("OTP sent successfully", "success");
-            router.push("/auth/otp-verification");
+            router.push("/student/otp-verification");
           }
         } catch (error) {
           console.error(error);
@@ -298,7 +298,7 @@ export default function SignupPage() {
         <div className="text-center text-sm text-zinc-400">
           Already have an account?{" "}
           <Link
-            href="/auth/sign-in"
+            href="/student/sign-in"
             className="text-purple-400 hover:text-purple-300 hover:underline underline-offset-4"
           >
             Sign in

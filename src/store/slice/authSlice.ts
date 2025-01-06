@@ -42,10 +42,17 @@ const authSlice = createSlice({
     loadAuthFromCookies: (state) => {
       const token = Cookies.get("jwt_token");
       const role = Cookies.get("role");
+      console.log("Token from cookies:", token);
+      console.log("Role from cookies:", role);
+
       if (token) {
         state.isAuthenticated = true;
         state.token = token;
         state.role = role || null;
+      } else {
+        state.isAuthenticated = false;
+        state.token = null;
+        state.role = null;
       }
     },
   },

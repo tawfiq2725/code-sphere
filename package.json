@@ -18,12 +18,14 @@
     "mongoose": "^8.9.2",
     "next": "15.1.2",
     "next-auth": "^4.24.11",
+    "next-persist": "^1.2.4",
     "nprogress": "^0.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "react-redux": "^9.2.0",
-    "react-toastify": "^11.0.2"
+    "react-toastify": "^11.0.2",
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

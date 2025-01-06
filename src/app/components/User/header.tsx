@@ -3,9 +3,20 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "@/store/slice/authSlice";
+import { showToast } from "@/utils/toastUtil";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { isAuthenticated, role } = useSelector((state: any) => state.auth);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    showToast("Logged out successfully", "success");
+  };
+
   return (
     <nav className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,26 +38,48 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8">
-            <Link href="/static/courses" className="hover:text-gray-400">
+            <Link
+              href="/static/courses"
+              className="block py-2 hover:text-gray-400"
+            >
               Courses
             </Link>
-            <Link href="/static/membership" className="hover:text-gray-400">
+            <Link
+              href="/static/membership"
+              className="block py-2 hover:text-gray-400"
+            >
               Membership
             </Link>
-            <Link href="/static/learning-path" className="hover:text-gray-400">
+            <Link
+              href="/static/learning-path"
+              className="block py-2 hover:text-gray-400"
+            >
               Learning Path
             </Link>
-            <Link href="/static/contact" className="hover:text-gray-400">
+            <Link
+              href="/static/contact"
+              className="block py-2 hover:text-gray-400"
+            >
               Contact
             </Link>
           </div>
 
+          {/* Auth Buttons */}
           <div className="hidden md:flex">
-            <Link href="/student">
-              <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
-                Members Area
+            {isAuthenticated && role === "student" ? (
+              <button
+                className="bg-red-500 text-white py-1 px-4 rounded-lg hover:bg-red-600"
+                onClick={handleLogout}
+              >
+                Logout
               </button>
-            </Link>
+            ) : (
+              <Link href="/student/sign-in">
+                <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
+                  Sign In
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -104,9 +137,21 @@ const Navbar = () => {
             >
               Contact
             </Link>
-            <Link href="/student" className="block py-2 hover:text-gray-400">
-              Members Area
-            </Link>
+            {isAuthenticated && role === "student" ? (
+              <button
+                className="block py-2 text-red-500 hover:text-red-600"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/student/sign-in"
+                className="block py-2 hover:text-gray-400"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         )}
       </div>

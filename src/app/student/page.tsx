@@ -3,7 +3,7 @@
 import { StatItem } from "@/app/components/User/stat-item";
 import { FeatureCard } from "@/app/components/User/feature-card";
 import { CodeEditor } from "@/app/components/User/code-editor";
-import TrustedSection from "./components/User/end-hero";
+import TrustedSection from "@/app/components/User/end-hero";
 import { useEffect } from "react";
 import { showToast } from "@/utils/toastUtil";
 import Header from "@/app/components/header";
@@ -15,7 +15,6 @@ export default function Home() {
 
   return (
     <>
-      <Header />
       <div className="min-h-screen bg-black text-white px-10">
         <main className="container mx-auto px-4 py-16 space-y-24">
           {/* Hero Section */}

@@ -111,7 +111,7 @@ export default function OTPVerification() {
       if (!response.ok) {
         showToast(data.message, "error");
       } else {
-        router.push("/auth/sign-in");
+        router.push("/student/sign-in");
         localStorage.clear();
         showToast(data.message, "success");
       }

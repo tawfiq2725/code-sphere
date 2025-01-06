@@ -1,9 +1,10 @@
 import React from "react";
-// import Head from "next/head";
+import Header from "@/app/components/header";
 import Link from "next/link";
 const courses = () => {
   return (
     <>
+      <Header />
       <h1>
         <title>Level Up Your Coding Skills</title>
       </h1>
