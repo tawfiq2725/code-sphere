@@ -97,36 +97,36 @@ export default function SignupPage() {
           confirmPassword: "",
           role: "",
         });
+        let email = localStorage.getItem("email");
+        if (email) {
+          const url = "http://localhost:5000/send-otp";
+          const sendOtp = async () => {
+            try {
+              const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email }),
+              });
+              if (!response.ok) {
+                showToast("Failed to send OTP", "error");
+              } else {
+                showToast("OTP sent successfully", "success");
+                router.push("/auth/otp-verification");
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          };
+          // Send OTP
+          sendOtp();
+        }
       }
     } catch (error) {
       showToast((error as any).message, "error");
     }
     setTimeout(() => setIsLoading(false), 1000);
-    let email = localStorage.getItem("email");
-    if (email) {
-      const url = "http://localhost:5000/send-otp";
-      const sendOtp = async () => {
-        try {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email }),
-          });
-          if (!response.ok) {
-            showToast("Failed to send OTP", "error");
-          } else {
-            showToast("OTP sent successfully", "success");
-            router.push("/student/otp-verification");
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      };
-      // Send OTP
-      sendOtp();
-    }
   }
 
   return (
@@ -298,7 +298,7 @@ export default function SignupPage() {
         <div className="text-center text-sm text-zinc-400">
           Already have an account?{" "}
           <Link
-            href="/student/sign-in"
+            href="/auth/sign-in"
             className="text-purple-400 hover:text-purple-300 hover:underline underline-offset-4"
           >
             Sign in

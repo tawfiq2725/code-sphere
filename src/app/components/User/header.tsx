@@ -74,7 +74,7 @@ const Navbar = () => {
                 Logout
               </button>
             ) : (
-              <Link href="/student/sign-in">
+              <Link href="/auth/sign-in">
                 <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
                   Sign In
                 </button>

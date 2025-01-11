@@ -34,12 +34,12 @@ export default function LoginPage() {
         }),
       });
       const data = await respone.json();
-      console.log(data);
+      console.log("-------------------------------------------------");
+      console.log(data.data);
       console.log(data.data.role);
+      localStorage.setItem("email", email);
       // inga role handle pandra
-      if (!data.success) {
-        showToast(data.message, "error");
-      } else if (data.data.role === "student") {
+      if (data.data.role === "student") {
         console.log("ithuuuuuu token inga check pannu " + data.data.jwt_token);
         dispatch(
           loginSuccess({ token: data.data.jwt_token, role: data.data.role })
@@ -52,12 +52,16 @@ export default function LoginPage() {
         );
         showToast(data.message, "success");
         router.push("/admin/dashboard");
+      } else if (data.data.role === "tutor") {
+        dispatch(
+          loginSuccess({ token: data.data.jwt_token, role: data.data.role })
+        );
+        router.push("/tutor/dashboard");
       } else {
-        showToast("Wrong Page It is redirected into Respective Page", "error");
-        router.push("/tutor/sign-in");
+        showToast(data.message, "error");
       }
     } catch (error) {
-      console.log(error);
+      showToast("Your Blocked From Admin or Your not Registered", "error");
     }
     setTimeout(() => setIsLoading(false), 1000);
   }
@@ -138,20 +142,21 @@ export default function LoginPage() {
           <div className="text-center text-sm text-zinc-400 mb-2">
             Don&apos;t have an account?{" "}
             <Link
-              href="/student/sign-up"
+              href="/auth/sign-up"
               className="text-purple-400 hover:text-purple-300 hover:underline underline-offset-4"
             >
               Sign up
             </Link>
+            <br />
+            <div className="py-5">
+              <Link
+                href="/auth/forgotpass"
+                className="text-pink-500 hover:text-pink-100 hover:underline my-5"
+              >
+                Forgot Password
+              </Link>
+            </div>
           </div>
-          <Link href="/tutor/sign-in">
-            <button
-              type="button"
-              className="w-full px-4 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors text-sm"
-            >
-              Login as Teacher
-            </button>
-          </Link>
         </div>
       </div>
     </div>

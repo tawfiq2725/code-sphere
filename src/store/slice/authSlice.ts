@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
-
+import { logoutUser } from "@/utils/logout";
 interface AuthState {
   isAuthenticated: boolean;
   token: string | null;
@@ -38,6 +38,7 @@ const authSlice = createSlice({
       state.role = null;
       Cookies.remove("jwt_token");
       Cookies.remove("role");
+      logoutUser();
     },
     loadAuthFromCookies: (state) => {
       const token = Cookies.get("jwt_token");

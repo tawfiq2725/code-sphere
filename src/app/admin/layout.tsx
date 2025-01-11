@@ -17,7 +17,7 @@ export default function AdminLayout({
   useEffect(() => {
     dispatch(loadAuthFromCookies());
     if (!isAuthenticated || role !== "admin") {
-      router.push("/student/sign-in");
+      router.push("/auth/sign-in");
     }
   }, [dispatch, isAuthenticated, role, router]);
 
@@ -26,9 +26,9 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="admin-layout">
+    <>
       <Sidebar />
       {children}
-    </div>
+    </>
   );
 }

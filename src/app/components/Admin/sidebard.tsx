@@ -20,13 +20,13 @@ import { logout } from "@/store/slice/authSlice";
 import { showToast } from "@/utils/toastUtil";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "User Management", href: "/users", icon: Users },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "User Management", href: "/admin/userlist", icon: Users },
   { name: "Course Management", href: "/courses", icon: BookOpen },
   { name: "Coupon Management", href: "/coupons", icon: Ticket },
   { name: "Memberships", href: "/memberships", icon: Package },
   { name: "Orders Management", href: "/orders", icon: ShoppingCart },
-  { name: "Teacher Management", href: "/teachers", icon: GraduationCap },
+  { name: "Tutor Management", href: "/admin/tutor", icon: GraduationCap },
   { name: "Offer Management", href: "/offers", icon: Gift },
 ];
 

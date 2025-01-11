@@ -20,7 +20,7 @@ export const allFieldsValidation = (
   formData: Record<string, string>,
   showToast: any,
   stateV: any
-) => {
+): any => {
   const allFieldsFilled = Object.values(formData).every(
     (field) => field.trim() !== ""
   );
