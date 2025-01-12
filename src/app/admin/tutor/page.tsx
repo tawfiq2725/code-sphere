@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import Link from "next/link";
+import Pagination from "@/app/components/common/pagination";
+import Search from "@/app/components/common/search";
 const TutorList = () => {
   interface User {
     _id: string;
@@ -177,6 +179,7 @@ const TutorList = () => {
   return (
     <div className="container mx-auto p-4 text-center flex justify-center items-center flex-col h-screen">
       <h1 className="text-2xl font-bold my-4">User List</h1>
+      <Search searchTerm={searchTerm} onSearch={hadnleSearch} />
       <table className="w-4/5 table-auto border-collapse border border-gray-300 text-center">
         <thead>
           <tr className="bg-gray-100">

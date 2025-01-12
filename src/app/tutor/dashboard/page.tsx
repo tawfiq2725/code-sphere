@@ -101,7 +101,28 @@ const TutorProfile = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setCertificates(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+        "image/gif",
+      ];
+      const validFiles = files.filter((file) =>
+        allowedTypes.includes(file.type)
+      );
+      const invalidFiles = files.filter(
+        (file) => !allowedTypes.includes(file.type)
+      );
+      if (invalidFiles.length > 0) {
+        showToast(
+          "Only image files (JPEG, PNG, JPG, GIF) are allowed. Invalid files have been removed.",
+          "error"
+        );
+
+        e.target.value = "";
+      }
+      setCertificates(validFiles);
     }
   };
 

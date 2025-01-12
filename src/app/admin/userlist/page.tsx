@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
+import Pagination from "@/app/components/common/pagination";
+import Search from "@/app/components/common/search";
 
 const UserLists = () => {
   interface User {
@@ -13,6 +15,10 @@ const UserLists = () => {
   }
 
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const usersPerPage = 5;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -31,6 +37,7 @@ const UserLists = () => {
           showToast(data.message, "error");
         } else {
           setUsers(data.data);
+          setFilteredUsers(data.data);
           showToast("Users fetched successfully", "success");
         }
       } catch (err) {
@@ -45,7 +52,6 @@ const UserLists = () => {
   const blockUser = async (userId: string) => {
     try {
       let token = Cookies.get("jwt_token");
-      console.log(token);
       const response = await fetch(
         `http://localhost:5000/admin/block-user/${userId}`,
         {
@@ -104,11 +110,39 @@ const UserLists = () => {
       console.error(err);
     }
   };
-  console.log(users);
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (term.trim() === "") {
+      // Reset to original users when search term is cleared
+      setFilteredUsers(users);
+    } else {
+      const lowercasedTerm = term.toLowerCase();
+      setFilteredUsers(
+        users.filter(
+          (user) =>
+            user.name.toLowerCase().includes(lowercasedTerm) ||
+            user.email.toLowerCase().includes(lowercasedTerm)
+        )
+      );
+    }
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="container mx-auto p-4 text-center flex justify-center items-center flex-col h-screen">
       <h1 className="text-2xl font-bold my-4">User List</h1>
+      <Search searchTerm={searchTerm} onSearch={handleSearch} />
       <table className="w-4/5 table-auto border-collapse border border-gray-300 text-center">
         <thead>
           <tr className="bg-gray-100">
@@ -120,8 +154,8 @@ const UserLists = () => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user: User, index) => (
-            <tr key={index}>
+          {currentUsers.map((user) => (
+            <tr key={user._id}>
               <td className="border px-4 py-2">{user.name}</td>
               <td className="border px-4 py-2">{user.email}</td>
               <td className="border px-4 py-2">
@@ -151,6 +185,11 @@ const UserLists = () => {
           ))}
         </tbody>
       </table>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };

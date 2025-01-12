@@ -58,46 +58,27 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
   }
 
   return (
-    <div className="container mx-auto p-4 flex justify-center items-center flex-col">
+    <div className="container h-screen mx-auto p-4 flex justify-center items-center flex-col">
       <h1 className="text-2xl font-bold mb-4">Certificates</h1>
       {certificates && certificates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {certificates.map((certificate, index) => (
             <div key={index} className="border p-4 rounded shadow">
-              {certificate.endsWith(".pdf") ? (
-                <div>
-                  <embed
-                    src={certificate}
-                    type="application/pdf"
-                    width="100%"
-                    height="200px"
-                  />
-                  <a
-                    href={certificate}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    View Full PDF
-                  </a>
-                </div>
-              ) : (
-                <div>
-                  <img
-                    src={certificate}
-                    alt={`Certificate ${index + 1}`}
-                    className="w-full h-auto mb-2"
-                  />
-                  <a
-                    href={certificate}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    View Full Image
-                  </a>
-                </div>
-              )}
+              <div>
+                <img
+                  src={certificate}
+                  alt={`Certificate ${index + 1}`}
+                  className="w-full h-auto mb-2"
+                />
+                <a
+                  href={certificate}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  View Full Image
+                </a>
+              </div>
             </div>
           ))}
         </div>
