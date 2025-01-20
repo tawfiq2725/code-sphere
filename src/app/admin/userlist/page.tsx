@@ -4,6 +4,7 @@ import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
+import { backendUrl } from "@/utils/backendUrl";
 
 const UserLists = () => {
   interface User {
@@ -24,7 +25,7 @@ const UserLists = () => {
     const fetchUsers = async () => {
       try {
         let token = Cookies.get("jwt_token");
-        const response = await fetch("http://localhost:5000/admin/get-users", {
+        const response = await fetch(`${backendUrl}/admin/get-users`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -52,21 +53,23 @@ const UserLists = () => {
   const blockUser = async (userId: string) => {
     try {
       let token = Cookies.get("jwt_token");
-      const response = await fetch(
-        `http://localhost:5000/admin/block-user/${userId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${backendUrl}/admin/block-user/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await response.json();
       if (data.success) {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
+            user._id === userId ? { ...user, isBlocked: true } : user
+          )
+        );
+        setFilteredUsers((prevFilteredUsers) =>
+          prevFilteredUsers.map((user) =>
             user._id === userId ? { ...user, isBlocked: true } : user
           )
         );
@@ -84,7 +87,7 @@ const UserLists = () => {
     try {
       let token = Cookies.get("jwt_token");
       const response = await fetch(
-        `http://localhost:5000/admin/unblock-user/${userId}`,
+        `${backendUrl}/admin/unblock-user/${userId}`,
         {
           method: "PATCH",
           headers: {
@@ -101,6 +104,11 @@ const UserLists = () => {
             user._id === userId ? { ...user, isBlocked: false } : user
           )
         );
+        setFilteredUsers((prevFilteredUsers) =>
+          prevFilteredUsers.map((user) =>
+            user._id === userId ? { ...user, isBlocked: false } : user
+          )
+        );
         showToast("User unblocked successfully", "success");
       } else {
         showToast(data.message, "error");
@@ -114,7 +122,6 @@ const UserLists = () => {
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim() === "") {
-      // Reset to original users when search term is cleared
       setFilteredUsers(users);
     } else {
       const lowercasedTerm = term.toLowerCase();
@@ -126,7 +133,7 @@ const UserLists = () => {
         )
       );
     }
-    setCurrentPage(1); // Reset to first page on search
+    setCurrentPage(1);
   };
 
   const indexOfLastUser = currentPage * usersPerPage;
@@ -141,11 +148,12 @@ const UserLists = () => {
 
   return (
     <div className="container mx-auto p-4 text-center flex justify-center items-center flex-col h-screen">
-      <h1 className="text-2xl font-bold my-4">User List</h1>
+      <h1 className="text-2xl font-bold my-4">Student List</h1>
       <Search searchTerm={searchTerm} onSearch={handleSearch} />
       <table className="w-4/5 table-auto border-collapse border border-gray-300 text-center">
         <thead>
           <tr className="bg-gray-100">
+            <th className="border px-4 py-2">S.no</th>
             <th className="border px-4 py-2">Name</th>
             <th className="border px-4 py-2">Email</th>
             <th className="border px-4 py-2">Verified</th>
@@ -154,8 +162,9 @@ const UserLists = () => {
           </tr>
         </thead>
         <tbody>
-          {currentUsers.map((user) => (
+          {currentUsers.map((user, index) => (
             <tr key={user._id}>
+              <td className="border px-4 py-2">{index + 1}</td>
               <td className="border px-4 py-2">{user.name}</td>
               <td className="border px-4 py-2">{user.email}</td>
               <td className="border px-4 py-2">

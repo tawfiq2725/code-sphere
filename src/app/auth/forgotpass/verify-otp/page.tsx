@@ -32,14 +32,12 @@ export default function OTPVerification() {
   }, []);
 
   const handleChange = (index: number, value: string) => {
-    // Only allow numbers
     if (value && !/^\d+$/.test(value)) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto-advance to next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -49,7 +47,6 @@ export default function OTPVerification() {
     index: number,
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
-    // Handle backspace
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -73,7 +70,7 @@ export default function OTPVerification() {
     setTimeLeft(30);
     setCanResend(false);
     // Simulate API call
-    let email = localStorage.getItem("email");
+    let email = localStorage.getItem("userEmail");
     try {
       const response = await fetch(backendUrl + "/resend-otp", {
         method: "POST",
@@ -97,7 +94,7 @@ export default function OTPVerification() {
     e.preventDefault();
     setIsLoading(true);
     // Simulate API call
-    let email = localStorage.getItem("email");
+    let email = localStorage.getItem("userEmail");
     let otpFormated = otp.join("");
     try {
       let response = await fetch(backendUrl + "/verify-forgot-password", {
@@ -111,7 +108,7 @@ export default function OTPVerification() {
       if (!response.ok) {
         showToast(data.message, "error");
       } else {
-        router.push("/student/forgotpass/new-password");
+        router.push("/auth/forgotpass/new-password");
 
         showToast(data.message, "success");
       }

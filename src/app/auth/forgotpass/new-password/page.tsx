@@ -15,7 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     allFieldsValidation({ password, confirm }, showToast, setIsLoading);
-    let email = localStorage.getItem("email");
+    let email = localStorage.getItem("userEmail");
     // ithu form submission
     try {
       const respone = await fetch(backendUrl + "/new-password", {

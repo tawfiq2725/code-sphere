@@ -9,6 +9,7 @@ import { showToast } from "@/utils/toastUtil";
 
 const navigation = [
   { name: "Dashboard", href: "/tutor/dashboard", icon: LayoutDashboard },
+  { name: "Profile", href: "/tutor/profile", icon: LayoutDashboard },
 ];
 
 export default function Sidebar() {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import Common from "@/app/components/common/Common";
+import { SignIn } from "@/app/components/common/Common";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
 import {
@@ -11,6 +11,7 @@ import {
   validateEmail,
   validatePassword,
 } from "@/utils/validators";
+import { backendUrl } from "@/utils/backendUrl";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -72,19 +73,16 @@ export default function SignupPage() {
     }
     // Simulate API call
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_BACKEND_URL + "/user",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch(`${backendUrl}/user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
       console.log(formData);
       const { email } = formData;
-      localStorage.setItem("email", email);
+      localStorage.setItem("userEmail", email);
       const data = await response.json();
       if (!data.success) {
         showToast(data.message, "error");
@@ -97,12 +95,11 @@ export default function SignupPage() {
           confirmPassword: "",
           role: "",
         });
-        let email = localStorage.getItem("email");
+        let email = localStorage.getItem("userEmail");
         if (email) {
-          const url = "http://localhost:5000/send-otp";
           const sendOtp = async () => {
             try {
-              const response = await fetch(url, {
+              const response = await fetch(`${backendUrl}/send-otp`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -119,7 +116,7 @@ export default function SignupPage() {
               console.error(error);
             }
           };
-          // Send OTP
+
           sendOtp();
         }
       }
@@ -292,7 +289,7 @@ export default function SignupPage() {
         </div>
 
         {/* Social Button */}
-        <Common />
+        <SignIn />
 
         {/* Footer Link */}
         <div className="text-center text-sm text-zinc-400">

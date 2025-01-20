@@ -1,38 +1,68 @@
+"use client";
 import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "@/store/slice/authSlice";
 const page = () => {
   const router = useRouter();
   const [role, setRole] = React.useState("");
   const [email, setEmail] = React.useState("");
-
+  const dispatch = useDispatch();
   useEffect(() => {
-    // Get the email from query parameters
     const params = new URLSearchParams(window.location.search);
     const userEmail = params.get("email");
 
     if (userEmail) {
       setEmail(userEmail);
-      localStorage.setItem("email", email);
+      localStorage.setItem("userEmail", email);
     }
   }, []);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!role) return;
-
+    let userId = localStorage.getItem("UserId");
     try {
       const response = await fetch(`${backendUrl}/auth/set-role`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ role, userId }),
       });
       const data = await response.json();
+      localStorage.setItem("userEmail", data.data.email);
+      if (data.success) {
+        if (data.data.role === "student") {
+          dispatch(
+            loginSuccess({
+              token: data.data.jwt_token,
+              role: data.data.role,
+            })
+          );
+          showToast(data.message, "success");
+          router.push(`/student`);
+        } else if (data.data.role === "tutor") {
+          dispatch(
+            loginSuccess({
+              token: data.data.jwt_token,
+              role: data.data.role,
+            })
+          );
+          showToast(data.message, "success");
 
-      if (data.success && data.data.role === "student") {
-        router.push(`/student`);
+          router.push(`/tutor/dashboard`);
+        } else if (data.data.role === "admin") {
+          dispatch(
+            loginSuccess({
+              token: data.data.jwt_token,
+              role: data.data.role,
+            })
+          );
+          showToast(data.message, "success");
+          router.push(`/admin/dashboard`);
+        }
       } else {
         showToast("Failed to set role", "error");
       }

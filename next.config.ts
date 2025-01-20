@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactStrictMode: false,
+  async headers() {
+    return []; // No headers
+  },
 };
 
 export default nextConfig;

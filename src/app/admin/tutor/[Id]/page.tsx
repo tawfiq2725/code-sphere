@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
+import { backendUrl } from "@/utils/backendUrl";
 
 interface Params {
   Id: string;
@@ -24,7 +25,7 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
       try {
         const token = Cookies.get("jwt_token");
         const response = await fetch(
-          `http://localhost:5000/admin/tutor/certificates/${Id}`,
+          `${backendUrl}/admin/tutor/certificates/${Id}`,
           {
             method: "GET",
             headers: {

@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import persist from "@/store/store";
-
+let { store, persistor } = persist();
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,6 +25,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta httpEquiv="Cross-Origin-Opener-Policy" content="same-origin" />
+
         <link
           rel="stylesheet"
           href="https://unpkg.com/nprogress@0.2.0/nprogress.css"
@@ -34,8 +36,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Provider store={persist().store}>
-          <PersistGate loading={null} persistor={persist().persistor}>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
             {children}
             <ToastContainer />
             <Footer />

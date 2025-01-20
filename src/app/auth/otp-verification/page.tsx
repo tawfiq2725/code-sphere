@@ -73,7 +73,7 @@ export default function OTPVerification() {
     setTimeLeft(30);
     setCanResend(false);
     // Simulate API call
-    let email = localStorage.getItem("email");
+    let email = localStorage.getItem("userEmail");
     try {
       const response = await fetch(backendUrl + "/resend-otp", {
         method: "POST",
@@ -97,7 +97,7 @@ export default function OTPVerification() {
     e.preventDefault();
     setIsLoading(true);
     // Simulate API call
-    let email = localStorage.getItem("email");
+    let email = localStorage.getItem("userEmail");
     let otpFormated = otp.join("");
     try {
       let response = await fetch(backendUrl + "/verify-otp", {

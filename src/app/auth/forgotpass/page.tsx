@@ -29,9 +29,9 @@ const Page = () => {
       });
 
       const data = await response.json();
-      localStorage.setItem("email", email);
+      localStorage.setItem("userEmail", email);
 
-      if (response.ok) {
+      if (data.success) {
         showToast("OTP sent successfully.", "success");
         router.push("/auth/forgotpass/verify-otp");
       } else {

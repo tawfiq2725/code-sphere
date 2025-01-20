@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import Common from "@/app/components/common/Common";
+import { SignIn } from "@/app/components/common/Common";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
-
+import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "@/utils/toastUtil";
 import { loginSuccess } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
@@ -17,6 +16,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const dispatch = useDispatch();
+  const { isAuthenticated, role } = useSelector(
+    (state: {
+      auth: { isAuthenticated: boolean; role: "student" | "admin" | "tutor" };
+    }) => state.auth
+  );
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/auth/sign-in");
+    } else {
+      const routes = {
+        student: "/student",
+        admin: "/admin/dashboard",
+        tutor: "/tutor/dashboard",
+      };
+      if (routes[role]) {
+        router.push(routes[role]);
+      }
+    }
+  }, [isAuthenticated, role]);
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
@@ -37,7 +55,7 @@ export default function LoginPage() {
       console.log("-------------------------------------------------");
       console.log(data.data);
       console.log(data.data.role);
-      localStorage.setItem("email", email);
+      localStorage.setItem("userEmail", email);
       // inga role handle pandra
       if (data.data.role === "student") {
         console.log("ithuuuuuu token inga check pannu " + data.data.jwt_token);
@@ -136,7 +154,7 @@ export default function LoginPage() {
           </div>
         </div>
         {/* Social Icon  */}
-        <Common />
+        <SignIn />
         {/* Footer Links */}
         <div className="space-y-4">
           <div className="text-center text-sm text-zinc-400 mb-2">
