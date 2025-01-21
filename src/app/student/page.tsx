@@ -6,10 +6,36 @@ import { CodeEditor } from "@/app/components/User/code-editor";
 import TrustedSection from "@/app/components/User/end-hero";
 import { useEffect } from "react";
 import { showToast } from "@/utils/toastUtil";
-
+import { backendUrl } from "@/utils/backendUrl";
+import { useDispatch } from "react-redux";
+import { getUserDetails } from "@/store/slice/authSlice";
 export default function Home() {
+  const dispatch = useDispatch();
   useEffect(() => {
-    showToast("Welcome to CodeSphere", "success");
+    const fetchUserProfile = async () => {
+      try {
+        let email = localStorage.getItem("userEmail");
+        let token = localStorage.getItem("jwt_token");
+        let response = await fetch(`${backendUrl}/get-profile?email=${email}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        let data = await response.json();
+
+        if (data.success) {
+          showToast("User profile fetched successfully", "success");
+          dispatch(getUserDetails({ user: data.data }));
+        } else {
+          showToast(data.message, "error");
+        }
+      } catch (error: any) {
+        console.log("Error fetching user profile:", error);
+      }
+    };
+    fetchUserProfile();
   }, []);
 
   return (

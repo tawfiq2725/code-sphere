@@ -10,12 +10,13 @@ import { showToast } from "@/utils/toastUtil";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dispatch = useDispatch();
-  const { isAuthenticated, role } = useSelector((state: any) => state.auth);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    showToast("Logged out successfully", "success");
-  };
+  const { isAuthenticated, role, user } = useSelector(
+    (state: any) => state.auth
+  );
+  console.log(
+    "inga profile....................................",
+    user.user.profile
+  );
 
   return (
     <nav className="bg-black text-white">
@@ -67,12 +68,24 @@ const Navbar = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex">
             {isAuthenticated && role === "student" ? (
-              <button
-                className="bg-red-500 text-white py-1 px-4 rounded-lg hover:bg-red-600"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
+              <div>
+                <div className="profile">
+                  <Link href="/student/profile">
+                    {/* Show the user's profile picture or default picture */}
+                    <Image
+                      src={
+                        user?.user.profile
+                          ? user.user.profile
+                          : "/default-profile.png"
+                      }
+                      alt="Profile"
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                    />
+                  </Link>
+                </div>
+              </div>
             ) : (
               <Link href="/auth/sign-in">
                 <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
@@ -138,18 +151,30 @@ const Navbar = () => {
               Contact
             </Link>
             {isAuthenticated && role === "student" ? (
-              <button
-                className="block py-2 text-red-500 hover:text-red-600"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
+              <div>
+                <div className="profile">
+                  <Link href="/student/profile">
+                    {/* Show the user's profile picture or default picture */}
+                    <Image
+                      src={
+                        user?.profile
+                          ? user.profile
+                          : "/default-profile.png.jpg"
+                      }
+                      alt="Profile"
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                    />
+                    <p className="block py-2 hover:text-gray-400">Profile</p>
+                  </Link>
+                </div>
+              </div>
             ) : (
-              <Link
-                href="/student/sign-in"
-                className="block py-2 hover:text-gray-400"
-              >
-                Sign In
+              <Link href="/student/sign-in">
+                <button className="block py-2 hover:text-gray-400">
+                  Sign In
+                </button>
               </Link>
             )}
           </div>

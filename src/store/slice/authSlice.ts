@@ -5,12 +5,14 @@ interface AuthState {
   isAuthenticated: boolean;
   token: string | null;
   role: string | null;
+  user: any;
 }
 
 const initialState: AuthState = {
   isAuthenticated: false,
   token: null,
   role: null,
+  user: null,
 };
 
 const authSlice = createSlice({
@@ -56,8 +58,13 @@ const authSlice = createSlice({
         state.role = null;
       }
     },
+    getUserDetails: (state, action: PayloadAction<any>) => {
+      state.user = action.payload;
+      console.log("User details:", state.user);
+    },
   },
 });
 
-export const { loginSuccess, logout, loadAuthFromCookies } = authSlice.actions;
+export const { loginSuccess, logout, loadAuthFromCookies, getUserDetails } =
+  authSlice.actions;
 export default authSlice.reducer;

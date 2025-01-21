@@ -2,25 +2,42 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
+import { backendUrl } from "@/utils/backendUrl";
+import Image from "next/image";
+import { getUserDetails } from "@/store/slice/authSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const TutorProfile = () => {
   const [isEditable, setIsEditable] = useState(false);
-  const [profile, setProfile] = useState({
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: any) => state.auth);
+  const [profile, setProfile] = useState<{
+    name: string;
+    email: string;
+    qualification: string;
+    subjects: string;
+    experience: string;
+    profilePicture: string | File;
+  }>({
     name: "",
     email: "",
     qualification: "",
     subjects: "",
     experience: "",
+    profilePicture: "",
   });
   const [certificates, setCertificates] = useState<File[]>([]);
+  const [uploadedCertificates, setUploadedCertificates] = useState<string[]>(
+    []
+  );
 
-  let email = localStorage.getItem("userEmail");
-  let token = Cookies.get("jwt_token");
+  const email = localStorage.getItem("userEmail");
+  const token = Cookies.get("jwt_token");
 
   const fetchProfile = async () => {
     try {
-      let response = await fetch(
-        `http://localhost:5000/tutor/profile?email=${email}`,
+      const response = await fetch(
+        `${backendUrl}/tutor/profile?email=${email}`,
         {
           method: "GET",
           headers: {
@@ -29,22 +46,22 @@ const TutorProfile = () => {
           },
         }
       );
-      let data = await response.json();
-      console.log(
-        "----------------------This is dashboard data-----------------------------"
-      );
-      console.log(data.data);
+      const data = await response.json();
+      console.log("checkkk user details code", data.data);
       localStorage.setItem("tutor_id", data.data._id);
       if (!data.success) {
         showToast(data.message, "error");
       } else {
+        dispatch(getUserDetails({ user: data.data }));
         setProfile({
           name: data.data.name || "",
           email: data.data.email || "",
           qualification: data.data.qualification || "",
           subjects: data.data.subjects || "",
           experience: data.data.experience || "",
+          profilePicture: data.data.profile || "/default-profile.jpg",
         });
+        setUploadedCertificates(data.data.certificates || []);
         showToast("Profile fetched successfully", "success");
       }
     } catch (error) {
@@ -52,13 +69,14 @@ const TutorProfile = () => {
       showToast("Failed to fetch profile", "error");
     }
   };
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  const handleUpdateform = async (e: React.FormEvent) => {
+  const handleUpdateForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    let tutor_id = localStorage.getItem("tutor_id");
+    const tutor_id = localStorage.getItem("tutor_id");
     try {
       const formData = new FormData();
       formData.append("name", profile.name);
@@ -67,25 +85,25 @@ const TutorProfile = () => {
       formData.append("subjects", profile.subjects);
       formData.append("experience", profile.experience);
 
-      certificates.forEach((file) => {
-        formData.append("certificates", file);
-      });
+      certificates.forEach((file) => formData.append("certificates", file));
+      formData.append("profilePhoto", profile.profilePicture);
 
-      let response = await fetch(
-        `http://localhost:5000/tutor/profile/${tutor_id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-      let data = await response.json();
+      const response = await fetch(`${backendUrl}/tutor/profile/${tutor_id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      const data = await response.json();
       if (!data.success) {
         showToast(data.message, "error");
       } else {
-        setProfile(data.data);
+        setProfile({
+          ...profile,
+          profilePicture: data.data.profilePicture,
+        });
+        setUploadedCertificates(data.data.certificates);
         showToast("Profile updated successfully", "success");
       }
     } catch (error) {
@@ -111,28 +129,55 @@ const TutorProfile = () => {
       const validFiles = files.filter((file) =>
         allowedTypes.includes(file.type)
       );
-      const invalidFiles = files.filter(
-        (file) => !allowedTypes.includes(file.type)
-      );
-      if (invalidFiles.length > 0) {
+      if (validFiles.length !== files.length) {
         showToast(
-          "Only image files (JPEG, PNG, JPG, GIF) are allowed. Invalid files have been removed.",
+          "Only image files (JPEG, PNG, JPG, GIF) are allowed.",
           "error"
         );
-
-        e.target.value = "";
       }
       setCertificates(validFiles);
     }
   };
 
-  const toggleEditMode = () => setIsEditable(!isEditable);
+  const handleProfilePictureChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (e.target.files && e.target.files[0]) {
+      setProfile({ ...profile, profilePicture: e.target.files[0] });
+    }
+  };
 
+  const toggleEditMode = () => setIsEditable(!isEditable);
+  const profilePicture =
+    profile.profilePicture && typeof profile.profilePicture === "string"
+      ? profile.profilePicture
+      : "/default-profile.jpg";
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white px-4">
       <div className="max-w-md w-full bg-gray-800 p-6 rounded-lg shadow-md my-10">
         <h2 className="text-center text-2xl font-bold mb-6">Profile</h2>
-        <form onSubmit={handleUpdateform}>
+        <form onSubmit={handleUpdateForm}>
+          <div className="w-28 h-28 mx-auto mb-2 overflow-hidden rounded-full">
+            <Image
+              src={profilePicture}
+              alt="Avatar"
+              width={100}
+              height={100}
+              layout="responsive" // Maintains aspect ratio automatically
+              objectFit="cover" // Ensures the image covers the container
+              priority
+              className="rounded-full" // Additional safety for rounding images
+            />
+
+            {isEditable && (
+              <input
+                type="file"
+                name="profilePicture"
+                onChange={handleProfilePictureChange}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none"
+              />
+            )}
+          </div>
           {/* Name Field */}
           <div className="mb-4">
             <label className="block text-sm mb-1">Name</label>
@@ -147,7 +192,7 @@ const TutorProfile = () => {
               }`}
             />
           </div>
-
+          {/* Other Fields */}
           {/* Email Field */}
           <div className="mb-4">
             <label className="block text-sm mb-1">Email</label>
@@ -192,7 +237,6 @@ const TutorProfile = () => {
               }`}
             />
           </div>
-
           {/* Certificates Field */}
           <div className="mb-4">
             <label className="block text-sm mb-1">Add Certificates</label>
@@ -222,7 +266,27 @@ const TutorProfile = () => {
               }`}
             />
           </div>
+          {/* ... (rest of the fields) */}
 
+          <div className="mb-4">
+            <label className="block text-sm mb-1">Uploaded Certificates</label>
+            {uploadedCertificates.length > 0 ? (
+              uploadedCertificates.map((cert, index) => (
+                <div key={index} className="flex justify-between">
+                  <a
+                    href={cert}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400"
+                  >
+                    View Certificate {index + 1}
+                  </a>
+                </div>
+              ))
+            ) : (
+              <p>No certificates uploaded yet.</p>
+            )}
+          </div>
           {/* Buttons */}
           <div className="flex justify-between">
             <button
