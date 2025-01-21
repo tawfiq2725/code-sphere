@@ -36,7 +36,11 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
         );
 
         const data = await response.json();
+        console.log("------------------------------------");
+
+        console.log(data);
         console.log(data.data);
+        console.log("------------------------------------");
         if (data.success && Array.isArray(data.data)) {
           setCertificates(data.data);
           showToast("Certificates fetched successfully", "success");

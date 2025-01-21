@@ -168,7 +168,8 @@ const TutorProfile = () => {
               priority
               className="rounded-full" // Additional safety for rounding images
             />
-
+          </div>
+          <div className="mb-4">
             {isEditable && (
               <input
                 type="file"
