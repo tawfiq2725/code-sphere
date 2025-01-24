@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  X,
+  Book,
+  UserIcon,
+  BookDownIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slice/authSlice";
@@ -9,7 +17,13 @@ import { showToast } from "@/utils/toastUtil";
 
 const navigation = [
   { name: "Dashboard", href: "/tutor/dashboard", icon: LayoutDashboard },
-  { name: "Profile", href: "/tutor/profile", icon: LayoutDashboard },
+  { name: "Profile", href: "/tutor/profile", icon: UserIcon },
+  { name: "Courses", href: "/tutor/auth/courses", icon: Book },
+  {
+    name: "Chapters",
+    href: "/tutor/auth/courses/chapters",
+    icon: BookDownIcon,
+  },
 ];
 
 export default function Sidebar() {
@@ -43,7 +57,7 @@ export default function Sidebar() {
             {/* Logo/Header */}
             <div className="flex h-16 items-center gap-2 border-b border-gray-800 px-6">
               <LayoutDashboard className="h-6 w-6" />
-              <span className="text-xl font-bold">Admin Portal</span>
+              <span className="text-xl font-bold">Tutor Portal</span>
             </div>
 
             {/* Navigation Links */}

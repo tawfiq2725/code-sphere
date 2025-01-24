@@ -13,10 +13,6 @@ const Navbar = () => {
   const { isAuthenticated, role, user } = useSelector(
     (state: any) => state.auth
   );
-  console.log(
-    "inga profile....................................",
-    user.user.profile
-  );
 
   return (
     <nav className="bg-black text-white">
@@ -76,7 +72,7 @@ const Navbar = () => {
                       src={
                         user?.user.profile
                           ? user.user.profile
-                          : "/default-profile.png"
+                          : "/default-profile.jpg"
                       }
                       alt="Profile"
                       width={40}

@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { loadAuthFromCookies } from "@/store/slice/authSlice";
 import Sidebar from "@/app/components/Tutor/sidebar";
-
+import { showToast } from "@/utils/toastUtil";
 export default function TutorLayout({
   children,
 }: Readonly<{
@@ -12,22 +12,18 @@ export default function TutorLayout({
 }>) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { isAuthenticated, role } = useSelector((state: any) => state.auth);
+  const { user } = useSelector((state: any) => state.auth);
   useEffect(() => {
     dispatch(loadAuthFromCookies());
-    if (!isAuthenticated || role !== "tutor") {
-      router.push("/auth/sign-in");
+    if (!user.user.isTutor) {
+      showToast("Just verify your details first", "error");
+      router.push("/tutor/profile");
     }
-  }, [dispatch, isAuthenticated, role, router]);
+  }, [dispatch, router]);
 
-  if (!isAuthenticated || role !== "tutor") {
+  if (!user.user.isTutor) {
     return null;
   }
 
-  return (
-    <>
-      <Sidebar />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

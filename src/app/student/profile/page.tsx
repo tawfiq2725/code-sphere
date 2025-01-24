@@ -11,7 +11,7 @@ const page = () => {
     showToast("Logged out successfully", "success");
   };
   return (
-    <div>
+    <div className="w-full h-screen flex items-center justify-center">
       <button
         className="bg-red-500 text-white py-1 px-4 rounded-lg hover:bg-red-600"
         onClick={handleLogout}
