@@ -13,6 +13,7 @@ import {
   Ticket,
   Users,
   X,
+  FormInput,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
@@ -22,11 +23,16 @@ import { showToast } from "@/utils/toastUtil";
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/userlist", icon: Users },
+  {
+    name: "New Applications",
+    href: "/admin/tutor-applications",
+    icon: FormInput,
+  },
+  { name: "Tutor Management", href: "/admin/tutor", icon: GraduationCap },
   { name: "Course Management", href: "/courses", icon: BookOpen },
   { name: "Coupon Management", href: "/coupons", icon: Ticket },
   { name: "Memberships", href: "/memberships", icon: Package },
   { name: "Orders Management", href: "/orders", icon: ShoppingCart },
-  { name: "Tutor Management", href: "/admin/tutor", icon: GraduationCap },
   { name: "Offer Management", href: "/offers", icon: Gift },
 ];
 

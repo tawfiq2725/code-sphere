@@ -10,7 +10,7 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-black text-white py-4 px-6">
+    <footer className="w-full bg-black text-white py-4 px-6 pt-20">
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Copyright */}
         <div className="text-sm text-gray-400">© Code Sphere</div>

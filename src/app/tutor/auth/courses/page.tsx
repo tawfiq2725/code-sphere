@@ -3,17 +3,20 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
+import Link from "next/link";
 import Cookies from "js-cookie";
-import { getCourseData } from "@/api/tutor/course";
+import { getCourseData } from "@/api/course";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import { ToastConfirm } from "@/app/components/common/Toast";
+import { Link2 } from "lucide-react";
+import Pagination from "@/app/components/common/pagination";
 interface Course {
   serialNo: number;
   courseId: string;
   courseName: string;
   courseDescription: string;
+  info: string;
   thumbnail: string;
   thumbnailFile: File | null;
   price: number;
@@ -55,6 +58,9 @@ export default function SimpleCourseManagement() {
     }
     if (selectedCourse?.courseDescription) {
       formdata.append("courseDescription", selectedCourse.courseDescription);
+    }
+    if (selectedCourse?.info) {
+      formdata.append("info", selectedCourse.info);
     }
     if (selectedCourse?.price) {
       formdata.append("price", selectedCourse.price.toString());
@@ -152,7 +158,7 @@ export default function SimpleCourseManagement() {
 
   return (
     <div className=" mx-auto p-4 w-full h-screen flex  justify-center bg-black">
-      <div className="bg-gray-800 shadow-md rounded-lg overflow-hidden w-8/12">
+      <div className="bg-gray-800 h-max  shadow-md rounded-lg overflow-hidden w-8/12">
         <div className="p-6 bg-gray-800 border-b">
           <h1 className="text-2xl font-bold text-gray-100">
             Course Management
@@ -172,7 +178,7 @@ export default function SimpleCourseManagement() {
               Add Course
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar pb-5">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-800 text-white">
@@ -181,6 +187,7 @@ export default function SimpleCourseManagement() {
                   <th className="p-3 border-b">Name</th>
                   <th className="p-3 border-b hidden md:table-cell">Image</th>
                   <th className="p-3 border-b">Price</th>
+                  <th className="p-3 border-b ">Chapters</th>
                   <th className="p-3 border-b hidden sm:table-cell">Status</th>
                   <th className="p-3 border-b">Actions</th>
                 </tr>
@@ -203,6 +210,19 @@ export default function SimpleCourseManagement() {
                       </div>
                     </td>
                     <td className="p-3 border-b">${course.price}</td>
+                    <td className="p-3 border-b">
+                      <Link
+                        href={`/tutor/auth/courses/${course.courseId}`}
+                        passHref
+                        className="text-center flex justify-center"
+                        onClick={() => {
+                          localStorage.setItem("thumbnail", course.thumbnail);
+                          localStorage.setItem("courseName", course.courseName);
+                        }}
+                      >
+                        <Link2 />
+                      </Link>
+                    </td>
                     <td className="p-3 border-b hidden sm:table-cell">
                       <button
                         className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -255,6 +275,22 @@ export default function SimpleCourseManagement() {
                                     setSelectedCourse({
                                       ...selectedCourse,
                                       courseDescription: e.target.value,
+                                    })
+                                  }
+                                  rows={4}
+                                  className="w-full p-2 border rounded bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+                                ></textarea>
+                              </div>
+                              <div className="mb-4">
+                                <label className="block text-white font-semibold">
+                                  Course Information
+                                </label>
+                                <textarea
+                                  value={selectedCourse.info || ""}
+                                  onChange={(e) =>
+                                    setSelectedCourse({
+                                      ...selectedCourse,
+                                      info: e.target.value,
                                     })
                                   }
                                   rows={4}
@@ -367,6 +403,7 @@ export default function SimpleCourseManagement() {
                 ))}
               </tbody>
             </table>
+            <Pagination totalPages={5} onPageChange={5} currentPage={1} />
           </div>
         </div>
       </div>

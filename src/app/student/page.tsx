@@ -26,7 +26,6 @@ export default function Home() {
         let data = await response.json();
 
         if (data.success) {
-          showToast("User profile fetched successfully", "success");
           dispatch(getUserDetails({ user: data.data }));
         } else {
           showToast(data.message, "error");

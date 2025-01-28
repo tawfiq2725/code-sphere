@@ -10,3 +10,21 @@
 #nprogress .peg {
   box-shadow: 0 0 10px #9333ea, 0 0 5px #ec4899 !important;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Adjust the width */
+  height: 8px; /* Adjust the height for horizontal scrollbars */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4a5568; /* Dark gray thumb for the scrollbar */
+  border-radius: 4px; /* Rounded corners */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #718096; /* Slightly lighter on hover */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Transparent track */
+}

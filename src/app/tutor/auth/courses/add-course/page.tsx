@@ -5,10 +5,12 @@ import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
+import { set } from "nprogress";
 
 export default function AddCourseForm() {
   const [courseName, setCourseName] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
+  const [info, setInfo] = useState("");
   const [price, setPrice] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [prerequisites, setPrerequisites] = useState("");
@@ -21,6 +23,7 @@ export default function AddCourseForm() {
   const resetForm = () => {
     setCourseName("");
     setCourseDescription("");
+    setInfo("");
     setPrice("");
     setThumbnailFile(null);
     setPrerequisites("");
@@ -30,6 +33,7 @@ export default function AddCourseForm() {
   interface CourseFormData {
     courseName: string;
     courseDescription: string;
+    info: string;
     price: string;
     prerequisites: string;
     thumbnail?: File;
@@ -43,6 +47,7 @@ export default function AddCourseForm() {
     const formData = new FormData();
     formData.append("courseName", courseName);
     formData.append("courseDescription", courseDescription);
+    formData.append("info", info);
     formData.append("price", price);
     formData.append("prerequisites", prerequisites);
     if (thumbnailFile) {
@@ -67,7 +72,7 @@ export default function AddCourseForm() {
         router.back();
       } else {
         showToast(data.message, "error");
-        router.push("tutor/auth/courses");
+        router.back();
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -119,6 +124,24 @@ export default function AddCourseForm() {
                          transition-all duration-200 border-gray-300 rounded-md"
               rows={4}
               placeholder="Enter a detailed description of your course"
+            ></textarea>
+          </div>
+          <div>
+            <label
+              htmlFor="info"
+              className="block text-sm font-medium text-gray-100 mb-1"
+            >
+              Course Information
+            </label>
+            <textarea
+              id="info"
+              autoComplete="off"
+              value={info}
+              onChange={(e) => setCourseDescription(e.target.value)}
+              className="w-full px-3 py-2 border bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
+                         transition-all duration-200 border-gray-300 rounded-md"
+              rows={4}
+              placeholder="Enter a detailed information of your course"
             ></textarea>
           </div>
 

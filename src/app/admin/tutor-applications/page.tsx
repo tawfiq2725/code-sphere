@@ -30,13 +30,16 @@ const TutorList = () => {
     const fetchUsers = async () => {
       try {
         let token = Cookies.get("jwt_token");
-        const response = await fetch(`${backendUrl}/admin/get-tutors`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          `${backendUrl}/admin/get-tutors/applications`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const data = await response.json();
         if (!data.success) {
@@ -44,6 +47,7 @@ const TutorList = () => {
         } else {
           setUsers(data.data);
           setFilteredUsers(data.data);
+
           showToast("Tutors fetched successfully", "success");
         }
       } catch (err) {
@@ -156,7 +160,7 @@ const TutorList = () => {
 
   return (
     <div className="container mx-auto p-4 text-center flex justify-center items-center flex-col h-screen">
-      <h1 className="text-2xl font-bold my-4">Tutor List</h1>
+      <h1 className="text-2xl font-bold my-4">New Applicants</h1>
       <Search searchTerm={searchTerm} onSearch={handleSearch} />
 
       <div className="w-full overflow-x-auto">
@@ -166,8 +170,10 @@ const TutorList = () => {
               <th className="border px-4 py-2">S.No</th>
               <th className="border px-4 py-2">Name</th>
               <th className="border px-4 py-2">Email</th>
+              <th className="border px-4 py-2">Qualification</th>
+              <th className="border px-4 py-2">Experience</th>
               <th className="border px-4 py-2">Subjects</th>
-
+              <th className="border px-4 py-2">Certificates</th>
               <th className="border px-4 py-2">Verified</th>
               <th className="border px-4 py-2">IsTutor</th>
               <th className="border px-4 py-2">Blocked</th>
@@ -180,8 +186,19 @@ const TutorList = () => {
                 <td className="border px-4 py-2">{index + 1}</td>
                 <td className="border px-4 py-2">{user.name}</td>
                 <td className="border px-4 py-2">{user.email}</td>
+                <td className="border px-4 py-2">{user.qualification}</td>
+                <td className="border px-4 py-2">{user.experience}</td>
                 <td className="border px-4 py-2">{user.subjects.join(", ")}</td>
-
+                <td className="border px-4 py-2">
+                  <Link
+                    href={`/admin/tutor-applications/${user._id}`}
+                    onClick={() => {
+                      localStorage.setItem("applicant-id", user._id);
+                    }}
+                  >
+                    Check
+                  </Link>
+                </td>
                 <td className="border px-4 py-2">
                   {user.isVerified ? "Yes" : "No"}
                 </td>
