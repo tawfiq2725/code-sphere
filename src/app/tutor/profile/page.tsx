@@ -9,14 +9,22 @@ import { useSelector } from "react-redux";
 
 const TutorProfile = () => {
   const { user } = useSelector((state: any) => state.auth);
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<{
+    name: string;
+    email: string;
+    qualification: string;
+    subjects: string;
+    experience: string;
+    bio: string;
+    profileImage: string | File;
+  }>({
     name: "",
     email: "",
     qualification: "",
     subjects: "",
     experience: "",
     bio: "",
-    profilePhoto: "",
+    profileImage: "",
   });
   const [certificates, setCertificates] = useState<File[]>([]);
   const [uploadedCertificates, setUploadedCertificates] = useState<string[]>(
@@ -37,7 +45,7 @@ const TutorProfile = () => {
         subjects: user.user.subjects || "",
         experience: user.user.experience || "",
         bio: user.user.bio || "",
-        profilePhoto: user.user.profile ?? "/default-profile.jpg",
+        profileImage: user.user.profile ?? "/default-profile.jpg",
       });
       setUploadedCertificates(user.user.certificates || []);
     }
@@ -46,16 +54,21 @@ const TutorProfile = () => {
   const handleUpdateProfile = async () => {
     try {
       const formData = new FormData();
+
       Object.keys(editedFields).forEach((field) => {
         if (editedFields[field]) {
           formData.append(field, profile[field as keyof typeof profile]);
         }
       });
-      if (editedFields.profilePhoto) {
-        formData.append("profilePhoto", profile.profilePhoto);
-      }
+
       certificates.forEach((file) => formData.append("certificates", file));
       formData.append("email", profile.email);
+
+      console.log("FormData contents:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
       const response = await fetch(`${backendUrl}/tutor/profile/`, {
         method: "PATCH",
         headers: {
@@ -63,7 +76,10 @@ const TutorProfile = () => {
         },
         body: formData,
       });
+
       const data = await response.json();
+      console.log("Response from backend:", data);
+
       if (!data.success) {
         showToast(data.message, "error");
       } else {
@@ -72,6 +88,7 @@ const TutorProfile = () => {
         setEditedFields({});
       }
     } catch (error) {
+      console.error("Error updating profile:", error);
       showToast("Failed to update profile", "error");
     }
   };
@@ -99,9 +116,12 @@ const TutorProfile = () => {
       const file = e.target.files[0];
       setProfile((prev) => ({
         ...prev,
-        profilePhoto: URL.createObjectURL(file),
+        profileImage: file,
       }));
-      setEditedFields({ ...editedFields, profilePhoto: true });
+      setEditedFields((prev) => ({
+        ...prev,
+        profileImage: true,
+      }));
     }
   };
 
@@ -128,15 +148,23 @@ const TutorProfile = () => {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-6">
             <h2 className="text-2xl text-white font-bold">Profile Details</h2>
-            {/* <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4">
               <div className="w-24 h-24 relative">
-                <Image
-                  src={profile.profilePhoto || "/default-profile.jpg"}
-                  alt="Profile"
-                  layout="fill"
-                  objectFit="cover"
-                  className="rounded-full"
-                />
+                {profile.profileImage && (
+                  <Image
+                    src={
+                      typeof profile.profileImage === "string"
+                        ? profile.profileImage
+                        : profile.profileImage instanceof File
+                        ? URL.createObjectURL(profile.profileImage)
+                        : "/default-profile.jpg"
+                    }
+                    alt="Profile"
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-full"
+                  />
+                )}
               </div>
               <input
                 type="file"
@@ -144,7 +172,7 @@ const TutorProfile = () => {
                 className="w-2/4 px-3 py-2 border rounded bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
                          transition-all duration-200"
               />
-            </div> */}
+            </div>
             <input
               type="text"
               name="name"

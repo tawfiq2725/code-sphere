@@ -1,11 +1,12 @@
 "use client";
 
-import { findUserById, getCoursById } from "@/api/course";
+import { findUserById, getChaptersById, getCoursById } from "@/api/course";
 import { use, useEffect, useState } from "react";
 import { Clock, DollarSign, BookOpen, HelpCircle } from "lucide-react";
 import Header from "@/app/components/header";
 import Image from "next/image";
-import Head from "next/head";
+
+import { getByNameById } from "@/api/category";
 
 interface Course {
   _id: string;
@@ -18,6 +19,7 @@ interface Course {
   category: string;
   price: number;
   tutorId: string;
+  categoryName: string;
 }
 
 interface Tutor {
@@ -37,33 +39,57 @@ export default function CourseDetailsPage({
   const [tutorId, setTutorId] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
   const [tutorData, setTutorData] = useState<Tutor>();
+  const [category, setCategory] = useState<string>();
+  const [categoryData, setCategoryData] = useState<any>();
+  const [chapters, setChapters] = useState<any>();
 
+  // Fetch course details
   useEffect(() => {
     getCoursById(id)
       .then((data) => {
         setCourseData(data.data);
         setTutorId(data.data.tutorId);
-        console.log("sharik", data.data);
+        setCategory(data.data.categoryName); // This sets the category (which is an ID)
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, [id]);
-  console.log("sharik iddd", tutorId);
 
+  // Update document title when courseData is set
   useEffect(() => {
     if (courseData) {
       document.title = courseData.courseName;
     }
   }, [courseData]);
+
+  // Fetch tutor details when tutorId is set
   useEffect(() => {
     if (tutorId) {
       findUserById(tutorId).then((data) => {
-        console.log("sharik byeeeeeeeeee", data);
         setTutorData(data);
       });
     }
   }, [tutorId]);
+
+  // fetch chapter details
+  useEffect(() => {
+    getChaptersById(id).then((data) => {
+      console.log("chapters", data);
+      setChapters(data);
+    });
+  }, [id]);
+
+  // Fetch category details when category (ID) is set
+  useEffect(() => {
+    if (category) {
+      console.log("Fetching category for ID:", category);
+      getByNameById(category).then((data) => {
+        setCategoryData(data);
+        console.log("Fetched category data:", data);
+      });
+    }
+  }, [category]);
 
   if (isLoading) {
     return (
@@ -160,9 +186,11 @@ export default function CourseDetailsPage({
                   </div>
                 </div>
                 <div className="prose prose-invert max-w-none">
-                  <p className="text-gray-400 leading-relaxed">
-                    {courseData.courseDescription}
-                  </p>
+                  {chapters?.map((chapter: any, index: number) => (
+                    <p key={index} className="text-gray-400 leading-relaxed">
+                      {chapter.chapterName}
+                    </p>
+                  ))}
                 </div>
               </section>
 
@@ -180,7 +208,7 @@ export default function CourseDetailsPage({
                   </div>
                   <div className="bg-gray-900/50 p-6 rounded-lg">
                     <h3 className="font-semibold mb-2">Category</h3>
-                    <p className="text-gray-400">{courseData.category}</p>
+                    <p className="text-gray-400">{categoryData}</p>
                   </div>
                   <div className="bg-gray-900/50 p-6 rounded-lg">
                     <h3 className="font-semibold mb-2">More Info</h3>

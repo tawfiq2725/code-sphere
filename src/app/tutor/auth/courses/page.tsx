@@ -11,29 +11,37 @@ import { backendUrl } from "@/utils/backendUrl";
 import { ToastConfirm } from "@/app/components/common/Toast";
 import { Link2 } from "lucide-react";
 import Pagination from "@/app/components/common/pagination";
-interface Course {
-  serialNo: number;
-  courseId: string;
-  courseName: string;
-  courseDescription: string;
-  info: string;
-  thumbnail: string;
-  thumbnailFile: File | null;
-  price: number;
-  prerequisites: string;
-  isListed: boolean;
-  courseStatus: string;
-}
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function SimpleCourseManagement() {
+  interface Course {
+    serialNo: number;
+    courseId: string;
+    courseName: string;
+    courseDescription: string;
+    info: string;
+    thumbnail: string;
+    thumbnailFile: File | null;
+    price: number;
+    prerequisites: string;
+    isListed: boolean;
+    courseStatus: string;
+    categoryName: string;
+  }
+
   const token: any = Cookies.get("jwt_token");
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const id: string = localStorage.getItem("tutor_id") || "";
   useEffect(() => {
-    getCourseData(token)
+    getCourseData(token, id)
       .then((data) => {
         console.log(data.data);
         setCourses(data.data);
@@ -45,6 +53,28 @@ export default function SimpleCourseManagement() {
         console.log("Course data fetched successfully");
       });
   }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          `${backendUrl}/api/course/get-categories`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setCategories(response.data.data);
+        console.log(response.data.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", "error");
+      }
+    };
+
+    fetchCategories();
+  }, [token]);
 
   const handleEdit = (course: Course) => {
     setSelectedCourse({ ...course });
@@ -71,8 +101,12 @@ export default function SimpleCourseManagement() {
     if (selectedCourse?.thumbnailFile) {
       formdata.append("thumbnail", selectedCourse.thumbnailFile);
     }
+    if (selectedCategory) {
+      formdata.append("categoryName", selectedCategory);
+    }
     return formdata;
   };
+
   const courseId = selectedCourse?.courseId;
   const handlesubmitUpdateData = async () => {
     const formdata = updateData();
@@ -141,20 +175,39 @@ export default function SimpleCourseManagement() {
   };
 
   const handleDelete = async (courseId: string) => {
-    ToastConfirm({
-      message: "Are you sure you want to delete this course?",
-      onConfirm: () => {
-        deleteCourse(courseId);
-        setCourses((prev) =>
-          prev.filter((course) => course.courseId !== courseId)
-        );
-      },
-      onCancel: () => {
-        console.log("Delete operation cancelled");
-        showToast("Delete operation cancelled", "info");
-      },
-    });
+    toast.info(
+      <ToastConfirm
+        message="Are you sure you want to delete this course?"
+        onConfirm={() => {
+          deleteCourse(courseId);
+          setCourses((prev) =>
+            prev.filter((course) => course.courseId !== courseId)
+          );
+        }}
+        onCancel={() => {
+          console.log("Delete operation cancelled");
+          showToast("Delete operation cancelled", "info");
+        }}
+      />,
+      {
+        position: "top-center",
+        autoClose: false,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      }
+    );
   };
+
+  // Get current courses
+  const indexOfLastCourse = currentPage * itemsPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - itemsPerPage;
+  const currentCourses = courses.slice(indexOfFirstCourse, indexOfLastCourse);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className=" mx-auto p-4 w-full h-screen flex  justify-center bg-black">
@@ -193,7 +246,7 @@ export default function SimpleCourseManagement() {
                 </tr>
               </thead>
               <tbody>
-                {courses.map((course, index) => (
+                {currentCourses.map((course, index) => (
                   <tr key={course.courseId} className="text-gray-50">
                     <td className="p-3 border-b">{index + 1}</td>
                     <td className="p-3 border-b">{course.courseId}</td>
@@ -280,6 +333,29 @@ export default function SimpleCourseManagement() {
                                   rows={4}
                                   className="w-full p-2 border rounded bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
                                 ></textarea>
+                              </div>
+                              <div className="mb-4">
+                                <label className="block text-white font-semibold">
+                                  Category Name
+                                </label>
+                                <select
+                                  id="category"
+                                  value={selectedCourse.categoryName}
+                                  onChange={(e) =>
+                                    setSelectedCategory(e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 rounded-md"
+                                >
+                                  <option value="">Select a category</option>
+                                  {categories.map((category: any) => (
+                                    <option
+                                      key={category._id}
+                                      value={category._id}
+                                    >
+                                      {category.categoryName}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                               <div className="mb-4">
                                 <label className="block text-white font-semibold">
@@ -403,7 +479,11 @@ export default function SimpleCourseManagement() {
                 ))}
               </tbody>
             </table>
-            <Pagination totalPages={5} onPageChange={5} currentPage={1} />
+            <Pagination
+              totalPages={Math.ceil(courses.length / itemsPerPage)}
+              onPageChange={paginate}
+              currentPage={currentPage}
+            />
           </div>
         </div>
       </div>

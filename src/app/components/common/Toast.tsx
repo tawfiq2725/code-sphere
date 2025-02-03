@@ -8,19 +8,17 @@ interface ToastProps {
 }
 
 export const ToastConfirm = ({ message, onConfirm, onCancel }: ToastProps) => {
-  const toastId = React.useRef<string | number | null>(null);
-
   const handleConfirm = () => {
-    toast.dismiss(toastId.current!); // Dismiss the current toast
-    onConfirm && onConfirm(); // Call the onConfirm callback
+    toast.dismiss(); // Dismiss the toast
+    onConfirm && onConfirm();
   };
 
   const handleCancel = () => {
-    toast.dismiss(toastId.current!); // Dismiss the current toast
-    onCancel && onCancel(); // Call the onCancel callback if necessary
+    toast.dismiss();
+    onCancel && onCancel();
   };
 
-  toastId.current = toast.info(
+  return (
     <div>
       <p>{message}</p>
       <div style={{ display: "flex", justifyContent: "space-around" }}>
@@ -51,15 +49,6 @@ export const ToastConfirm = ({ message, onConfirm, onCancel }: ToastProps) => {
           Cancel
         </button>
       </div>
-    </div>,
-    {
-      position: "top-center",
-      autoClose: false,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    }
+    </div>
   );
 };

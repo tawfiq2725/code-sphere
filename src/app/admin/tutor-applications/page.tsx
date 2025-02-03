@@ -47,8 +47,6 @@ const TutorList = () => {
         } else {
           setUsers(data.data);
           setFilteredUsers(data.data);
-
-          showToast("Tutors fetched successfully", "success");
         }
       } catch (err) {
         showToast("Failed to fetch users", "error");

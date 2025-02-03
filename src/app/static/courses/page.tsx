@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import Header from "@/app/components/header";
 import Link from "next/link";
 import { getCourses } from "@/api/course";
+import { getAllCategories } from "@/api/category";
+import Pagination from "@/app/components/common/pagination";
 
 export default function Courses() {
   interface Course {
@@ -15,11 +17,20 @@ export default function Courses() {
     courseId: string;
     category: string;
     price: number;
+    categoryName: string;
   }
 
   const [courseData, setCourseData] = useState<Course[]>([]);
   const [filter, setFilter] = useState("All Courses");
   const [search, setSearch] = useState("");
+
+  const [categories, setCategories] = useState<
+    { _id: string; categoryName: string }[]
+  >([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; // You can adjust this number
 
   useEffect(() => {
     getCourses().then((data) => {
@@ -27,16 +38,37 @@ export default function Courses() {
     });
   }, []);
 
+  useEffect(() => {
+    getAllCategories().then((data) => {
+      setCategories(data);
+    });
+  }, []);
+
+  // Filter courses based on search and category
   const filteredCourses = courseData.filter(
     (course) =>
-      (filter === "All Courses" || course.category === filter) &&
+      (filter === "All Courses" || course.categoryName === filter) &&
       course.courseName.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+
+  // Slice the courses based on the current page
+  const currentCourses = filteredCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <main className=" mx-auto px-20 py-8">
+      <main className="mx-auto px-20 py-8">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4">
             Level Up Your Coding Skills
@@ -54,10 +86,12 @@ export default function Courses() {
             onChange={(e) => setFilter(e.target.value)}
             className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
-            <option>All Courses</option>
-            <option>Web Development</option>
-            <option>Programming</option>
-            <option>Database</option>
+            <option value="All Courses">All Courses</option>
+            {categories.map((category) => (
+              <option key={category._id} value={category._id}>
+                {category.categoryName}
+              </option>
+            ))}
           </select>
 
           <div className="flex gap-4 mt-4 md:mt-0">
@@ -78,10 +112,10 @@ export default function Courses() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map((course) => (
+          {currentCourses.map((course) => (
             <div
               key={course._id}
-              className=" w-80 bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-200"
+              className="w-80 bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-200"
             >
               <img
                 src={course.thumbnail}
@@ -110,6 +144,12 @@ export default function Courses() {
             </div>
           ))}
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       </main>
     </div>
   );

@@ -153,13 +153,13 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
           <div className="flex justify-between items-center">
             <button
               className="mx-3 px-6 py-2 text-white bg-green-500 hover:bg-green-600 rounded-lg font-medium shadow-sm transition duration-200"
-              onClick={() => handleAccept()}
+              onClick={handleAccept}
             >
               Accept
             </button>
             <button
               className=" mx-3 px-6 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg font-medium shadow-sm transition duration-200"
-              onClick={() => handleReject()}
+              onClick={handleReject}
             >
               Reject
             </button>

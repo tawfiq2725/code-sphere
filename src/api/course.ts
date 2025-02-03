@@ -1,15 +1,27 @@
 import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
 
-// get the course
-export const getCourseData = async (token: string) => {
-  const response = await axios.get(`${backendUrl}/api/course/get-courses`, {
+export const getCourseData = async (token: string, id: string) => {
+  const response = await axios.get(
+    `${backendUrl}/api/course/get-courses/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const getCourseDataByAdmin = async (token: string) => {
+  const response = await axios.get(`${backendUrl}/admin/get-courses`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  return response.data;
+  return response.data.data;
 };
 
 export const getCourses = async () => {
@@ -25,5 +37,12 @@ export const getCoursById = async (id: string) => {
 export const findUserById = async (id: string) => {
   console.log("sharik id-------", id);
   const response = await axios.get(`${backendUrl}/api/user/find-user/${id}`);
+  return response.data.data;
+};
+
+export const getChaptersById = async (id: string) => {
+  const response = await axios.get(
+    `${backendUrl}/api/course/get-chapter-front/${id}`
+  );
   return response.data.data;
 };

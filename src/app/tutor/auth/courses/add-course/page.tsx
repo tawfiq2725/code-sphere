@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
-import { set } from "nprogress";
+import axios from "axios"; // Import axios
 
 export default function AddCourseForm() {
   const [courseName, setCourseName] = useState("");
@@ -14,12 +14,36 @@ export default function AddCourseForm() {
   const [price, setPrice] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [prerequisites, setPrerequisites] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState("");
   const router = useRouter();
 
   const tutorId: any = localStorage.getItem("tutor_id");
   const token: any = Cookies.get("jwt_token");
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          `${backendUrl}/api/course/get-categories`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setCategories(response.data.data);
+        console.log(response.data.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", "error");
+      }
+    };
+
+    fetchCategories();
+  }, [token]);
+
   const resetForm = () => {
     setCourseName("");
     setCourseDescription("");
@@ -27,18 +51,8 @@ export default function AddCourseForm() {
     setPrice("");
     setThumbnailFile(null);
     setPrerequisites("");
-    setSubmitMessage("");
+    setSelectedCategory("");
   };
-
-  interface CourseFormData {
-    courseName: string;
-    courseDescription: string;
-    info: string;
-    price: string;
-    prerequisites: string;
-    thumbnail?: File;
-    tutorId: string | null;
-  }
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,6 +64,7 @@ export default function AddCourseForm() {
     formData.append("info", info);
     formData.append("price", price);
     formData.append("prerequisites", prerequisites);
+    formData.append("categoryName", selectedCategory);
     if (thumbnailFile) {
       formData.append("thumbnail", thumbnailFile);
     }
@@ -72,11 +87,10 @@ export default function AddCourseForm() {
         router.back();
       } else {
         showToast(data.message, "error");
-        router.back();
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      setSubmitMessage("An error occurred while adding the course.");
+      showToast("An error occurred while adding the course.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,6 +103,7 @@ export default function AddCourseForm() {
           Add New Course
         </h2>
         <form onSubmit={onSubmit} className="space-y-6">
+          {/* Course Name */}
           <div>
             <label
               htmlFor="courseName"
@@ -101,13 +116,36 @@ export default function AddCourseForm() {
               type="text"
               value={courseName}
               onChange={(e) => setCourseName(e.target.value)}
-              className="w-full px-3 py-2 border bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                         transition-all duration-200 border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 border-gray-300 rounded-md"
               placeholder="Enter course name"
               autoComplete="off"
             />
           </div>
 
+          {/* Category Dropdown */}
+          <div>
+            <label
+              htmlFor="category"
+              className="block text-sm font-medium text-gray-100 mb-1"
+            >
+              Category
+            </label>
+            <select
+              id="category"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 rounded-md"
+            >
+              <option value="">Select a category</option>
+              {categories.map((category: any) => (
+                <option key={category._id} value={category._id}>
+                  {category.categoryName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Course Description */}
           <div>
             <label
               htmlFor="courseDescription"
@@ -120,8 +158,7 @@ export default function AddCourseForm() {
               autoComplete="off"
               value={courseDescription}
               onChange={(e) => setCourseDescription(e.target.value)}
-              className="w-full px-3 py-2 border bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                         transition-all duration-200 border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 border-gray-300 rounded-md"
               rows={4}
               placeholder="Enter a detailed description of your course"
             ></textarea>
@@ -137,7 +174,7 @@ export default function AddCourseForm() {
               id="info"
               autoComplete="off"
               value={info}
-              onChange={(e) => setCourseDescription(e.target.value)}
+              onChange={(e) => setInfo(e.target.value)}
               className="w-full px-3 py-2 border bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
                          transition-all duration-200 border-gray-300 rounded-md"
               rows={4}
@@ -145,6 +182,7 @@ export default function AddCourseForm() {
             ></textarea>
           </div>
 
+          {/* Price */}
           <div>
             <label
               htmlFor="price"
@@ -158,14 +196,14 @@ export default function AddCourseForm() {
               autoComplete="off"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                         transition-all duration-200 rounded-md"
+              className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 rounded-md"
               placeholder="Enter course price"
               min="0"
               step="0.01"
             />
           </div>
 
+          {/* Thumbnail Image */}
           <div>
             <label
               htmlFor="thumbnailFile"
@@ -183,11 +221,9 @@ export default function AddCourseForm() {
                   setThumbnailFile(e.target.files[0]);
                 }
               }}
-              className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                         transition-all duration-200 rounded-md"
+              className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 rounded-md"
             />
           </div>
-
           <div>
             <label
               htmlFor="prerequisites"
@@ -206,7 +242,7 @@ export default function AddCourseForm() {
               placeholder="Enter course prerequisites"
             />
           </div>
-
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}

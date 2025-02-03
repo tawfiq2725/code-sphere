@@ -254,7 +254,6 @@ export default function CourseChapterPage({
                       Chapter Name
                     </th>
                     <th className="p-3 border-b border-gray-600">Video</th>
-                    <th className="p-3 border-b border-gray-600">Status</th>
                     <th className="p-3 border-b border-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -280,20 +279,6 @@ export default function CourseChapterPage({
                       </td>
                       <td className="p-3 border-b border-gray-600">
                         {chapter.video ? "Uploaded" : "Not uploaded"}
-                      </td>
-                      <td className="p-3 border-b border-gray-600">
-                        <button
-                          onClick={() =>
-                            toggleChapterStatus(chapter._id, chapter.isListed)
-                          }
-                          className={`px-2 py-1 rounded ${
-                            chapter.isListed
-                              ? "bg-green-500 hover:bg-green-600"
-                              : "bg-red-500 hover:bg-red-600"
-                          } transition duration-200`}
-                        >
-                          {chapter.isListed ? "Listed" : "Unlisted"}
-                        </button>
                       </td>
                       <td className="p-3 border-b border-gray-600">
                         <button
