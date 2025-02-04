@@ -19,11 +19,6 @@ const navigation = [
   { name: "Dashboard", href: "/tutor/dashboard", icon: LayoutDashboard },
   { name: "Profile", href: "/tutor/profile", icon: UserIcon },
   { name: "Courses", href: "/tutor/auth/courses", icon: Book },
-  {
-    name: "Chapters",
-    href: "/tutor/auth/courses/chapters",
-    icon: BookDownIcon,
-  },
 ];
 
 export default function Sidebar() {
