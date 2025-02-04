@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/store/slice/authSlice";
-import { showToast } from "@/utils/toastUtil";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,53 +34,35 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8">
-            <Link
-              href="/static/courses"
-              className="block py-2 hover:text-gray-400"
-            >
+            <Link href="/static/courses" className="hover:text-gray-400">
               Courses
             </Link>
-            <Link
-              href="/static/membership"
-              className="block py-2 hover:text-gray-400"
-            >
+            <Link href="/static/membership" className="hover:text-gray-400">
               Membership
             </Link>
-            <Link
-              href="/static/learning-path"
-              className="block py-2 hover:text-gray-400"
-            >
+            <Link href="/static/learning-path" className="hover:text-gray-400">
               Learning Path
             </Link>
-            <Link
-              href="/static/contact"
-              className="block py-2 hover:text-gray-400"
-            >
+            <Link href="/static/contact" className="hover:text-gray-400">
               Contact
             </Link>
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex">
+          <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && role === "student" ? (
-              <div>
-                <div className="profile">
-                  <Link href="/student/profile">
-                    {/* Show the user's profile picture or default picture */}
-                    <Image
-                      src={
-                        user?.user.profile
-                          ? user.user.profile
-                          : "/default-profile.jpg"
-                      }
-                      alt="Profile"
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                  </Link>
+              <Link href="/student/profile">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
+                  <Image
+                    src={user?.user?.profile || "/default-profile.jpg"}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="object-cover w-full h-full"
+                    priority
+                  />
                 </div>
-              </div>
+              </Link>
             ) : (
               <Link href="/auth/sign-in">
                 <button className="bg-white text-black py-1 px-4 rounded-lg hover:bg-gray-300">
@@ -121,56 +102,54 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden">
+          <div className="md:hidden flex flex-col space-y-4 py-4 bg-gray-900">
             <Link
               href="/static/courses"
-              className="block py-2 hover:text-gray-400"
+              className="px-4 py-2 hover:text-gray-400"
             >
               Courses
             </Link>
             <Link
               href="/static/membership"
-              className="block py-2 hover:text-gray-400"
+              className="px-4 py-2 hover:text-gray-400"
             >
               Membership
             </Link>
             <Link
               href="/static/learning-path"
-              className="block py-2 hover:text-gray-400"
+              className="px-4 py-2 hover:text-gray-400"
             >
               Learning Path
             </Link>
             <Link
               href="/static/contact"
-              className="block py-2 hover:text-gray-400"
+              className="px-4 py-2 hover:text-gray-400"
             >
               Contact
             </Link>
+
             {isAuthenticated && role === "student" ? (
-              <div>
-                <div className="profile">
-                  <Link href="/student/profile">
-                    {/* Show the user's profile picture or default picture */}
-                    <Image
-                      src={
-                        user?.profile
-                          ? user.profile
-                          : "/default-profile.png.jpg"
-                      }
-                      alt="Profile"
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                    <p className="block py-2 hover:text-gray-400">Profile</p>
-                  </Link>
+              <Link
+                href="/student/profile"
+                className="flex items-center space-x-2 px-4 py-2"
+              >
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
+                  <Image
+                    src={user?.user?.profile || "/default-profile.jpg"}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
-              </div>
+                <span className="hover:text-gray-400">Profile</span>
+              </Link>
             ) : (
-              <Link href="/student/sign-in">
-                <button className="block py-2 hover:text-gray-400">
-                  Sign In
-                </button>
+              <Link
+                href="/auth/sign-in"
+                className="px-4 py-2 hover:text-gray-400"
+              >
+                Sign In
               </Link>
             )}
           </div>

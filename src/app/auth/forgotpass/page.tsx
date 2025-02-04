@@ -2,7 +2,7 @@
 
 import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
-import { allFieldsValidation } from "@/utils/validators";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -15,7 +15,11 @@ const Page = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    allFieldsValidation({ email }, showToast, setIsLoading);
+    if (!email) {
+      showToast("Email is required.", "error");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch(backendUrl + "/forgot-password", {

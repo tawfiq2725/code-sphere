@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "@/utils/toastUtil";
 import { loginSuccess } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
-import { allFieldsValidation } from "@/utils/validators";
+import { validateForm } from "@/utils/validators";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,64 +24,50 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/auth/sign-in");
-    } else {
-      const routes = {
+      return;
+    }
+    const routes: Record<string, string> = {
+      student: "/student",
+      admin: "/admin/dashboard",
+      tutor: "/tutor/dashboard",
+    };
+    router.push(routes[role] || "/auth/sign-in");
+  }, [isAuthenticated, role]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) {
+      showToast("Please fill in all fields", "error");
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${backendUrl}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (!data.data) throw new Error();
+
+      const { jwt_token, role } = data.data;
+      localStorage.setItem("userEmail", email);
+      dispatch(loginSuccess({ token: jwt_token, role }));
+      showToast(data.message, "success");
+
+      const routes: Record<string, string> = {
         student: "/student",
         admin: "/admin/dashboard",
         tutor: "/tutor/dashboard",
       };
-      if (routes[role]) {
-        router.push(routes[role]);
-      }
-    }
-  }, [isAuthenticated, role]);
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    allFieldsValidation({ email, password }, showToast, setIsLoading);
-    // ithu form submission
-    try {
-      const respone = await fetch(backendUrl + "/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-      const data = await respone.json();
-      console.log("-------------------------------------------------");
-      console.log(data.data);
-      console.log(data.data.role);
-      localStorage.setItem("userEmail", email);
-      // inga role handle pandra
-      if (data.data.role === "student") {
-        console.log("ithuuuuuu token inga check pannu " + data.data.jwt_token);
-        dispatch(
-          loginSuccess({ token: data.data.jwt_token, role: data.data.role })
-        );
-        showToast(data.message, "success");
-        router.push("/student");
-      } else if (data.data.role === "admin") {
-        dispatch(
-          loginSuccess({ token: data.data.jwt_token, role: data.data.role })
-        );
-        showToast(data.message, "success");
-        router.push("/admin/dashboard");
-      } else if (data.data.role === "tutor") {
-        dispatch(
-          loginSuccess({ token: data.data.jwt_token, role: data.data.role })
-        );
-        router.push("/tutor/dashboard");
-      } else {
-        showToast(data.message, "error");
-      }
+      router.push(routes[role] || "/auth/sign-in");
     } catch (error) {
-      showToast("Your Blocked From Admin or Your not Registered", "error");
+      showToast("An error occurred during sign-in", "error");
+    } finally {
+      setTimeout(() => setIsLoading(false), 1000);
     }
-    setTimeout(() => setIsLoading(false), 1000);
   }
 
   return (

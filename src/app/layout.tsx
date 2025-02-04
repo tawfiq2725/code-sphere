@@ -33,6 +33,8 @@ export default function RootLayout({
         />
         <link rel="shortcut icon" href="/logo.png" type="image/x-icon" />
       </head>
+      <title>{"Code Sphere"}</title>
+
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

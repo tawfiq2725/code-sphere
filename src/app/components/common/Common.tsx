@@ -13,43 +13,56 @@ export const SignIn = () => {
   const router = useRouter();
   const handleGoogleLogin = async () => {
     try {
-      const provide = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provide);
+      setIsLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
-      console.log(result);
+
       const res = await fetch(`${backendUrl}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
       const data = await res.json();
-      if (data.data.newUser) {
-        localStorage.setItem("UserId", data.data.userId);
+
+      const {
+        newUser,
+        userId,
+        email,
+        role,
+        jwt_token: token,
+        message,
+      } = data.data;
+
+      localStorage.setItem("UserId", newUser ? userId : userId);
+      localStorage.setItem("userEmail", email);
+
+      if (newUser) {
         router.push(`/auth/role-page`);
       } else {
-        console.log("data---------------------------------", data.data.email);
-        localStorage.setItem("userEmail", data.data.email);
-        const { role, jwt_token: token, message } = data.data;
         dispatch(loginSuccess({ token, role }));
         showToast(message, "success");
-        switch (role) {
-          case "student":
-            router.push("/student");
-            break;
-          case "admin":
-            router.push("/admin/dashboard");
-            break;
-          case "tutor":
-            router.push("/tutor/dashboard");
-            break;
-          default:
-            showToast("Unknown user role. Please contact support.", "error");
+
+        const roleRoutes: { [key: string]: string } = {
+          student: "/student",
+          admin: "/admin/dashboard",
+          tutor: "/tutor/dashboard",
+        };
+
+        const userRoleRoute = roleRoutes[role];
+        if (userRoleRoute) {
+          router.push(userRoleRoute);
+        } else {
+          showToast("Unknown user role. Please contact support.", "error");
         }
       }
     } catch (error: any) {
       console.log("Google Sign-In error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
   return (
     <>
       <div className="space-y-3">

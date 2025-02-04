@@ -1,14 +1,40 @@
 "use client";
-
-import { logout, updateUserProfile } from "@/store/slice/authSlice";
+import { logout, getUserDetails } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Cookies from "js-cookie";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
-
+import { useRouter } from "next/navigation";
 export default function UserProfile() {
+  const dispatch = useDispatch();
+  const fetchUserProfile = async () => {
+    try {
+      let email = localStorage.getItem("userEmail");
+      let token = localStorage.getItem("jwt_token");
+      let response = await fetch(`${backendUrl}/get-profile?email=${email}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      let data = await response.json();
+
+      if (data.success) {
+        dispatch(getUserDetails({ user: data.data }));
+      } else {
+        showToast(data.message, "error");
+      }
+    } catch (error: any) {
+      console.log("Error fetching user profile:", error);
+    }
+  };
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
   interface User {
     user: any;
     name: string;
@@ -20,10 +46,11 @@ export default function UserProfile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
   const token = Cookies.get("jwt_token");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useSelector((state: { auth: { user: User } }) => state.auth);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
@@ -38,15 +65,17 @@ export default function UserProfile() {
   const handleImageUpload = async () => {
     if (!selectedImage) return;
 
+    setLoading(true);
+
     const formData = new FormData();
-    formData.append("image", selectedImage);
+    formData.append("profileImage", selectedImage);
     formData.append("userId", user.user._id);
 
     try {
       const response = await fetch(
         `${backendUrl}/api/user/update-profile-image`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -55,15 +84,19 @@ export default function UserProfile() {
       );
 
       const data = await response.json();
+      console.log("------------------------", data);
       if (data.success) {
         showToast("Profile image updated successfully", "success");
-        dispatch(updateUserProfile({ image: data.imageUrl }));
+        router.refresh();
+        fetchUserProfile();
         setSelectedImage(null);
       } else {
         showToast(data.message, "error");
       }
     } catch (error) {
       showToast("Error uploading image", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,6 +133,10 @@ export default function UserProfile() {
     showToast("Logged out successfully", "success");
   };
 
+  const { user } = useSelector((state: any) => state.auth);
+
+  console.log("User:----,ithy", user);
+
   return (
     <div className="w-full bg-black px-4 py-8 flex justify-center items-center flex-col">
       <h1 className="text-3xl font-bold mb-8 text-white">User Profile</h1>
@@ -126,7 +163,7 @@ export default function UserProfile() {
                 src={
                   selectedImage
                     ? URL.createObjectURL(selectedImage)
-                    : user.user.image ?? "/default-profile.jpg"
+                    : user.user.profile ?? "/default-profile.jpg"
                 }
                 width={96}
                 height={96}
@@ -147,8 +184,13 @@ export default function UserProfile() {
           <button
             onClick={handleImageUpload}
             className="bg-blue-500 text-white px-4 py-2 mt-3 rounded-md hover:bg-blue-700"
+            disabled={loading}
           >
-            Update Image
+            {loading ? (
+              <div className="spinner-border animate-spin w-5 h-5 border-t-2 border-white rounded-full"></div>
+            ) : (
+              "Update Image"
+            )}
           </button>
         )}
         <button
