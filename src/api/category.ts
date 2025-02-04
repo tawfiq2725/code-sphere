@@ -3,6 +3,7 @@ import axios from "axios";
 
 interface Category {
   categoryName: string;
+  description: string;
   _id?: string;
 }
 
