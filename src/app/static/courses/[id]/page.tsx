@@ -2,11 +2,12 @@
 
 import { findUserById, getChaptersById, getCoursById } from "@/api/course";
 import { use, useEffect, useState } from "react";
-import { Clock, DollarSign, BookOpen, HelpCircle } from "lucide-react";
+import { Clock, IndianRupee, BookOpen, HelpCircle } from "lucide-react";
 import Header from "@/app/components/header";
 import Image from "next/image";
 
 import { getByNameById } from "@/api/category";
+import ChapterAccordion from "@/app/components/common/ChapterAccordian";
 
 interface Course {
   _id: string;
@@ -18,6 +19,7 @@ interface Course {
   courseId: string;
   category: string;
   price: number;
+  sellingPrice: number;
   tutorId: string;
   categoryName: string;
 }
@@ -49,21 +51,19 @@ export default function CourseDetailsPage({
       .then((data) => {
         setCourseData(data.data);
         setTutorId(data.data.tutorId);
-        setCategory(data.data.categoryName); // This sets the category (which is an ID)
+        setCategory(data.data.categoryName);
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, [id]);
 
-  // Update document title when courseData is set
   useEffect(() => {
     if (courseData) {
       document.title = courseData.courseName;
     }
   }, [courseData]);
 
-  // Fetch tutor details when tutorId is set
   useEffect(() => {
     if (tutorId) {
       findUserById(tutorId).then((data) => {
@@ -72,7 +72,6 @@ export default function CourseDetailsPage({
     }
   }, [tutorId]);
 
-  // fetch chapter details
   useEffect(() => {
     getChaptersById(id).then((data) => {
       console.log("chapters", data);
@@ -80,7 +79,6 @@ export default function CourseDetailsPage({
     });
   }, [id]);
 
-  // Fetch category details when category (ID) is set
   useEffect(() => {
     if (category) {
       console.log("Fetching category for ID:", category);
@@ -125,8 +123,8 @@ export default function CourseDetailsPage({
                   Enroll Now
                 </button>
                 <div className="flex items-center text-2xl font-bold text-purple-400">
-                  <DollarSign className="w-6 h-6 mr-1" />
-                  {courseData.price}
+                  <IndianRupee className="w-6 h-6 mr-1" />
+                  {courseData.sellingPrice}
                 </div>
               </div>
             </div>
@@ -158,8 +156,8 @@ export default function CourseDetailsPage({
                   <span>Category</span>
                 </li>
                 <li className="flex items-center space-x-3">
-                  <DollarSign className="w-4 h-4 text-purple-600" />
-                  <span>Price: ${courseData.price}</span>
+                  <IndianRupee className="w-4 h-4 text-purple-600" />
+                  <span>Price: ₹{courseData.sellingPrice}</span>
                 </li>
               </ul>
             </nav>
@@ -187,9 +185,7 @@ export default function CourseDetailsPage({
                 </div>
                 <div className="prose prose-invert max-w-none">
                   {chapters?.map((chapter: any, index: number) => (
-                    <p key={index} className="text-gray-400 leading-relaxed">
-                      {chapter.chapterName}
-                    </p>
+                    <ChapterAccordion key={index} chapter={chapter} />
                   ))}
                 </div>
               </section>
@@ -214,7 +210,7 @@ export default function CourseDetailsPage({
                     <h3 className="font-semibold mb-2">More Info</h3>
                     <p className="text-gray-400">{courseData.info}</p>
                   </div>
-                  <div className="bg-gray-900/50 p-6 rounded-lg shadow-lg max-w-md mx-auto">
+                  <div className="bg-gray-900/50 p-6 rounded-lg ">
                     <h3 className="font-semibold mb-2">Tutor Details</h3>
                     <div className="flex flex-col justify-center">
                       {/* Profile Image */}

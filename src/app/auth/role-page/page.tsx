@@ -22,47 +22,36 @@ const page = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!role) return;
-    let userId = localStorage.getItem("UserId");
+
+    const userId = localStorage.getItem("UserId");
+
     try {
       const response = await fetch(`${backendUrl}/auth/set-role`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, userId }),
       });
       const data = await response.json();
-      localStorage.setItem("userEmail", data.data.email);
-      if (data.success) {
-        if (data.data.role === "student") {
-          dispatch(
-            loginSuccess({
-              token: data.data.jwt_token,
-              role: data.data.role,
-            })
-          );
-          showToast(data.message, "success");
-          router.push(`/student`);
-        } else if (data.data.role === "tutor") {
-          dispatch(
-            loginSuccess({
-              token: data.data.jwt_token,
-              role: data.data.role,
-            })
-          );
-          showToast(data.message, "success");
 
-          router.push(`/tutor/dashboard`);
-        } else if (data.data.role === "admin") {
-          dispatch(
-            loginSuccess({
-              token: data.data.jwt_token,
-              role: data.data.role,
-            })
-          );
-          showToast(data.message, "success");
-          router.push(`/admin/dashboard`);
-        }
+      localStorage.setItem("userEmail", data.data.email);
+
+      if (data.success) {
+        dispatch(
+          loginSuccess({
+            token: data.data.jwt_token,
+            role: data.data.role,
+          })
+        );
+
+        showToast(data.message, "success");
+
+        const routes: Record<string, string> = {
+          student: "/student",
+          tutor: "/tutor/dashboard",
+          admin: "/admin/dashboard",
+        };
+
+        router.push(routes[data.data.role]);
       } else {
         showToast("Failed to set role", "error");
       }
@@ -73,35 +62,41 @@ const page = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label
-          htmlFor="role"
-          className="block text-sm font-medium text-zinc-200"
-        >
-          Role
-        </label>
-        <select
-          id="role"
-          name="role"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        >
-          <option value="" disabled>
-            Select...
-          </option>
-          <option value="student">Student</option>
-          <option value="tutor">Teacher</option>
-        </select>
-      </div>
-      <button
-        type="submit"
-        className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    <div className="w-full h-screen bg-black flex justify-center items-center ">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 bg-gray-800 p-20 rounded-2xl"
       >
-        Submit
-      </button>
-    </form>
+        <h2 className="text-white text-3xl ">Role Selection</h2>
+        <div className="space-y-2">
+          <label
+            htmlFor="role"
+            className="block text-sm font-medium text-zinc-200"
+          >
+            Role
+          </label>
+          <select
+            id="role"
+            name="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+            <option value="" disabled>
+              Select...
+            </option>
+            <option value="student">Student</option>
+            <option value="tutor">Teacher</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
   );
 };
 

@@ -6,6 +6,7 @@ import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import VideoModal from "@/app/components/common/VideoModal";
 
 export default function CourseChapterPage({
   params,
@@ -67,6 +68,8 @@ export default function CourseChapterPage({
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setIsLoading] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [newChapter, setNewChapter] = useState<Partial<Chapter>>({});
   const router = useRouter();
@@ -94,6 +97,7 @@ export default function CourseChapterPage({
   };
 
   const handleAddChapter = async () => {
+    setIsLoading(true);
     if (
       !newChapter.chapterName ||
       !newChapter.chapterDescription ||
@@ -121,7 +125,7 @@ export default function CourseChapterPage({
       if (data.success) {
         showToast(data.message, "success");
         setChapters([...chapters, data.chapter]);
-        router.refresh();
+        fetchCapterData();
       } else {
         showToast(data.message, "error");
         console.error("Error adding chapter:", data.message);
@@ -129,6 +133,8 @@ export default function CourseChapterPage({
     } catch (error) {
       console.error("Error adding chapter:", error);
       showToast("An error occurred while adding the chapter", "error");
+    } finally {
+      setIsLoading(false);
     }
 
     closeAddModal();
@@ -149,6 +155,7 @@ export default function CourseChapterPage({
   };
 
   const handleEditChapter = async () => {
+    setIsLoading(true);
     if (!currentChapter) return;
 
     const formData = new FormData();
@@ -192,44 +199,23 @@ export default function CourseChapterPage({
     } catch (error) {
       console.error("Error updating chapter:", error);
       showToast("An error occurred while updating the chapter", "error");
+    } finally {
+      setIsLoading(true);
     }
 
     closeEditModal();
   };
 
-  const toggleChapterStatus = async (
-    chapterId: string,
-    currentStatus: boolean
-  ) => {
-    try {
-      const response = await fetch(
-        `${backendUrl}/api/course/toggle-chapter-status/${chapterId}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: !currentStatus }),
-        }
-      );
-
-      const data = await response.json();
-      if (data.success) {
-        showToast(data.message, "success");
-        fetchCapterData();
-      } else {
-        showToast(data.message, "error");
-        console.error("Error toggling chapter status:", data.message);
-      }
-    } catch (error) {
-      console.error("Error toggling chapter status:", error);
-      showToast("An error occurred while toggling the chapter status", "error");
-    }
-  };
-
   return (
     <div className="mx-auto p-4 w-full h-screen flex  justify-center bg-black ">
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div
+            className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"
+            role="status"
+          ></div>
+        </div>
+      )}
       <div className="bg-gray-800 text-white mx-auto p-4">
         <div className="bg-gray-800 shadow-lg rounded-lg overflow-hidden">
           <div className="p-6 border-b border-gray-700">
@@ -367,14 +353,21 @@ export default function CourseChapterPage({
                     {currentChapter.video instanceof File ? (
                       "File Selected"
                     ) : (
-                      <a
-                        href={currentChapter.video}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:underline"
-                      >
-                        View video
-                      </a>
+                      <div>
+                        <button
+                          onClick={() => setShowModal(true)}
+                          className="text-blue-400 hover:underline"
+                        >
+                          View video
+                        </button>
+
+                        {showModal && (
+                          <VideoModal
+                            videoUrl={currentChapter.video}
+                            onClose={() => setShowModal(false)}
+                          />
+                        )}
+                      </div>
                     )}
                   </p>
                 </div>

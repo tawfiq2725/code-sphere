@@ -17,6 +17,7 @@ export default function Courses() {
     courseId: string;
     category: string;
     price: number;
+    sellingPrice: number;
     categoryName: string;
   }
 
@@ -28,9 +29,8 @@ export default function Courses() {
     { _id: string; categoryName: string }[]
   >([]);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; // You can adjust this number
+  const itemsPerPage = 6;
 
   useEffect(() => {
     getCourses().then((data) => {
@@ -44,27 +44,42 @@ export default function Courses() {
     });
   }, []);
 
-  // Filter courses based on search and category
   const filteredCourses = courseData.filter(
     (course) =>
       (filter === "All Courses" || course.categoryName === filter) &&
       course.courseName.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Calculate total pages
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
-  // Slice the courses based on the current page
   const currentCourses = filteredCourses.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
+  if (currentCourses.length === 0) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Header />
+        <main className="mx-auto px-20 py-8">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold mb-4">
+              Level Up Your Coding Skills
+            </h1>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Whether you want to excel in web development, mobile development,
+              or strengthen your fundamental software engineering skills, there
+              is a course for you.
+            </p>
+          </div>
+          <div className="text-center text-4xl font-bold">No Courses Found</div>
+        </main>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -128,7 +143,7 @@ export default function Courses() {
                   {course.courseDescription}
                 </p>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-pink-500">
+                  <span className="text-sm text-gray-50">
                     <Link href={`/static/courses/${course.courseId}`}>
                       Explore Course
                     </Link>
@@ -136,8 +151,8 @@ export default function Courses() {
                   <span className="text-sm text-gray-300">
                     {course.duration}
                   </span>
-                  <span className="text-sm font-semibold text-pink-500">
-                    ${course.price}
+                  <span className="text-sm font-semibold text-gray-50">
+                    ₹{course.sellingPrice}
                   </span>
                 </div>
               </div>

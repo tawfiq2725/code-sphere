@@ -6,7 +6,9 @@ import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import Pagination from "@/app/components/common/pagination"; // Adjust the import path as needed
+import Pagination from "@/app/components/common/pagination";
+import CourseAction from "@/app/components/Admin/Action";
+import VideoModal from "@/app/components/common/VideoModal";
 
 export default function CourseChapterPage({
   params,
@@ -14,7 +16,12 @@ export default function CourseChapterPage({
   params: Promise<{ courseId: string; courseName: string; thumbnail: string }>;
 }) {
   const { courseId } = use(params);
-
+  const [chapterData, setChapterData] = useState<Chapter[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
+  const [showModal, setShowModal] = useState(false);
   console.log("courseId", courseId);
   console.log(courseId[0], courseId[1]);
   const thumbnail = localStorage.getItem("thumbnail");
@@ -31,10 +38,6 @@ export default function CourseChapterPage({
     isListed: boolean;
   }
 
-  const [chapterData, setChapterData] = useState<Chapter[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Adjust the number of items per page as needed
-
   console.log(`${backendUrl}/api/course/get-chapters/${courseId[0]}`);
   const fetchCapterData = async () => {
     try {
@@ -48,7 +51,6 @@ export default function CourseChapterPage({
         }
       );
       const data = await response.json();
-      console.log("----------------------", data);
       console.log(data.data);
       if (data.success) {
         setChapterData(data.data);
@@ -68,12 +70,6 @@ export default function CourseChapterPage({
 
   console.log(chapterData);
 
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
-  const [newChapter, setNewChapter] = useState<Partial<Chapter>>({});
-  const router = useRouter();
   const openEditModal = (chapter: Chapter) => {
     setCurrentChapter({
       ...chapter,
@@ -103,10 +99,16 @@ export default function CourseChapterPage({
     <div className="mx-auto p-4 w-full h-screen flex  justify-center bg-black ">
       <div className="bg-gray-800 text-white mx-auto p-4">
         <div className="bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-          <div className="p-6 border-b border-gray-700">
-            <h1 className="text-2xl font-bold">Chapter Management</h1>
-            <h3 className="text-lg mt-2">{courseName}</h3>
+          <div className="p-6 border-b border-gray-700 flex justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Chapter Management</h1>
+              <h3 className="text-lg mt-2">{courseName}</h3>
+            </div>
+            <div>
+              <CourseAction courseId={courseId[0]} />
+            </div>
           </div>
+
           <div className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -148,7 +150,7 @@ export default function CourseChapterPage({
                       <td className="p-3 border-b border-gray-600">
                         <button
                           onClick={() => openEditModal(chapter)}
-                          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition duration-200 mr-2"
+                          className="bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 transition duration-200 mr-2"
                         >
                           View
                         </button>
@@ -184,6 +186,7 @@ export default function CourseChapterPage({
                   id="name"
                   defaultValue={currentChapter.chapterName}
                   className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2"
+                  readOnly
                 />
               </div>
               <div>
@@ -198,26 +201,34 @@ export default function CourseChapterPage({
                   defaultValue={currentChapter.chapterDescription}
                   className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2"
                   rows={3}
+                  readOnly
                 />
               </div>
 
               {currentChapter.video && (
                 <div>
-                  <p className="text-sm text-gray-300">
+                  <a className="text-sm text-gray-300">
                     Current video:{" "}
                     {currentChapter.video instanceof File ? (
                       "File Selected"
                     ) : (
-                      <a
-                        href={currentChapter.video}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:underline"
-                      >
-                        View video
-                      </a>
+                      <div>
+                        <button
+                          onClick={() => setShowModal(true)}
+                          className="text-blue-400 hover:underline"
+                        >
+                          View video
+                        </button>
+
+                        {showModal && (
+                          <VideoModal
+                            videoUrl={currentChapter.video}
+                            onClose={() => setShowModal(false)}
+                          />
+                        )}
+                      </div>
                     )}
-                  </p>
+                  </a>
                 </div>
               )}
             </div>

@@ -31,24 +31,27 @@ const CourseLists = () => {
         console.log(data);
         setCourses(data);
         setFilteredCourses(data);
-        showToast("Course data fetched successfully", "success");
       })
       .catch((err) => {
         console.error("Failed to fetch course data:", err);
         showToast("Failed to fetch course data", "error");
       });
   }, [token]);
-  const listCourse = async (courseId: string) => {
+  const toggleCourse = async (
+    courseId: string,
+    isCurrentlyVisible: boolean
+  ) => {
     try {
       const token = Cookies.get("jwt_token");
       const response = await fetch(
-        `${backendUrl}/admin/list-course/${courseId}`,
+        `${backendUrl}/admin/toggle-course/${courseId}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({ isVisible: !isCurrentlyVisible }),
         }
       );
 
@@ -57,57 +60,44 @@ const CourseLists = () => {
         setCourses((prevCourses) => {
           const updatedCourses = prevCourses.map((course) =>
             course.courseId === courseId
-              ? { ...course, isVisible: true }
+              ? { ...course, isVisible: !isCurrentlyVisible }
               : course
           );
-          setFilteredCourses(updatedCourses);
+          // Update filteredCourses based on the current search term
+          if (searchTerm.trim() === "") {
+            setFilteredCourses(updatedCourses);
+          } else {
+            setFilteredCourses(
+              updatedCourses.filter(
+                (course) =>
+                  course.courseName
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  course.courseId
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+              )
+            );
+          }
           return updatedCourses;
         });
 
-        showToast("Course listed successfully", "success");
+        showToast(
+          `Course ${isCurrentlyVisible ? "unlisted" : "listed"} successfully`,
+          "success"
+        );
       } else {
         showToast(data.message, "error");
       }
     } catch (err) {
-      showToast("Failed to list course", "error");
-      console.error(err);
-    }
-  };
-  const unlistCourse = async (courseId: string) => {
-    try {
-      const token = Cookies.get("jwt_token");
-      const response = await fetch(
-        `${backendUrl}/admin/unlist-course/${courseId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      showToast(
+        `Failed to ${isCurrentlyVisible ? "unlist" : "list"} course`,
+        "error"
       );
-
-      const data = await response.json();
-      if (data.success) {
-        setCourses((prevCourses) => {
-          const updatedCourses = prevCourses.map((course) =>
-            course.courseId === courseId
-              ? { ...course, isVisible: false }
-              : course
-          );
-          setFilteredCourses(updatedCourses);
-          return updatedCourses;
-        });
-
-        showToast("Course unlisted successfully", "success");
-      } else {
-        showToast(data.message, "error");
-      }
-    } catch (err) {
-      showToast("Failed to unlist course", "error");
       console.error(err);
     }
   };
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim() === "") {
@@ -188,21 +178,18 @@ const CourseLists = () => {
                 {course.isVisible ? "Listed" : "Unlisted"}
               </td>
               <td className="border px-4 py-2">
-                {course.isVisible ? (
-                  <button
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={() => unlistCourse(course.courseId)}
-                  >
-                    Unlist
-                  </button>
-                ) : (
-                  <button
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={() => listCourse(course.courseId)}
-                  >
-                    List
-                  </button>
-                )}
+                <button
+                  className={`${
+                    course.isVisible
+                      ? "bg-red-500 hover:bg-red-700"
+                      : "bg-green-500 hover:bg-green-700"
+                  } text-white font-bold py-2 px-4 rounded`}
+                  onClick={() =>
+                    toggleCourse(course.courseId, course.isVisible)
+                  }
+                >
+                  {course.isVisible ? "Unlist" : "List"}
+                </button>
               </td>
             </tr>
           ))}

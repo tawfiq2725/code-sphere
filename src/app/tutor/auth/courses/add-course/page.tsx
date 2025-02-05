@@ -11,7 +11,7 @@ export default function AddCourseForm() {
   const [courseName, setCourseName] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [info, setInfo] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(0);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [prerequisites, setPrerequisites] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -48,7 +48,7 @@ export default function AddCourseForm() {
     setCourseName("");
     setCourseDescription("");
     setInfo("");
-    setPrice("");
+    setPrice(0);
     setThumbnailFile(null);
     setPrerequisites("");
     setSelectedCategory("");
@@ -62,7 +62,7 @@ export default function AddCourseForm() {
     formData.append("courseName", courseName);
     formData.append("courseDescription", courseDescription);
     formData.append("info", info);
-    formData.append("price", price);
+    formData.append("price", price.toString());
     formData.append("prerequisites", prerequisites);
     formData.append("categoryName", selectedCategory);
     if (thumbnailFile) {
@@ -195,7 +195,7 @@ export default function AddCourseForm() {
               type="number"
               autoComplete="off"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => setPrice(Number(e.target.value))}
               className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 rounded-md"
               placeholder="Enter course price"
               min="0"
