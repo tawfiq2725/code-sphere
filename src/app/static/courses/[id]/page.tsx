@@ -5,7 +5,7 @@ import { use, useEffect, useState } from "react";
 import { Clock, IndianRupee, BookOpen, HelpCircle } from "lucide-react";
 import Header from "@/app/components/header";
 import Image from "next/image";
-
+import Link from "next/link";
 import { getByNameById } from "@/api/category";
 import ChapterAccordion from "@/app/components/common/ChapterAccordian";
 
@@ -119,9 +119,11 @@ export default function CourseDetailsPage({
                 {courseData.courseDescription}
               </p>
               <div className="flex flex-wrap gap-4">
-                <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium">
-                  Enroll Now
-                </button>
+                <Link href={`/student/enroll/${courseData.courseId}`}>
+                  <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium">
+                    Enroll Now
+                  </button>
+                </Link>
                 <div className="flex items-center text-2xl font-bold text-purple-400">
                   <IndianRupee className="w-6 h-6 mr-1" />
                   {courseData.sellingPrice}

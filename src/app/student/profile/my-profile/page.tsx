@@ -134,7 +134,7 @@ export default function UserProfile() {
   };
 
   const { user } = useSelector((state: any) => state.auth);
-
+  console.log(user.user._id);
   console.log("User:----,ithy", user);
 
   return (

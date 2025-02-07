@@ -25,6 +25,7 @@
     "next-auth": "^4.24.11",
     "next-persist": "^1.0.6",
     "nprogress": "^0.2.0",
+    "razorpay": "^2.9.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
@@ -32,7 +33,6 @@
     "react-redux": "^9.2.0",
     "react-toastify": "^11.0.2",
     "redux-persist": "^6.0.0",
-    "sweetalert2": "^11.6.13",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.24.1"
   },

@@ -51,7 +51,7 @@ const Navbar = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && role === "student" ? (
-              <Link href="/student/profile">
+              <Link href="/student/profile/my-profile">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
                   <Image
                     src={user?.user?.profile || "/default-profile.jpg"}
@@ -130,7 +130,7 @@ const Navbar = () => {
 
             {isAuthenticated && role === "student" ? (
               <Link
-                href="/student/profile"
+                href="/student/profile/my-profile"
                 className="flex items-center space-x-2 px-4 py-2"
               >
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
