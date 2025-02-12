@@ -73,7 +73,7 @@ export default function Courses() {
 
       setMergedCourses(enrolledCourses);
     } else {
-      setMergedCourses([]); // If no enrolled courses, set empty array
+      setMergedCourses([]);
     }
   }, [courseData, enrollData]);
 
@@ -108,7 +108,9 @@ export default function Courses() {
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-50">
-                      <Link href={`/static/courses/${course.courseId}`}>
+                      <Link
+                        href={`/student/profile/my-courses/${course.courseId}`}
+                      >
                         Explore Course
                       </Link>
                     </span>
@@ -126,7 +128,7 @@ export default function Courses() {
                       ></div>
                     </div>
                     <p className="text-sm text-gray-400 mt-1">
-                      Progress: {course.progress}%
+                      Progress: {Math.round(course.progress)}%
                     </p>
                   </div>
                 </div>

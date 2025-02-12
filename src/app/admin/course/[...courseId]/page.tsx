@@ -5,7 +5,6 @@ import Image from "next/image";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
 import Pagination from "@/app/components/common/pagination";
 import CourseAction from "@/app/components/Admin/Action";
 import VideoModal from "@/app/components/common/VideoModal";
@@ -94,7 +93,7 @@ export default function CourseChapterPage({
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
+  const status = localStorage.getItem("courseStatus");
   return (
     <div className="mx-auto p-4 w-full h-screen flex  justify-center bg-black ">
       <div className="bg-gray-800 text-white mx-auto p-4">
@@ -105,7 +104,7 @@ export default function CourseChapterPage({
               <h3 className="text-lg mt-2">{courseName}</h3>
             </div>
             <div>
-              <CourseAction courseId={courseId[0]} />
+              {status !== "approved" && <CourseAction courseId={courseId[0]} />}
             </div>
           </div>
 

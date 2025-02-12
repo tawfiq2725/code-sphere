@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import persist from "@/store/store";
-let { store, persistor } = persist();
+const { store, persistor } = persist();
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

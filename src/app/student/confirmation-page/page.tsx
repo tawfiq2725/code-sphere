@@ -19,7 +19,7 @@ export default function OrderConfirmation() {
         )}
         <Link href="/student/profile/my-profile">
           <button className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg text-lg font-medium hover:bg-blue-700 transition">
-            Go to Dashboard
+            Explore Your Course
           </button>
         </Link>
       </div>

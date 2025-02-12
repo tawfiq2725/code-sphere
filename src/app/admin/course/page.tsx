@@ -17,6 +17,7 @@ const CourseLists = () => {
     thumbnail: string;
     price: number;
     isVisible: boolean;
+    courseStatus: string;
   }
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -63,7 +64,6 @@ const CourseLists = () => {
               ? { ...course, isVisible: !isCurrentlyVisible }
               : course
           );
-          // Update filteredCourses based on the current search term
           if (searchTerm.trim() === "") {
             setFilteredCourses(updatedCourses);
           } else {
@@ -169,6 +169,7 @@ const CourseLists = () => {
                   onClick={() => {
                     localStorage.setItem("thumbnail", course.thumbnail);
                     localStorage.setItem("courseName", course.courseName);
+                    localStorage.setItem("courseStatus", course.courseStatus);
                   }}
                 >
                   <Link2 />

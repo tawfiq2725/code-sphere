@@ -14,7 +14,7 @@ export const logoutUser = async () => {
     } else {
       showToast(data.message, "error");
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
   }
 };

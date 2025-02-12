@@ -14,16 +14,19 @@ export default function Home() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        let email = localStorage.getItem("userEmail");
-        let token = localStorage.getItem("jwt_token");
-        let response = await fetch(`${backendUrl}/get-profile?email=${email}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        let data = await response.json();
+        const email = localStorage.getItem("userEmail");
+        const token = localStorage.getItem("jwt_token");
+        const response = await fetch(
+          `${backendUrl}/get-profile?email=${email}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
 
         if (data.success) {
           dispatch(getUserDetails({ user: data.data }));

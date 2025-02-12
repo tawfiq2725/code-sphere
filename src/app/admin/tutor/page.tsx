@@ -29,7 +29,7 @@ const TutorList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        let token = Cookies.get("jwt_token");
+        const token = Cookies.get("jwt_token");
         const response = await fetch(`${backendUrl}/admin/get-tutors`, {
           method: "GET",
           headers: {
@@ -57,7 +57,7 @@ const TutorList = () => {
 
   const blockUser = async (userId: string) => {
     try {
-      let token = Cookies.get("jwt_token");
+      const token = Cookies.get("jwt_token");
       const response = await fetch(`${backendUrl}/admin/block-user/${userId}`, {
         method: "PATCH",
         headers: {
@@ -91,7 +91,7 @@ const TutorList = () => {
 
   const unblockUser = async (userId: string) => {
     try {
-      let token = Cookies.get("jwt_token");
+      const token = Cookies.get("jwt_token");
       const response = await fetch(
         `${backendUrl}/admin/unblock-user/${userId}`,
         {

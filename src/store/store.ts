@@ -3,15 +3,12 @@ import authReducer from "./slice/authSlice";
 import { persistStore, persistReducer } from "redux-persist";
 import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 
-const createNoopStorage = () => {
-  return {
-    getItem: () => Promise.resolve(null),
-    setItem: () => Promise.resolve(),
-    removeItem: () => Promise.resolve(),
-  };
-};
+const createNoopStorage = () => ({
+  getItem: () => Promise.resolve(null),
+  setItem: () => Promise.resolve(),
+  removeItem: () => Promise.resolve(),
+});
 
-// Use noop storage for server-side, and localStorage for the client
 const storage =
   typeof window !== "undefined"
     ? createWebStorage("local")
@@ -24,7 +21,7 @@ const persistConfig = {
 
 const persistedReducer = persistReducer(persistConfig, authReducer);
 
-export default () => {
+const createStore = () => {
   const store = configureStore({
     reducer: {
       auth: persistedReducer,
@@ -38,3 +35,5 @@ export default () => {
   const persistor = persistStore(store);
   return { store, persistor };
 };
+
+export default createStore;

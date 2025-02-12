@@ -11,16 +11,16 @@ export default function UserProfile() {
   const dispatch = useDispatch();
   const fetchUserProfile = async () => {
     try {
-      let email = localStorage.getItem("userEmail");
-      let token = localStorage.getItem("jwt_token");
-      let response = await fetch(`${backendUrl}/get-profile?email=${email}`, {
+      const email = localStorage.getItem("userEmail");
+      const token = localStorage.getItem("jwt_token");
+      const response = await fetch(`${backendUrl}/get-profile?email=${email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-      let data = await response.json();
+      const data = await response.json();
 
       if (data.success) {
         dispatch(getUserDetails({ user: data.data }));
@@ -35,13 +35,6 @@ export default function UserProfile() {
     fetchUserProfile();
   }, []);
 
-  interface User {
-    user: any;
-    name: string;
-    email: string;
-    verified: boolean;
-    image: string;
-  }
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

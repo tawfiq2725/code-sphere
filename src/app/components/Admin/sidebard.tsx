@@ -14,6 +14,7 @@ import {
   Users,
   X,
   FormInput,
+  TicketPercentIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
@@ -31,8 +32,9 @@ const navigation = [
   { name: "Tutor Management", href: "/admin/tutor", icon: GraduationCap },
   { name: "Category Management", href: "/admin/category", icon: TypeIcon },
   { name: "Course Management", href: "/admin/course", icon: BookOpen },
-  { name: "Memberships", href: "/memberships", icon: Package },
-  { name: "Orders Management", href: "/orders", icon: ShoppingCart },
+  { name: "Orders Management", href: "/admin/orders", icon: ShoppingCart },
+  { name: "Coupons", href: "/admin/coupons", icon: TicketPercentIcon },
+  { name: "Memberships", href: "/admin/membership", icon: Package },
   { name: "Offer Management", href: "/offers", icon: Gift },
 ];
 

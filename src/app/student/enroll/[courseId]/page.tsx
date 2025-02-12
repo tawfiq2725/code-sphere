@@ -95,7 +95,6 @@ export default function CheckoutPage({
       description: `Payment for ${courseData?.courseName}`,
       order_id: orderData.id,
       handler: async function (response: any) {
-        alert("Payment Successful!");
         console.log("Payment Response:", response);
         const verify = await verifyOrder(response, details, token);
         console.log("Verify Response:", verify);

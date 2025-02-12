@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 import { logoutUser } from "@/utils/logout";
+import { User } from "@/interface/user";
 interface AuthState {
   isAuthenticated: boolean;
   token: string | null;
   role: string | null;
-  user: any;
+  user: User | null;
 }
 
 const initialState: AuthState = {
@@ -58,7 +59,7 @@ const authSlice = createSlice({
         state.role = null;
       }
     },
-    getUserDetails: (state, action: PayloadAction<any>) => {
+    getUserDetails: (state, action) => {
       state.user = action.payload;
       console.log("User details:", state.user);
     },

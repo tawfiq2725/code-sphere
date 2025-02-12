@@ -70,7 +70,7 @@ export default function OTPVerification() {
     setTimeLeft(30);
     setCanResend(false);
     // Simulate API call
-    let email = localStorage.getItem("userEmail");
+    const email = localStorage.getItem("userEmail");
     try {
       const response = await fetch(backendUrl + "/resend-otp", {
         method: "POST",
@@ -94,17 +94,17 @@ export default function OTPVerification() {
     e.preventDefault();
     setIsLoading(true);
     // Simulate API call
-    let email = localStorage.getItem("userEmail");
-    let otpFormated = otp.join("");
+    const email = localStorage.getItem("userEmail");
+    const otpFormated = otp.join("");
     try {
-      let response = await fetch(backendUrl + "/verify-forgot-password", {
+      const response = await fetch(backendUrl + "/verify-forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, otp: otpFormated }),
       });
-      let data = await response.json();
+      const data = await response.json();
       if (!response.ok) {
         showToast(data.message, "error");
       } else {

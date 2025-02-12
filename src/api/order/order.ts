@@ -48,3 +48,16 @@ export const verifyOrder = async (
     console.log(err);
   }
 };
+
+export const getAllorders = async (token: any) => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/order/get-all-orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+};

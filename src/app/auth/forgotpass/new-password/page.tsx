@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
-import { allFieldsValidation } from "@/utils/validators";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,8 +13,7 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    allFieldsValidation({ password, confirm }, showToast, setIsLoading);
-    let email = localStorage.getItem("userEmail");
+    const email = localStorage.getItem("userEmail");
     // ithu form submission
     try {
       const respone = await fetch(backendUrl + "/new-password", {
