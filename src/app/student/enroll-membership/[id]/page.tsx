@@ -1,116 +1,110 @@
 "use client";
-import { getCoursById } from "@/api/course";
-import { createOrder, verifyOrder } from "@/api/order/order";
+
+import { getMembershipById, getMemberships } from "@/api/user/user";
+import { getAllCategories, getCategories } from "@/api/category";
+import {
+  createOrder,
+  membershipOrder,
+  verifyMembershipOrder,
+} from "@/api/order/order";
 import { showToast } from "@/utils/toastUtil";
-import { Shield, Tag } from "lucide-react";
+import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
-import { backendUrl } from "@/utils/backendUrl";
-interface Course {
-  courseName: string;
-  courseDescription: string;
-  thumbnail: string;
-  courseId: string;
-  sellingPrice: number;
+
+interface Membership {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+
+  label: string;
 }
 
-export default function CheckoutPage({
+interface Category {
+  _id: string;
+  categoryName: string;
+}
+
+export default function MembershipCheckoutPage({
   params,
 }: {
-  params: Promise<{ courseId: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { courseId } = use(params);
-  const [courseData, setCourseData] = useState<Course>();
-  const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const { id } = use(params);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
-  useEffect(() => {
-    getCoursById(courseId).then((data) => {
-      setCourseData(data.data);
-    });
-  }, [courseId]);
-
+  const [selectedMembership, setSelectedMembership] =
+    useState<Membership | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const token = Cookies.get("jwt_token");
   const { user } = useSelector((state: any) => state.auth);
+  let membershipName = localStorage.getItem("membershipName");
+  let membershipPrice = Number(localStorage.getItem("membershipId"));
+  useEffect(() => {
+    getMemberships()
+      .then((data) => {
+        setMemberships(data);
+        if (data.length > 0) {
+          setSelectedMembership(data[0]);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching memberships:", err);
+      });
+    getMembershipById(id, token)
+      .then((data) => {
+        setSelectedMembership(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching membership:", err);
+      });
 
-  //   calculate the estimated tax
+    getAllCategories()
+      .then((data) => {
+        console.log("Categories:", data);
+        setCategories(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching categories:", err);
+      });
+  }, []);
+
   const taxRate = 0.18;
-  const originalPrice = courseData?.sellingPrice ?? 0;
-  const discountedPrice = originalPrice - originalPrice * discount;
-  const estimatedTax = Math.round(discountedPrice * taxRate * 100) / 100;
-  const totalAmount = discountedPrice + estimatedTax;
+  const estimatedTax = Math.round(membershipPrice * taxRate * 100) / 100;
+
+  const totalAmount = membershipPrice + estimatedTax;
 
   const [isChecked, setIsChecked] = useState(false);
-
-  const token = Cookies.get("jwt_token");
-
-  const verifyCoupon = async (code: string) => {
-    try {
-      const response = await fetch(`${backendUrl}/api/verify-coupon`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          couponCode: code,
-          userId: user.user._id,
-        }),
-      });
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error("Error verifying coupon:", error);
-      return {
-        isValid: false,
-        message: "Error verifying coupon. Please try again.",
-      };
-    }
+  const data = {
+    currency: "INR",
+    amount: totalAmount,
+    userId: user.user._id,
+    membershipId: selectedMembership?._id,
+    categoryId: selectedCategory,
   };
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      showToast("Please enter a coupon code", "error");
-      return;
-    }
-
-    setIsApplyingCoupon(true);
-    try {
-      const result = await verifyCoupon(couponCode);
-
-      if (result.couponStatus && result.couponDiscount) {
-        setDiscount(result.couponDiscount / 100);
-        setAppliedCoupon(couponCode);
-        showToast(
-          `Coupon applied successfully! ${result.couponDiscount}% off`,
-          "success"
-        );
-      } else {
-        setDiscount(0);
-        setAppliedCoupon("");
-        showToast(result.message || "Invalid coupon code", "error");
-      }
-    } finally {
-      setIsApplyingCoupon(false);
-    }
-  };
-
+  console.log(data);
   const handleProceed = async () => {
     if (!isChecked) {
       showToast("You must agree to the terms before proceeding.", "error");
+      return;
+    }
+    if (!selectedCategory) {
+      showToast("Please select a category.", "error");
       return;
     }
     const data = {
       currency: "INR",
       amount: totalAmount,
       userId: user.user._id,
-      courseId: courseData?.courseId,
+      membershipId: selectedMembership?._id,
+      categoryId: selectedCategory,
     };
     try {
-      const order: any = await createOrder(data, token);
+      const order: any = await membershipOrder(data, token);
       if (!order) {
         showToast("Failed to create order. Try again.", "error");
         return;
@@ -121,12 +115,13 @@ export default function CheckoutPage({
       console.error(error);
     }
   };
-  console.log();
-  const details = {
-    courseId: courseData?.courseId,
-    userId: user.user._id,
-  };
 
+  const details = {
+    membershipId: selectedMembership?._id,
+    userId: user.user._id,
+    categoryId: selectedCategory,
+  };
+  console.log(details);
   const openRazorpay = (orderData: any) => {
     interface RazorpayOptions {
       key_id: string;
@@ -150,11 +145,11 @@ export default function CheckoutPage({
       amount: orderData.amount,
       currency: orderData.currency,
       name: "Code Sphere",
-      description: `Payment for ${courseData?.courseName}`,
+      description: `Payment for ${membershipName}`,
       order_id: orderData.id,
       handler: async function (response: any) {
         console.log("Payment Response:", response);
-        const verify = await verifyOrder(response, details, token);
+        const verify = await verifyMembershipOrder(response, details, token);
         console.log("Verify Response:", verify);
         if (verify.success) {
           showToast("Payment Successful", "success");
@@ -177,11 +172,11 @@ export default function CheckoutPage({
     <div className="min-h-screen bg-black text-white p-4 md:p-6">
       <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-8">
         <div className="md:col-span-3 space-y-6">
-          <h1 className="text-2xl font-semibold">Billing Details</h1>
+          <h1 className="text-2xl font-semibold">Membership Checkout</h1>
 
           <div className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-sm text-gray-400">Get Started</label>
+              <label className="text-sm text-gray-400">Email</label>
               <div className="relative">
                 <input
                   type="email"
@@ -193,6 +188,31 @@ export default function CheckoutPage({
                   Logged
                 </span>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm text-gray-400">Choose Category</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full bg-black text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:ring-1 focus:ring-purple-500 transition-all appearance-none"
+              >
+                <option
+                  value=""
+                  className="bg-black  hover:bg-purple-500 text-gray-400"
+                >
+                  Select a category
+                </option>
+                {categories.map((category) => (
+                  <option
+                    key={category._id}
+                    value={category._id}
+                    className="bg-black hover:bg-purple-500"
+                  >
+                    {category.categoryName}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1.5">
@@ -209,30 +229,6 @@ export default function CheckoutPage({
                 </button>
               </div>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm text-gray-400">
-                Have a coupon? (Optional)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="Enter coupon code"
-                  className="flex-1 bg-gray-900/50 border border-gray-800 rounded-lg px-4 py-2.5 focus:ring-1 focus:ring-purple-500 transition-all placeholder:text-gray-600"
-                />
-                <button
-                  onClick={handleApplyCoupon}
-                  disabled={isApplyingCoupon}
-                  className="bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-lg px-4 py-2.5 flex items-center gap-2 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Tag className="w-4 h-4" />
-                  {isApplyingCoupon ? "Applying..." : "Apply"}
-                </button>
-              </div>
-            </div>
-
             <label className="flex items-start gap-3 cursor-pointer group">
               <input
                 type="checkbox"
@@ -245,7 +241,6 @@ export default function CheckoutPage({
                 Terms, and Teachable's Privacy & Terms.
               </span>
             </label>
-
             <button
               onClick={handleProceed}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-6 py-2.5 flex items-center justify-center gap-2 transition-colors"
@@ -257,38 +252,31 @@ export default function CheckoutPage({
         </div>
 
         <div className="md:col-span-2 h-fit bg-gray-900/50 rounded-xl p-5">
-          <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+          <h2 className="text-lg font-semibold mb-4">Membership Summary</h2>
 
           <div className="space-y-4">
             <div className="aspect-[4/3] bg-gray-900/50 rounded-lg overflow-hidden relative group">
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                  src={courseData?.thumbnail}
-                  alt={courseData?.courseName || "Course Thumbnail"}
+                  src={"/membership.png"}
+                  alt={"Course Thumbnail"}
                   className="w-full h-full object-contain"
                 />
               </div>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
             </div>
-
             <div>
-              <h3 className="font-medium mb-1">{courseData?.courseName}</h3>
+              <h3 className="font-medium mb-1">{selectedMembership?.name}</h3>
               <p className="text-sm text-gray-400 mb-2">
-                {courseData?.courseDescription}
+                {selectedMembership?.description}
               </p>
-              <div className="text-2xl font-semibold">
-                ₹{courseData?.sellingPrice}
-              </div>
+              <div className="text-2xl font-semibold">₹{membershipPrice}</div>
             </div>
 
             <div className="space-y-3 pt-4 border-t border-gray-800">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <span>Estimated Tax</span>
                 <span>₹{estimatedTax}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm text-gray-400">
-                <span>Miscellaneous Tax</span>
-                <span>₹0</span>
               </div>
               <div className="flex justify-between items-center text-base font-medium pt-3 border-t border-gray-800">
                 <span>Total</span>

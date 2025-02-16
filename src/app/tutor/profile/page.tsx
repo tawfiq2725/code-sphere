@@ -5,8 +5,7 @@ import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import Image from "next/image";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { getUserDetails } from "@/store/slice/authSlice";
 
 const TutorProfile = () => {
@@ -94,7 +93,7 @@ const TutorProfile = () => {
       certificates.forEach((file) => formData.append("certificates", file));
       formData.append("email", profile.email);
 
-      console.log("FormData contents:");
+      // Debug: Log formData contents
       for (const pair of formData.entries()) {
         console.log(pair[0], pair[1]);
       }
@@ -108,8 +107,6 @@ const TutorProfile = () => {
       });
 
       const data = await response.json();
-      console.log("Response from backend:", data);
-
       if (!data.success) {
         showToast(data.message, "error");
       } else {
@@ -174,7 +171,8 @@ const TutorProfile = () => {
   };
 
   const inputClass =
-    "w-full px-3 py-2 border rounded bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200";
+    "w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200";
+
   return (
     <>
       {loading && (
@@ -185,13 +183,17 @@ const TutorProfile = () => {
           ></div>
         </div>
       )}
-      <div className="container mx-auto px-10 py-8 bg-black">
-        <div className="flex flex-col justify-center items-center  bg-gray-800 p-6 rounded-lg shadow-md my-10">
+      <div className="min-h-screen bg-gradient-to-br from-gray-800 to-black flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-5xl bg-white/10 backdrop-blur-md rounded-2xl shadow-xl p-8">
+          <h1 className="text-3xl font-extrabold text-white text-center mb-8">
+            Tutor Profile
+          </h1>
           <div className="grid md:grid-cols-2 gap-8">
+            {/* Profile Details */}
             <div className="space-y-6">
-              <h2 className="text-2xl text-white font-bold">Profile Details</h2>
-              <div className="flex items-center space-x-4">
-                <div className="w-24 h-24 relative">
+              <h2 className="text-2xl font-bold text-white">Profile Details</h2>
+              <div className="flex items-center space-x-6">
+                <div className="w-28 h-28 relative rounded-full overflow-hidden border-4 border-purple-500">
                   {profile.profileImage && (
                     <Image
                       src={
@@ -208,169 +210,182 @@ const TutorProfile = () => {
                     />
                   )}
                 </div>
+                <div>
+                  <input
+                    type="file"
+                    onChange={handleProfilePictureChange}
+                    className="text-sm text-gray-400 file:py-2 file:px-4 file:border file:border-purple-500 file:rounded-md file:bg-purple-600 file:text-white hover:file:bg-purple-700 transition-all"
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
                 <input
-                  type="file"
-                  onChange={handleProfilePictureChange}
-                  className="w-2/4 px-3 py-2 border rounded bg-gray-800 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                         transition-all duration-200"
+                  type="text"
+                  name="name"
+                  value={profile.name}
+                  onChange={handleInputChange}
+                  placeholder="Name"
+                  className={inputClass}
+                  autoComplete="off"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  value={profile.email}
+                  onChange={handleInputChange}
+                  placeholder="Email"
+                  disabled
+                  className={`${inputClass} opacity-70 cursor-not-allowed`}
+                  autoComplete="off"
+                />
+                <textarea
+                  name="bio"
+                  value={profile.bio}
+                  onChange={handleInputChange}
+                  placeholder="Bio"
+                  className={`${inputClass} resize-none h-28`}
+                  autoComplete="off"
                 />
               </div>
-              <input
-                type="text"
-                name="name"
-                value={profile.name}
-                onChange={handleInputChange}
-                placeholder="Name"
-                className={inputClass}
-                autoComplete="off"
-              />
-              <input
-                type="email"
-                name="email"
-                value={profile.email}
-                onChange={handleInputChange}
-                placeholder="Email"
-                disabled
-                className={inputClass}
-                autoComplete="off"
-              />
-              <textarea
-                name="bio"
-                value={profile.bio}
-                onChange={handleInputChange}
-                placeholder="Bio"
-                className={`${inputClass} resize-none h-32`}
-                autoComplete="off"
-              />
             </div>
+
+            {/* Professional Details */}
             <div className="space-y-6">
-              <h2 className="text-2xl text-white font-bold">
+              <h2 className="text-2xl font-bold text-white">
                 Professional Details
               </h2>
-              <input
-                type="text"
-                name="qualification"
-                value={profile.qualification}
-                onChange={handleInputChange}
-                placeholder="Qualification"
-                className={inputClass}
-                autoComplete="off"
-              />
-              <input
-                type="text"
-                name="subjects"
-                value={profile.subjects}
-                onChange={handleInputChange}
-                placeholder="Specialization"
-                className={inputClass}
-                autoComplete="off"
-              />
-              <input
-                type="text"
-                name="experience"
-                value={profile.experience}
-                onChange={handleInputChange}
-                placeholder="Experience"
-                className={inputClass}
-                autoComplete="off"
-              />
-              <input
-                type="file"
-                onChange={handleFileChange}
-                multiple
-                className={inputClass}
-                autoComplete="off"
-              />
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  name="qualification"
+                  value={profile.qualification}
+                  onChange={handleInputChange}
+                  placeholder="Qualification"
+                  className={inputClass}
+                  autoComplete="off"
+                />
+                <input
+                  type="text"
+                  name="subjects"
+                  value={profile.subjects}
+                  onChange={handleInputChange}
+                  placeholder="Specialization"
+                  className={inputClass}
+                  autoComplete="off"
+                />
+                <input
+                  type="text"
+                  name="experience"
+                  value={profile.experience}
+                  onChange={handleInputChange}
+                  placeholder="Experience"
+                  className={inputClass}
+                  autoComplete="off"
+                />
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  multiple
+                  className={inputClass}
+                  autoComplete="off"
+                />
+              </div>
               <div>
-                <h3 className="text-lg text-white font-semibold mb-2">
+                <h3 className="text-xl font-semibold text-white mb-2">
                   Certificates
                 </h3>
                 <button
                   onClick={openModal}
-                  className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-700"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
                 >
                   View Certificates
                 </button>
               </div>
             </div>
           </div>
-          <div className="mt-8 flex justify-center">
+          <div className="mt-10 flex justify-center">
             <button
               onClick={handleUpdateProfile}
               disabled={loading || Object.keys(editedFields).length === 0}
-              className={`px-6 py-2 bg-pink-500 text-white rounded hover:bg-purple-700 
-    ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`px-8 py-3 bg-pink-500 text-white rounded-md hover:bg-purple-700 transition ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {loading ? "Updating..." : "Save Profile"}
             </button>
           </div>
-
-          {isModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-              <div className="bg-white p-6 rounded-lg max-w-lg w-full">
-                <h2 className="text-2xl font-bold mb-4">Certificates</h2>
-                <div className="relative">
-                  {/* Conditional Rendering for File Types */}
-                  {uploadedCertificates[currentCertificateIndex] && (
-                    <>
-                      {uploadedCertificates[currentCertificateIndex].endsWith(
-                        ".pdf"
-                      ) ? (
-                        <iframe
-                          src={uploadedCertificates[currentCertificateIndex]}
-                          title={`Certificate ${currentCertificateIndex + 1}`}
-                          className="w-full h-96"
-                        ></iframe>
-                      ) : uploadedCertificates[
-                          currentCertificateIndex
-                        ].endsWith(".jpg") ||
-                        uploadedCertificates[currentCertificateIndex].endsWith(
-                          ".jpeg"
-                        ) ||
-                        uploadedCertificates[currentCertificateIndex].endsWith(
-                          ".png"
-                        ) ? (
-                        <Image
-                          src={uploadedCertificates[currentCertificateIndex]}
-                          alt={`Certificate ${currentCertificateIndex + 1}`}
-                          width={400}
-                          height={300}
-                          objectFit="contain"
-                        />
-                      ) : (
-                        <p className="text-center">
-                          Unsupported file type:{" "}
-                          {uploadedCertificates[currentCertificateIndex]
-                            .split(".")
-                            .pop()}
-                        </p>
-                      )}
-                    </>
-                  )}
-                  <button
-                    onClick={handlePrev}
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-l"
-                  >
-                    &#8249;
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-r"
-                  >
-                    &#8250;
-                  </button>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Certificates Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Certificates
+            </h2>
+            <div className="relative">
+              {uploadedCertificates[currentCertificateIndex] && (
+                <>
+                  {uploadedCertificates[currentCertificateIndex].endsWith(
+                    ".pdf"
+                  ) ? (
+                    <iframe
+                      src={uploadedCertificates[currentCertificateIndex]}
+                      title={`Certificate ${currentCertificateIndex + 1}`}
+                      className="w-full h-96 border rounded-md"
+                    ></iframe>
+                  ) : uploadedCertificates[currentCertificateIndex].endsWith(
+                      ".jpg"
+                    ) ||
+                    uploadedCertificates[currentCertificateIndex].endsWith(
+                      ".jpeg"
+                    ) ||
+                    uploadedCertificates[currentCertificateIndex].endsWith(
+                      ".png"
+                    ) ? (
+                    <Image
+                      src={uploadedCertificates[currentCertificateIndex]}
+                      alt={`Certificate ${currentCertificateIndex + 1}`}
+                      width={400}
+                      height={300}
+                      objectFit="contain"
+                      className="rounded-md"
+                    />
+                  ) : (
+                    <p className="text-center text-gray-600">
+                      Unsupported file type:{" "}
+                      {uploadedCertificates[currentCertificateIndex]
+                        .split(".")
+                        .pop()}
+                    </p>
+                  )}
+                </>
+              )}
+              <button
+                onClick={handlePrev}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white p-2 rounded-l hover:bg-opacity-80 transition"
+              >
+                &#8249;
+              </button>
+              <button
+                onClick={handleNext}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white p-2 rounded-r hover:bg-opacity-80 transition"
+              >
+                &#8250;
+              </button>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

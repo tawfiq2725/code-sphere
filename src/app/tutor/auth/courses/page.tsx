@@ -262,7 +262,7 @@ export default function SimpleCourseManagement() {
                         />
                       </div>
                     </td>
-                    <td className="p-3 border-b">${course.price}</td>
+                    <td className="p-3 border-b">₹{course.price}</td>
                     <td className="p-3 border-b">
                       <Link
                         href={`/tutor/auth/courses/${course.courseId}`}

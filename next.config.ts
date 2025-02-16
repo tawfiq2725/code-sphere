@@ -6,9 +6,15 @@ const nextConfig: NextConfig = {
     return [];
   },
   images: {
-    domains: [
-      "lh3.googleusercontent.com",
-      "codesphere.s3.ap-southeast-2.amazonaws.com",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "codesphere.s3.ap-southeast-2.amazonaws.com",
+      },
     ],
   },
 };

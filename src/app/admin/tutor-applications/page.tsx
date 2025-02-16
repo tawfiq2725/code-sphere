@@ -57,78 +57,6 @@ const TutorList = () => {
     fetchUsers();
   }, []);
 
-  const blockUser = async (userId: string) => {
-    try {
-      const token = Cookies.get("jwt_token");
-      const response = await fetch(`${backendUrl}/admin/block-user/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setFilteredUsers((prevFiltered) =>
-          prevFiltered.map((user) =>
-            user._id === userId ? { ...user, isBlocked: true } : user
-          )
-        );
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user._id === userId ? { ...user, isBlocked: true } : user
-          )
-        );
-
-        showToast("Tutor blocked successfully", "success");
-      } else {
-        showToast(data.message, "error");
-      }
-    } catch (err) {
-      showToast("Failed to block tutor", "error");
-      console.error(err);
-    }
-  };
-
-  const unblockUser = async (userId: string) => {
-    try {
-      const token = Cookies.get("jwt_token");
-      const response = await fetch(
-        `${backendUrl}/admin/unblock-user/${userId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (data.success) {
-        setFilteredUsers((prevFiltered) =>
-          prevFiltered.map((user) =>
-            user._id === userId ? { ...user, isBlocked: false } : user
-          )
-        );
-
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user._id === userId ? { ...user, isBlocked: false } : user
-          )
-        );
-
-        showToast("Tutor unblocked successfully", "success");
-      } else {
-        showToast(data.message, "error");
-      }
-    } catch (err) {
-      showToast("Failed to unblock tutor", "error");
-      console.error(err);
-    }
-  };
-
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim() === "") {
@@ -174,8 +102,6 @@ const TutorList = () => {
               <th className="border px-4 py-2">Certificates</th>
               <th className="border px-4 py-2">Verified</th>
               <th className="border px-4 py-2">IsTutor</th>
-              <th className="border px-4 py-2">Blocked</th>
-              <th className="border px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -202,26 +128,6 @@ const TutorList = () => {
                 </td>
                 <td className="border px-4 py-2">
                   {user.isTutor ? "Yes" : "No"}
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isBlocked ? "Yes" : "No"}
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isBlocked ? (
-                    <button
-                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                      onClick={() => unblockUser(user._id)}
-                    >
-                      Unblock
-                    </button>
-                  ) : (
-                    <button
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                      onClick={() => blockUser(user._id)}
-                    >
-                      Block
-                    </button>
-                  )}
                 </td>
               </tr>
             ))}

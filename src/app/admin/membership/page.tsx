@@ -1,9 +1,14 @@
 "use client";
-
+import Pagination from "@/app/components/common/pagination";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { Plus, Pencil } from "lucide-react";
-import { addMembership, fetchMemberships, updateMembership } from "@/api/admin";
+import {
+  addMembership,
+  fetchMemberships,
+  toggleStatusMembership,
+  updateMembership,
+} from "@/api/admin";
 import { showToast } from "@/utils/toastUtil";
 
 interface Membership {
@@ -14,6 +19,7 @@ interface Membership {
   price: number;
   label: string;
   status: boolean;
+  duration: number;
 }
 
 export default function MembershipManagement() {
@@ -23,12 +29,15 @@ export default function MembershipManagement() {
   const [editingMembership, setEditingMembership] = useState<Membership | null>(
     null
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
   const [editedFields, setEditedFields] = useState<Partial<Membership>>({});
   const [newMembership, setNewMembership] = useState({
     membershipName: "",
     membershipDescription: "",
     price: 0,
     label: "",
+    duration: 0,
   });
 
   const token = Cookies.get("jwt_token") || "";
@@ -45,11 +54,35 @@ export default function MembershipManagement() {
       });
   }, [token]);
 
+  console.log("Memberships", memberships);
+
   const handleAddMembership = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (
+      !newMembership.membershipName ||
+      !newMembership.membershipDescription ||
+      !newMembership.price ||
+      !newMembership.label ||
+      !newMembership.duration
+    ) {
+      return showToast("Please fill all the fields", "error");
+    }
+
+    if (newMembership.price < 0) {
+      return showToast("Price cannot be negative", "error");
+    }
+
     console.log(newMembership);
 
-    addMembership(token, newMembership)
+    const membershipData = {
+      ...newMembership,
+      membershipDescription: newMembership.membershipDescription
+        .split(",")
+        .map((desc) => desc.trim()),
+    };
+
+    addMembership(token, membershipData)
       .then((data) => {
         console.log(data);
         setMemberships([...memberships, data]);
@@ -60,6 +93,7 @@ export default function MembershipManagement() {
           membershipDescription: "",
           price: 0,
           label: "",
+          duration: 0,
         });
       })
       .catch((err) => {
@@ -100,34 +134,30 @@ export default function MembershipManagement() {
       });
   };
 
-  //   const handleToggleStatus = (id: string) => {
-  //     const membership = memberships.find((m) => m._id === id);
-  //     if (!membership) return;
+  const handleToggleStatus = (id: string) => {
+    console.log("clicked");
+    const membership = memberships.find((m) => m.membershipId === id);
+    if (!membership) return;
 
-  //     const updateData = {
-  //       membershipId: id,
-  //       status: !membership.status,
-  //     };
-
-  //     updateMembership(token,updateData. ,updateData)
-  //       .then((data: any) => {
-  //         setMemberships(
-  //           memberships.map((membership) =>
-  //             membership._id === data._id ? data : membership
-  //           )
-  //         );
-  //         showToast(
-  //           `Membership ${
-  //             data.status ? "activated" : "deactivated"
-  //           } successfully`,
-  //           "success"
-  //         );
-  //       })
-  //       .catch((err: any) => {
-  //         console.error("Failed to update status:", err);
-  //         showToast("Failed to update status", "error");
-  //       });
-  //   };
+    toggleStatusMembership(token, id)
+      .then((data: any) => {
+        setMemberships(
+          memberships.map((membership) =>
+            membership._id === data._id ? data : membership
+          )
+        );
+        showToast(
+          `Membership ${
+            data.status ? "activated" : "deactivated"
+          } successfully`,
+          "success"
+        );
+      })
+      .catch((err: any) => {
+        console.error("Failed to update status:", err);
+        showToast("Failed to update status", "error");
+      });
+  };
 
   const closeEditModal = () => {
     setIsEditModalOpen(false);
@@ -135,24 +165,31 @@ export default function MembershipManagement() {
     setEditingMembership(null);
   };
 
+  const indexOfLastCoupon = currentPage * itemsPerPage;
+  const indexOfFirstCoupon = indexOfLastCoupon - itemsPerPage;
+  const currentCoupons = memberships.slice(
+    indexOfFirstCoupon,
+    indexOfLastCoupon
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center">
+    <div className="mx-auto p-4 w-full h-screen flex justify-center items-center bg-black">
+      <div className="bg-gray-800 h-max shadow-md rounded-lg overflow-hidden w-full mx-20 text-white">
+        <h1 className="text-3xl font-bold mt-3 pt-3 text-center">
           Membership Management
         </h1>
 
         <div className="mb-4 flex justify-end">
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center"
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded flex items-center mr-5"
           >
-            <Plus className="mr-2" size={20} /> Add Membership
+            <Plus className="mr-2" size={20} /> Add
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto border-collapse border border-gray-700">
+        <div className="overflow-x-auto p-10">
+          <table className="w-full table-auto border-collapse border border-gray-700 ">
             <thead>
               <tr className="bg-gray-800">
                 <th className="border border-gray-700 px-4 py-2">S.no</th>
@@ -162,12 +199,13 @@ export default function MembershipManagement() {
                 <th className="border border-gray-700 px-4 py-2">Name</th>
                 <th className="border border-gray-700 px-4 py-2">Label</th>
                 <th className="border border-gray-700 px-4 py-2">Price</th>
+                <th className="border border-gray-700 px-4 py-2">Duration</th>
                 <th className="border border-gray-700 px-4 py-2">Status</th>
                 <th className="border border-gray-700 px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {memberships.map((membership, index) => (
+              {currentCoupons.map((membership, index) => (
                 <tr key={membership._id} className="hover:bg-gray-900">
                   <td className="border border-gray-700 px-4 py-2">
                     {index + 1}
@@ -185,8 +223,14 @@ export default function MembershipManagement() {
                     ₹{membership.price}
                   </td>
                   <td className="border border-gray-700 px-4 py-2">
+                    {membership.duration}
+                  </td>
+                  <td className="border border-gray-700 px-4 py-2">
                     <button
-                      //   onClick={() => handleToggleStatus(membership._id)}
+                      type="button"
+                      onClick={() =>
+                        handleToggleStatus(membership.membershipId)
+                      }
                       className={`px-2 py-1 rounded ${
                         membership.status ? "bg-green-600" : "bg-red-600"
                       }`}
@@ -209,6 +253,11 @@ export default function MembershipManagement() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            totalPages={Math.ceil(memberships.length / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            currentPage={currentPage}
+          />
         </div>
       </div>
 
@@ -262,6 +311,18 @@ export default function MembershipManagement() {
                   setNewMembership({
                     ...newMembership,
                     price: Number(e.target.value),
+                  })
+                }
+              />
+              <input
+                type="number"
+                placeholder="Duration"
+                className="w-full p-2 mb-2 bg-gray-700 text-white rounded"
+                value={newMembership.duration}
+                onChange={(e) =>
+                  setNewMembership({
+                    ...newMembership,
+                    duration: Number(e.target.value),
                   })
                 }
               />
@@ -370,6 +431,24 @@ export default function MembershipManagement() {
                     }));
                   } else {
                     const { price, ...rest } = editedFields;
+                    setEditedFields(rest);
+                  }
+                }}
+              />
+              <input
+                type="number"
+                placeholder="Duration"
+                className="w-full p-2 mb-2 bg-gray-700 text-white rounded"
+                defaultValue={editingMembership.duration}
+                onChange={(e) => {
+                  const newValue = Number(e.target.value);
+                  if (newValue !== editingMembership.duration) {
+                    setEditedFields((prev) => ({
+                      ...prev,
+                      duration: newValue,
+                    }));
+                  } else {
+                    const { duration, ...rest } = editedFields;
                     setEditedFields(rest);
                   }
                 }}

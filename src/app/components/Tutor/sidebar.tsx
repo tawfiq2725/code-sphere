@@ -9,6 +9,7 @@ import {
   Book,
   UserIcon,
   BookDownIcon,
+  BookUser,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Dashboard", href: "/tutor/dashboard", icon: LayoutDashboard },
   { name: "Profile", href: "/tutor/profile", icon: UserIcon },
   { name: "Courses", href: "/tutor/auth/courses", icon: Book },
+  { name: "Enrollments", href: "/tutor/auth/enroll-students", icon: BookUser },
 ];
 
 export default function Sidebar() {

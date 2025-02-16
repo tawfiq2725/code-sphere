@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import triggerConfetti from "@/utils/confetti";
 
 export default function OrderConfirmation() {
   const orderId = localStorage.getItem("orderId");
-
+  triggerConfetti();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black p-6">
       <div className="bg-gray-800 shadow-lg rounded-2xl p-8 max-w-lg text-center">

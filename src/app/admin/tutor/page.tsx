@@ -1,11 +1,27 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
-import Link from "next/link";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
 import { backendUrl } from "@/utils/backendUrl";
+import type { IPagination } from "@/interface/pagination";
+import { User, CheckCircle, XCircle, Shield, ShieldOff } from "lucide-react";
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 const TutorList = () => {
   interface User {
     _id: string;
@@ -21,39 +37,51 @@ const TutorList = () => {
   }
 
   const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState<IPagination | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const usersPerPage = 5;
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setIsLoading(true);
       try {
         const token = Cookies.get("jwt_token");
-        const response = await fetch(`${backendUrl}/admin/get-tutors`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: usersPerPage.toString(),
+          search: debouncedSearchTerm,
         });
+        const response = await fetch(
+          `${backendUrl}/admin/get-tutors?${params}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const data = await response.json();
         if (!data.success) {
           showToast(data.message, "error");
         } else {
-          setUsers(data.data);
-          setFilteredUsers(data.data);
-          showToast("Tutors fetched successfully", "success");
+          setUsers(data.data.data);
+          setPagination(data.data.pagination);
         }
       } catch (err) {
         showToast("Failed to fetch users", "error");
         console.error(err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+  }, [currentPage, debouncedSearchTerm]);
 
   const blockUser = async (userId: string) => {
     try {
@@ -65,20 +93,13 @@ const TutorList = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const data = await response.json();
       if (data.success) {
-        setFilteredUsers((prevFiltered) =>
-          prevFiltered.map((user) =>
-            user._id === userId ? { ...user, isBlocked: true } : user
-          )
-        );
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
             user._id === userId ? { ...user, isBlocked: true } : user
           )
         );
-
         showToast("Tutor blocked successfully", "success");
       } else {
         showToast(data.message, "error");
@@ -102,21 +123,13 @@ const TutorList = () => {
           },
         }
       );
-
       const data = await response.json();
       if (data.success) {
-        setFilteredUsers((prevFiltered) =>
-          prevFiltered.map((user) =>
-            user._id === userId ? { ...user, isBlocked: false } : user
-          )
-        );
-
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
             user._id === userId ? { ...user, isBlocked: false } : user
           )
         );
-
         showToast("Tutor unblocked successfully", "success");
       } else {
         showToast(data.message, "error");
@@ -127,98 +140,122 @@ const TutorList = () => {
     }
   };
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    if (term.trim() === "") {
-      setFilteredUsers(users);
-    } else {
-      const lowercasedTerm = term.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          (user) =>
-            user.name.toLowerCase().includes(lowercasedTerm) ||
-            user.email.toLowerCase().includes(lowercasedTerm)
-        )
-      );
-    }
-    setCurrentPage(1);
-  };
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-  console.log(users);
-
   return (
-    <div className="container mx-auto p-4 text-center flex justify-center items-center flex-col h-screen">
-      <h1 className="text-2xl font-bold my-4">Tutor List</h1>
-      <Search searchTerm={searchTerm} onSearch={handleSearch} />
-
-      <div className="w-full overflow-x-auto">
-        <table className="w-full table-auto border-collapse border border-gray-300 text-center">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-4 py-2">S.No</th>
-              <th className="border px-4 py-2">Name</th>
-              <th className="border px-4 py-2">Email</th>
-              <th className="border px-4 py-2">Subjects</th>
-
-              <th className="border px-4 py-2">Verified</th>
-              <th className="border px-4 py-2">IsTutor</th>
-              <th className="border px-4 py-2">Blocked</th>
-              <th className="border px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentUsers.map((user: User, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">{index + 1}</td>
-                <td className="border px-4 py-2">{user.name}</td>
-                <td className="border px-4 py-2">{user.email}</td>
-                <td className="border px-4 py-2">{user.subjects.join(", ")}</td>
-
-                <td className="border px-4 py-2">
-                  {user.isVerified ? "Yes" : "No"}
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isTutor ? "Yes" : "No"}
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isBlocked ? "Yes" : "No"}
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isBlocked ? (
-                    <button
-                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                      onClick={() => unblockUser(user._id)}
-                    >
-                      Unblock
-                    </button>
-                  ) : (
-                    <button
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                      onClick={() => blockUser(user._id)}
-                    >
-                      Block
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
+      <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+        Tutor Management
+      </h1>
+      <div className="mb-6">
+        <Search searchTerm={searchTerm} onSearch={setSearchTerm} />
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+      <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+          </div>
+        ) : users.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th className="p-3 text-left">Name</th>
+                  <th className="p-3 text-left">Email</th>
+                  <th className="p-3 text-left">Subjects</th>
+                  <th className="p-3 text-center">Verified</th>
+                  <th className="p-3 text-center">Status</th>
+                  <th className="p-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr
+                    key={user._id}
+                    className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors"
+                  >
+                    <td className="p-3 flex items-center space-x-3">
+                      <User className="w-5 h-5 text-gray-400" />
+                      <span>{user.name}</span>
+                    </td>
+                    <td className="p-3">{user.email}</td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {user.subjects.map((subject, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-purple-600 rounded-full text-xs"
+                          >
+                            {subject}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex justify-center space-x-2">
+                        {user.isVerified ? (
+                          <CheckCircle
+                            className="w-5 h-5 text-green-500"
+                            aria-label="Verified"
+                          />
+                        ) : (
+                          <XCircle
+                            className="w-5 h-5 text-red-500"
+                            aria-label="Not Verified"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex justify-center space-x-2">
+                        {user.isBlocked ? (
+                          <Shield
+                            className="w-5 h-5 text-red-500"
+                            aria-label="Blocked"
+                          />
+                        ) : (
+                          <ShieldOff
+                            className="w-5 h-5 text-green-500"
+                            aria-label="Active"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                          user.isBlocked
+                            ? "bg-green-600 hover:bg-green-700 text-white"
+                            : "bg-red-600 hover:bg-red-700 text-white"
+                        }`}
+                        onClick={() =>
+                          user.isBlocked
+                            ? unblockUser(user._id)
+                            : blockUser(user._id)
+                        }
+                      >
+                        {user.isBlocked ? "Unblock" : "Block"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64">
+            <User className="w-16 h-16 text-gray-500 mb-4" />
+            <p className="text-xl text-gray-400">No tutors found</p>
+          </div>
+        )}
+      </div>
+      {pagination && pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
     </div>
   );
 };

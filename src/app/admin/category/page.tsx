@@ -101,6 +101,14 @@ export default function Category() {
             Manage your categories efficiently
           </p>
         </header>
+        <div className="flex justify-end my-6">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition duration-200"
+          >
+            Add Category
+          </button>
+        </div>
 
         <div className="bg-gray-800 shadow rounded-lg overflow-x-auto">
           {categories.length === 0 ? (
@@ -140,7 +148,7 @@ export default function Category() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={() => toggleCategoryListing(category._id)}
+                        // onClick={() => toggleCategoryListing(category._id)}
                         className={`px-3 py-1 text-xs font-semibold rounded-full text-white transition duration-200 ${
                           category.status
                             ? "bg-green-500 hover:bg-green-600"
@@ -166,15 +174,6 @@ export default function Category() {
               </tbody>
             </table>
           )}
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition duration-200"
-          >
-            Add Category
-          </button>
         </div>
 
         {/* Add Category Modal */}

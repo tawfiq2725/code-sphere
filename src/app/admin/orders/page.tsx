@@ -8,7 +8,8 @@ import { getUserOrders } from "@/api/user/user";
 import { showToast } from "@/utils/toastUtil";
 import { useSelector } from "react-redux";
 import { getAllorders } from "@/api/order/order";
-import { findUserById } from "@/api/course";
+import Link from "next/link";
+import { InfoIcon } from "lucide-react";
 
 export default function SimpleCourseManagement() {
   interface Orders {
@@ -97,10 +98,10 @@ export default function SimpleCourseManagement() {
                   <th className="p-2 border-b">Order Id</th>
                   <th className="p-3 border-b">Course Id</th>
                   <th className="p-3 border-b">Total </th>
-                  <th className="p-3 border-b">Payment </th>
                   <th className="p-3 border-b hidden sm:table-cell">
                     Order Status
                   </th>
+                  <th className="p-3 border-b">Details </th>
                 </tr>
               </thead>
               <tbody>
@@ -111,18 +112,16 @@ export default function SimpleCourseManagement() {
                     <td className="p-3 border-b">{order.courseId}</td>
                     <td className="p-3 border-b">₹{order.totalAmount}</td>
                     <td className="p-3 border-b hidden sm:table-cell">
-                      {order.paymentStatus === "success" ? (
+                      {order.orderStatus === "success" ? (
                         <span className="text-green-500">Success</span>
                       ) : (
                         <span className="text-red-500">Failed</span>
                       )}
                     </td>
                     <td className="p-3 border-b hidden sm:table-cell">
-                      {order.orderStatus === "success" ? (
-                        <span className="text-green-500">Success</span>
-                      ) : (
-                        <span className="text-red-500">Failed</span>
-                      )}
+                      <Link href={`/admin/orders/${order.orderId}`}>
+                        <InfoIcon size={24} />
+                      </Link>
                     </td>
                   </tr>
                 ))}

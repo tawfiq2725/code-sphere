@@ -28,6 +28,7 @@ const navigation = [
     icon: GraduationCap,
   },
   { name: "Orders", href: "/student/profile/my-orders", icon: ShoppingCart },
+  { name: "Membership", href: "/student/profile/membership", icon: Gift },
 ];
 
 export default function Sidebar() {

@@ -35,6 +35,11 @@ const navigation = [
   { name: "Orders Management", href: "/admin/orders", icon: ShoppingCart },
   { name: "Coupons", href: "/admin/coupons", icon: TicketPercentIcon },
   { name: "Memberships", href: "/admin/membership", icon: Package },
+  {
+    name: "Membership Management",
+    href: "/admin/membership-orders",
+    icon: Package,
+  },
   { name: "Offer Management", href: "/offers", icon: Gift },
 ];
 

@@ -63,8 +63,8 @@ export default function LoginPage() {
         tutor: "/tutor/dashboard",
       };
       router.push(routes[role] || "/auth/sign-in");
-    } catch (error) {
-      showToast("An error occurred during sign-in", "error");
+    } catch (error: any) {
+      showToast("Contact Admin Something Went wrong", "error");
     } finally {
       setTimeout(() => setIsLoading(false), 1000);
     }

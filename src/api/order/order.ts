@@ -61,3 +61,49 @@ export const getAllorders = async (token: any) => {
     console.log(error);
   }
 };
+
+export const membershipOrder = async (data: any, token: any) => {
+  try {
+    const response = await axios.post(
+      `${backendUrl}/api/order/membership/create-order`,
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    localStorage.setItem("orderId", response.data.data.orderId);
+    return response.data.data.order;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const verifyMembershipOrder = async (
+  data: any,
+  courseDetails: any,
+  token: any
+) => {
+  try {
+    const orderId = localStorage.getItem("orderId");
+    const response = await axios.post(
+      `${backendUrl}/api/order/membership/verify-order`,
+      {
+        data,
+        orderId,
+        courseDetails,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.log(err);
+  }
+};
