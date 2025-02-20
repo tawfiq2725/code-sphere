@@ -5,9 +5,10 @@ import { useEffect, useState, use } from "react";
 import { ChapterList } from "@/app/components/User/chapterList";
 import { CustomVideoPlayer } from "@/app/components/User/chapterVideo";
 import { Chapter } from "@/interface/chapters";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import { backendUrl } from "@/utils/backendUrl";
+import { getUserDetails } from "@/store/slice/authSlice";
 
 export default function CourseDetailsAndChapters({
   params,
@@ -17,6 +18,7 @@ export default function CourseDetailsAndChapters({
   const { courseId } = use(params);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const dispatch = useDispatch();
   const token = Cookies.get("jwt_token");
   const { user } = useSelector((state: any) => state.auth);
   const userId = user.user._id;
@@ -58,6 +60,18 @@ export default function CourseDetailsAndChapters({
       console.log(data);
       if (data.success) {
         console.log("Chapter progress updated successfully");
+
+        const updateUser = await fetch(
+          `${backendUrl}/api/user/find-user/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const userData = await updateUser.json();
+        console.log(userData, "roshan");
+        dispatch(getUserDetails({ user: userData.data }));
       } else {
         console.log("Chapter progress update failed");
       }

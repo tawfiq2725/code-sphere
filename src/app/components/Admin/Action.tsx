@@ -25,7 +25,7 @@ const CourseAction = ({ courseId }: CourseActionProps) => {
         courseStatus: action,
         percentage: percent,
       };
-      console.log("Payload:", payload); // Logs your data as a plain object
+      console.log("Payload:", payload);
 
       const response = await fetch(
         `${backendUrl}/admin/api/approve-or-reject-course/${courseId}`,

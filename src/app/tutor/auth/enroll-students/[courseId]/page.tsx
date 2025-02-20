@@ -13,6 +13,8 @@ interface CourseProgress {
   progress: number;
   completedChapters: string[];
   _id: string;
+
+  totalChapters: number;
 }
 
 interface Student {
@@ -20,7 +22,6 @@ interface Student {
   name: string;
   email: string;
   courseProgress: CourseProgress[];
-  // ...other student properties
 }
 
 export default function EnrollStudents({
@@ -94,11 +95,12 @@ export default function EnrollStudents({
                 <tr className="bg-gray-800 text-white">
                   <th className="p-3 border-b">S.No</th>
                   <th className="p-3 border-b">Name</th>
-                  <th className="p-3 border-b">Completed Chapters</th>
-                  <th className="p-3 border-b hidden sm:table-cell">Status</th>
-                  <th className="p-3 border-b">
-                    <MessageCircleHeart className="w-5 h-5" />
+                  <th className="p-3 border-b text-center">Completed</th>
+                  <th className="p-3 border-b text-center">Total Chapters</th>
+                  <th className="p-3 border-b hidden sm:table-cell text-center">
+                    Status
                   </th>
+                  <th className="p-3 border-b text-center">Message</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,8 +120,13 @@ export default function EnrollStudents({
                         {index + 1 + indexOfFirstStudent}
                       </td>
                       <td className="p-3 border-b">{student.name}</td>
-                      <td className="p-3 border-b">{completedChapters}</td>
-                      <td className="p-3 border-b hidden sm:table-cell">
+                      <td className="p-3 border-b text-center">
+                        {completedChapters}
+                      </td>
+                      <td className="p-3 border-b text-center">
+                        {progress ? progress.totalChapters : 0}
+                      </td>
+                      <td className="p-3 border-b hidden sm:table-cell text-center">
                         {status === "Completed" ? (
                           <span className="bg-green-500 text-white px-2 py-1 rounded-full">
                             {status}
@@ -130,10 +137,10 @@ export default function EnrollStudents({
                           </span>
                         )}
                       </td>
-                      <td className="p-3 border-b">
+                      <td className="p-3 border-b ">
                         <Link href={`/tutor/auth/message/${student._id}`}>
                           <p>
-                            <MessageCircle className="w-5 h-5 text-white" />
+                            <MessageCircle className="w-5 h-5 text-white " />
                           </p>
                         </Link>
                       </td>

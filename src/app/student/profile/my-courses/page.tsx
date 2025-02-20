@@ -26,6 +26,7 @@ export default function Courses() {
     courseId: string;
     progress: number;
     completedChapters: string[];
+    totalChapters: number;
   }
 
   const { user } = useSelector((state: any) => state.auth);
@@ -56,7 +57,6 @@ export default function Courses() {
 
   useEffect(() => {
     if (courseData.length > 0 && enrollData.length > 0) {
-      // Filter only enrolled courses
       const enrolledCourses = courseData
         .filter((course) =>
           enrollData.some((e) => e.courseId === course.courseId)
@@ -65,9 +65,15 @@ export default function Courses() {
           const enrolledCourse = enrollData.find(
             (e) => e.courseId === course.courseId
           );
+          const progress =
+            enrolledCourse && enrolledCourse.totalChapters > 0
+              ? (enrolledCourse.completedChapters.length /
+                  enrolledCourse.totalChapters) *
+                100
+              : 0;
           return {
             ...course,
-            progress: enrolledCourse ? enrolledCourse.progress : 0,
+            progress,
           };
         });
 
@@ -123,7 +129,7 @@ export default function Courses() {
                   <div className="mt-4">
                     <div className="w-full bg-gray-600 rounded-full h-2.5">
                       <div
-                        className="bg-blue-500 h-2.5 rounded-full"
+                        className="bg-pink-500 h-2.5 rounded-full"
                         style={{ width: `${course.progress}%` }}
                       ></div>
                     </div>

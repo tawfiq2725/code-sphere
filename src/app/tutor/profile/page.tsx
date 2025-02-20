@@ -214,6 +214,7 @@ const TutorProfile = () => {
                   <input
                     type="file"
                     onChange={handleProfilePictureChange}
+                    accept=".jpg, .jpeg, .png, .webp, image/jpeg, image/png, image/webp"
                     className="text-sm text-gray-400 file:py-2 file:px-4 file:border file:border-purple-500 file:rounded-md file:bg-purple-600 file:text-white hover:file:bg-purple-700 transition-all"
                   />
                 </div>
@@ -286,6 +287,7 @@ const TutorProfile = () => {
                   type="file"
                   onChange={handleFileChange}
                   multiple
+                  accept=".jpg, .jpeg, .png, .bmp, .webp, .svg, .pdf, image/jpeg, image/png,  image/bmp, image/webp, image/svg+xml, application/pdf"
                   className={inputClass}
                   autoComplete="off"
                 />

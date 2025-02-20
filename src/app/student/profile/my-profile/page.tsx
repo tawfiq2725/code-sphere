@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
+import { Eye, EyeConfirm } from "@/app/components/common/Eye";
 
 export default function UserProfile() {
   const dispatch = useDispatch();
@@ -47,6 +48,8 @@ export default function UserProfile() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -209,16 +212,22 @@ export default function UserProfile() {
               >
                 Old Password
               </label>
-              <input
-                id="old-password"
-                type="password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your old password"
-                required
-                autoComplete="off"
-              />
+              <div className="relative">
+                <input
+                  id="old-password"
+                  type={showPassword ? "text" : "password"}
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your old password"
+                  required
+                  autoComplete="off"
+                />
+                <Eye
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                />
+              </div>
             </div>
             <div>
               <label
@@ -227,16 +236,22 @@ export default function UserProfile() {
               >
                 New Password
               </label>
-              <input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your new password"
-                required
-                autoComplete="off"
-              />
+              <div className="relative">
+                <input
+                  id="new-password"
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your new password"
+                  required
+                  autoComplete="off"
+                />
+                <Eye
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                />
+              </div>
             </div>
             <div>
               <label
@@ -245,16 +260,22 @@ export default function UserProfile() {
               >
                 Confirm Password
               </label>
-              <input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Confirm your new password"
-                required
-                autoComplete="off"
-              />
+              <div className="relative">
+                <input
+                  id="confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Confirm your new password"
+                  required
+                  autoComplete="off"
+                />
+                <EyeConfirm
+                  showConfirmPassword={showConfirmPassword}
+                  setShowConfirmPassword={setShowConfirmPassword}
+                />
+              </div>
             </div>
             <button
               type="submit"

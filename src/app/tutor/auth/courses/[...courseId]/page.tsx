@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
@@ -96,8 +96,9 @@ export default function CourseChapterPage({
     setIsAddModalOpen(false);
   };
 
-  const handleAddChapter = async () => {
-    setIsLoading(true);
+  const handleAddChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (
       !newChapter.chapterName ||
       !newChapter.chapterDescription ||
@@ -105,6 +106,20 @@ export default function CourseChapterPage({
     ) {
       return showToast("Please fill all the fields", "error");
     }
+
+    const chapterNameRegex = /^[a-zA-Z\s]+$/;
+    const chapterDescriptionRegex = /^[a-zA-Z.,\s]+$/;
+    if (!chapterNameRegex.test(newChapter.chapterName)) {
+      return showToast("Chapter name should contain only alphabets", "error");
+    }
+    if (!chapterDescriptionRegex.test(newChapter.chapterDescription)) {
+      return showToast(
+        "Chapter description should contain only alphabets",
+        "error"
+      );
+    }
+
+    setIsLoading(true);
     const formData = new FormData();
     formData.append("courseId", (await params).courseId);
     formData.append("chapterName", newChapter.chapterName);
@@ -154,7 +169,29 @@ export default function CourseChapterPage({
     }
   };
 
-  const handleEditChapter = async () => {
+  const handleEditChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (
+      !currentChapter?.chapterName ||
+      !currentChapter?.chapterDescription ||
+      !currentChapter?.video
+    ) {
+      return showToast("Please fill all the fields", "error");
+    }
+
+    const chapterNameRegex = /^[a-zA-Z\s]+$/;
+    const chapterDescriptionRegex = /^[a-zA-Z.,\s]+$/;
+    if (!chapterNameRegex.test(currentChapter.chapterName)) {
+      return showToast("Chapter name should contain only alphabets", "error");
+    }
+    if (!chapterDescriptionRegex.test(currentChapter.chapterDescription)) {
+      return showToast(
+        "Chapter description should contain only alphabets",
+        "error"
+      );
+    }
+
     setIsLoading(true);
     if (!currentChapter) return;
 

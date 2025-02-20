@@ -25,7 +25,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/userlist", icon: Users },
   {
-    name: "New Applications",
+    name: "Applicants",
     href: "/admin/tutor-applications",
     icon: FormInput,
   },

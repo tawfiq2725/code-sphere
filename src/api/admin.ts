@@ -116,3 +116,19 @@ export const getOrderById = async (token: string, id: string) => {
     console.log("Failed to fetch order details:", error);
   }
 };
+
+export const dashboardData = async (token: string) => {
+  try {
+    const response = await axios.get(
+      `${backendUrl}/api/reports/admin/dashboard`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data.data;
+  } catch (error: any) {
+    console.log("Failed to fetch dashboard data:", error);
+  }
+};

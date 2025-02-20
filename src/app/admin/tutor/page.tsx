@@ -142,13 +142,13 @@ const TutorList = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
-      <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+      <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text text-white">
         Tutor Management
       </h1>
       <div className="mb-6">
         <Search searchTerm={searchTerm} onSearch={setSearchTerm} />
       </div>
-      <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+      <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden mx-20">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
@@ -247,7 +247,7 @@ const TutorList = () => {
           </div>
         )}
       </div>
-      {pagination && pagination.totalPages > 1 && (
+      {pagination && (
         <div className="mt-6">
           <Pagination
             currentPage={pagination.page}

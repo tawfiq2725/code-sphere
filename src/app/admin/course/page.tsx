@@ -16,6 +16,7 @@ const CourseLists = () => {
     courseName: string;
     thumbnail: string;
     price: number;
+    sellingPrice: number;
     isVisible: boolean;
     courseStatus: string;
   }
@@ -140,6 +141,7 @@ const CourseLists = () => {
             <th className="border px-4 py-2">Course Name</th>
             <th className="border px-4 py-2">Thumbnail</th>
             <th className="border px-4 py-2">Price</th>
+            <th className="border px-4 py-2">Selling Price</th>
             <th className="border px-4 py-2">Chapters</th>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Actions</th>
@@ -160,7 +162,10 @@ const CourseLists = () => {
                   className="rounded"
                 />
               </td>
-              <td className="border px-4 py-2">${course.price}</td>
+              <td className="border px-4 py-2">₹{course.price}</td>
+              <td className="border px-4 py-2">
+                ₹ {course.sellingPrice ?? "Not specified"}
+              </td>
               <td className="border px-4 py-2 flex justify-center">
                 <Link
                   href={`/admin/course/${course.courseId}`}

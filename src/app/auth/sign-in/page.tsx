@@ -9,6 +9,7 @@ import { showToast } from "@/utils/toastUtil";
 import { loginSuccess } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
 import { validateForm } from "@/utils/validators";
+import { Eye } from "@/app/components/common/Eye";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +70,7 @@ export default function LoginPage() {
       setTimeout(() => setIsLoading(false), 1000);
     }
   }
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black p-4">
@@ -108,15 +110,21 @@ export default function LoginPage() {
             >
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your password"
-              autoComplete="off"
-              className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your password"
+                autoComplete="off"
+                className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <Eye
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+              />
+            </div>
           </div>
 
           <button

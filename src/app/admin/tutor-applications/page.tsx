@@ -6,6 +6,21 @@ import Link from "next/link";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
 import { backendUrl } from "@/utils/backendUrl";
+import { User } from "lucide-react";
+import { IPagination } from "@/interface/pagination";
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 const TutorList = () => {
   interface User {
     _id: string;
@@ -24,14 +39,22 @@ const TutorList = () => {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [pagination, setPagination] = useState<IPagination | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const usersPerPage = 5;
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const token = Cookies.get("jwt_token");
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: usersPerPage.toString(),
+          search: debouncedSearchTerm,
+        });
         const response = await fetch(
-          `${backendUrl}/admin/get-tutors/applications`,
+          `${backendUrl}/admin/get-tutors/applications?${params}`,
           {
             method: "GET",
             headers: {
@@ -45,7 +68,8 @@ const TutorList = () => {
         if (!data.success) {
           showToast(data.message, "error");
         } else {
-          setUsers(data.data);
+          setUsers(data.data.data);
+          setPagination(data.data.pagination);
           setFilteredUsers(data.data);
         }
       } catch (err) {
@@ -55,7 +79,7 @@ const TutorList = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [currentPage, debouncedSearchTerm]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -73,11 +97,6 @@ const TutorList = () => {
     }
     setCurrentPage(1);
   };
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -85,61 +104,96 @@ const TutorList = () => {
   console.log(users);
 
   return (
-    <div className="container mx-auto p-4 text-center flex justify-center items-center flex-col h-screen">
-      <h1 className="text-2xl font-bold my-4">New Applicants</h1>
-      <Search searchTerm={searchTerm} onSearch={handleSearch} />
-
-      <div className="w-full overflow-x-auto">
-        <table className="w-full table-auto border-collapse border border-gray-300 text-center">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-4 py-2">S.No</th>
-              <th className="border px-4 py-2">Name</th>
-              <th className="border px-4 py-2">Email</th>
-              <th className="border px-4 py-2">Qualification</th>
-              <th className="border px-4 py-2">Experience</th>
-              <th className="border px-4 py-2">Subjects</th>
-              <th className="border px-4 py-2">Certificates</th>
-              <th className="border px-4 py-2">Verified</th>
-              <th className="border px-4 py-2">IsTutor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentUsers.map((user: User, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">{index + 1}</td>
-                <td className="border px-4 py-2">{user.name}</td>
-                <td className="border px-4 py-2">{user.email}</td>
-                <td className="border px-4 py-2">{user.qualification}</td>
-                <td className="border px-4 py-2">{user.experience}</td>
-                <td className="border px-4 py-2">{user.subjects.join(", ")}</td>
-                <td className="border px-4 py-2">
-                  <Link
-                    href={`/admin/tutor-applications/${user._id}`}
-                    onClick={() => {
-                      localStorage.setItem("applicant-id", user._id);
-                    }}
+    <div className=" bg-black container mx-auto p-4 flex   flex-col min-h-screen">
+      <h1 className="text-3xl text-white font-bold text-center mb-8">
+        Tutor Applications
+      </h1>
+      <div className="mb-6 w-full max-w-md mx-auto">
+        <Search searchTerm={searchTerm} onSearch={handleSearch} />
+      </div>
+      <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden mx-20">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+          </div>
+        ) : users.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700 text-white">
+                <tr>
+                  <th className=" p-3 text-center">S.No</th>
+                  <th className=" p-3 text-center">Name</th>
+                  <th className=" p-3 text-center">Email</th>
+                  <th className=" p-3 text-center">Qualification</th>
+                  <th className=" p-3 text-center">Experience</th>
+                  <th className=" p-3 text-center">Subjects</th>
+                  <th className=" p-3 text-center">Certificates</th>
+                  <th className=" p-3 text-center">Verified</th>
+                  <th className=" p-3 text-center">IsTutor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user: User, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors"
                   >
-                    Check
-                  </Link>
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isVerified ? "Yes" : "No"}
-                </td>
-                <td className="border px-4 py-2">
-                  {user.isTutor ? "Yes" : "No"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.qualification}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.experience}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.subjects.join(", ")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      <Link
+                        href={`/admin/tutor-applications/${user._id}`}
+                        onClick={() => {
+                          localStorage.setItem("applicant-id", user._id);
+                        }}
+                      >
+                        Check
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.isVerified ? "Yes" : "No"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {user.isTutor ? "Yes" : "No"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64">
+            <User className="w-16 h-16 text-gray-500 mb-4" />
+            <p className="text-xl text-gray-400">No Tutpr found</p>
+          </div>
+        )}
       </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+      {pagination && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
     </div>
   );
 };

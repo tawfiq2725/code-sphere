@@ -5,9 +5,11 @@ import { showToast } from "@/utils/toastUtil";
 import { Shield, Tag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import { backendUrl } from "@/utils/backendUrl";
+import { couponApply, couponRemove } from "@/store/slice/orderSlice";
+
 interface Course {
   courseName: string;
   courseDescription: string;
@@ -28,6 +30,8 @@ export default function CheckoutPage({
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const router = useRouter();
+  const dispatch = useDispatch();
+
   useEffect(() => {
     getCoursById(courseId).then((data) => {
       setCourseData(data.data);
@@ -35,16 +39,22 @@ export default function CheckoutPage({
   }, [courseId]);
 
   const { user } = useSelector((state: any) => state.auth);
+  const { couponApplied, totalAmount, discountAmount, couponUser } =
+    useSelector((state: any) => state.order);
 
-  //   calculate the estimated tax
+  // Constants for tax and price calculations
   const taxRate = 0.18;
   const originalPrice = courseData?.sellingPrice ?? 0;
-  const discountedPrice = originalPrice - originalPrice * discount;
-  const estimatedTax = Math.round(discountedPrice * taxRate * 100) / 100;
-  const totalAmount = discountedPrice + estimatedTax;
+  const originalTax = Math.round(originalPrice * taxRate * 100) / 100;
+  const originalTotalAmount = originalPrice + originalTax;
+
+  // Use the coupon only if it was applied by the current user.
+  const finalTotal =
+    couponApplied && couponUser === user.user._id
+      ? discountAmount
+      : originalTotalAmount;
 
   const [isChecked, setIsChecked] = useState(false);
-
   const token = Cookies.get("jwt_token");
 
   const verifyCoupon = async (code: string) => {
@@ -82,7 +92,23 @@ export default function CheckoutPage({
       const result = await verifyCoupon(couponCode);
 
       if (result.couponStatus && result.couponDiscount) {
-        setDiscount(result.couponDiscount / 100);
+        // Calculate discounted price using coupon discount percentage
+        const discountPercent = result.couponDiscount / 100;
+        const discountValue = originalPrice * discountPercent;
+        const discountedPrice = originalPrice - discountValue;
+        const discountedTax = Math.round(discountedPrice * taxRate * 100) / 100;
+        const newTotalAmount = discountedPrice + discountedTax;
+
+        // Dispatch to Redux: store the original total, new total, and current user id.
+        dispatch(
+          couponApply({
+            originalTotal: originalTotalAmount,
+            newTotal: newTotalAmount,
+            userId: user.user._id,
+          })
+        );
+
+        setDiscount(discountPercent);
         setAppliedCoupon(couponCode);
         showToast(
           `Coupon applied successfully! ${result.couponDiscount}% off`,
@@ -93,6 +119,8 @@ export default function CheckoutPage({
         setAppliedCoupon("");
         showToast(result.message || "Invalid coupon code", "error");
       }
+    } catch (error) {
+      console.error("Error applying coupon:", error);
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -105,9 +133,12 @@ export default function CheckoutPage({
     }
     const data = {
       currency: "INR",
-      amount: totalAmount,
+      amount: finalTotal,
       userId: user.user._id,
       courseId: courseData?.courseId,
+      isApplied: couponApplied && couponUser === user.user._id,
+      couponCode: appliedCoupon ? appliedCoupon : null,
+      couponDiscount: appliedCoupon ? discount : null,
     };
     try {
       const order: any = await createOrder(data, token);
@@ -121,7 +152,7 @@ export default function CheckoutPage({
       console.error(error);
     }
   };
-  console.log();
+
   const details = {
     courseId: courseData?.courseId,
     userId: user.user._id,
@@ -180,6 +211,7 @@ export default function CheckoutPage({
           <h1 className="text-2xl font-semibold">Billing Details</h1>
 
           <div className="space-y-5">
+            {/* User Email */}
             <div className="space-y-1.5">
               <label className="text-sm text-gray-400">Get Started</label>
               <div className="relative">
@@ -195,6 +227,7 @@ export default function CheckoutPage({
               </div>
             </div>
 
+            {/* Payment Information */}
             <div className="space-y-1.5">
               <label className="text-sm text-gray-400">
                 Payment information
@@ -210,6 +243,7 @@ export default function CheckoutPage({
               </div>
             </div>
 
+            {/* Coupon Code Section */}
             <div className="space-y-1.5">
               <label className="text-sm text-gray-400">
                 Have a coupon? (Optional)
@@ -224,15 +258,28 @@ export default function CheckoutPage({
                 />
                 <button
                   onClick={handleApplyCoupon}
-                  disabled={isApplyingCoupon}
+                  disabled={couponApplied && couponUser === user.user._id}
                   className="bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-lg px-4 py-2.5 flex items-center gap-2 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Tag className="w-4 h-4" />
                   {isApplyingCoupon ? "Applying..." : "Apply"}
                 </button>
+                {couponApplied && couponUser === user.user._id && (
+                  <button
+                    className="text-sm text-red-500"
+                    onClick={() => {
+                      dispatch(couponRemove());
+                      setDiscount(0);
+                      setAppliedCoupon("");
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             </div>
 
+            {/* Terms & Conditions */}
             <label className="flex items-start gap-3 cursor-pointer group">
               <input
                 type="checkbox"
@@ -246,19 +293,20 @@ export default function CheckoutPage({
               </span>
             </label>
 
+            {/* Proceed / Pay Now Button */}
             <button
               onClick={handleProceed}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-6 py-2.5 flex items-center justify-center gap-2 transition-colors"
             >
               <Shield className="w-4 h-4" />
-              Pay Now
+              Pay Now (₹{finalTotal})
             </button>
           </div>
         </div>
 
+        {/* Order Summary */}
         <div className="md:col-span-2 h-fit bg-gray-900/50 rounded-xl p-5">
           <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-
           <div className="space-y-4">
             <div className="aspect-[4/3] bg-gray-900/50 rounded-lg overflow-hidden relative group">
               <div className="absolute inset-0 flex items-center justify-center">
@@ -276,15 +324,13 @@ export default function CheckoutPage({
               <p className="text-sm text-gray-400 mb-2">
                 {courseData?.courseDescription}
               </p>
-              <div className="text-2xl font-semibold">
-                ₹{courseData?.sellingPrice}
-              </div>
+              <div className="text-2xl font-semibold">₹{originalPrice}</div>
             </div>
 
             <div className="space-y-3 pt-4 border-t border-gray-800">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <span>Estimated Tax</span>
-                <span>₹{estimatedTax}</span>
+                <span>₹{originalTax}</span>
               </div>
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <span>Miscellaneous Tax</span>
@@ -292,7 +338,7 @@ export default function CheckoutPage({
               </div>
               <div className="flex justify-between items-center text-base font-medium pt-3 border-t border-gray-800">
                 <span>Total</span>
-                <span>₹{totalAmount}</span>
+                <span>₹{finalTotal}</span>
               </div>
             </div>
           </div>

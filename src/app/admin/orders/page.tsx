@@ -28,8 +28,7 @@ export default function SimpleCourseManagement() {
   const [orders, setOrders] = useState<Orders[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const userId: string = user.user._id;
-  console.log("This is actual userId", userId);
+
   useEffect(() => {
     getAllorders(token)
       .then((data) => {

@@ -6,6 +6,7 @@ import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+
 interface Params {
   Id: string;
 }
@@ -22,6 +23,7 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
   const router = useRouter();
   const tutorId = localStorage.getItem("applicant-id");
   const token = Cookies.get("jwt_token");
+
   useEffect(() => {
     params.then((resolvedParams) => setId(resolvedParams.Id));
   }, [params]);
@@ -44,11 +46,6 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
         );
 
         const data = await response.json();
-        console.log("------------------------------------");
-
-        console.log(data);
-        console.log(data.data);
-        console.log("------------------------------------");
         if (data.success && Array.isArray(data.data)) {
           setUploadedCertificates(data.data);
           showToast("Certificates fetched successfully", "success");
@@ -103,6 +100,7 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
       }
     } catch (error) {}
   };
+
   const handleReject = async () => {
     try {
       const response = await fetch(
@@ -127,53 +125,90 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
       console.error(error);
     }
   };
+
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="w-full h-screen flex justify-center items-center bg-gray-900">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full h-screen flex justify-center items-center flex-col">
-      <div className="bg-gray-100 p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Certificates</h1>
+    <div className="w-full min-h-screen flex justify-center items-center bg-gray-900 text-white py-8">
+      <div className="w-full max-w-2xl mx-4 bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+        <h1 className="text-3xl font-bold mb-6 text-center text-white bg-clip-text text-transparent">
+          Tutor Certificates Review
+        </h1>
 
-        <div className="mb-6">
-          <button
-            onClick={openModal}
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline font-medium"
-          >
-            View Certificates
-          </button>
+        <div className="mb-8 text-center">
+          {uploadedCertificates.length > 0 ? (
+            <button
+              onClick={openModal}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-medium transition duration-300 transform hover:scale-105 hover:shadow-lg"
+            >
+              View {uploadedCertificates.length} Certificate
+              {uploadedCertificates.length !== 1 && "s"}
+            </button>
+          ) : (
+            <p className="text-gray-400 italic">No certificates available</p>
+          )}
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">
-            Confirmation
+        <div className="bg-gray-700/50 p-6 rounded-lg border border-gray-600 backdrop-blur-sm">
+          <h3 className="text-xl font-semibold mb-6 text-center">
+            Review Decision
           </h3>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
             <button
-              className="mx-3 px-6 py-2 text-white bg-green-500 hover:bg-green-600 rounded-lg font-medium shadow-sm transition duration-200"
+              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-lg font-medium shadow-lg transition duration-300 transform hover:scale-105"
               onClick={handleAccept}
             >
-              Accept
+              Accept Tutor
             </button>
             <button
-              className=" mx-3 px-6 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg font-medium shadow-sm transition duration-200"
+              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 rounded-lg font-medium shadow-lg transition duration-300 transform hover:scale-105"
               onClick={handleReject}
             >
-              Reject
+              Reject Tutor
             </button>
           </div>
         </div>
       </div>
 
-      {/* dd */}
+      {/* Certificate Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-lg max-w-lg w-full">
-            <h2 className="text-2xl font-bold mb-4">Certificates</h2>
-            <div className="relative">
-              {/* Conditional Rendering for File Types */}
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-xl max-w-3xl w-full border border-gray-700 shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-gray-700">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                  Certificate {currentCertificateIndex + 1} of{" "}
+                  {uploadedCertificates.length}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-900 min-h-[400px] flex items-center justify-center">
               {uploadedCertificates[currentCertificateIndex] && (
                 <>
                   {uploadedCertificates[currentCertificateIndex].endsWith(
@@ -182,7 +217,7 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
                     <iframe
                       src={uploadedCertificates[currentCertificateIndex]}
                       title={`Certificate ${currentCertificateIndex + 1}`}
-                      className="w-full h-96"
+                      className="w-full h-[500px] border-none rounded-md"
                     ></iframe>
                   ) : uploadedCertificates[currentCertificateIndex].endsWith(
                       ".jpg"
@@ -193,46 +228,96 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
                     uploadedCertificates[currentCertificateIndex].endsWith(
                       ".png"
                     ) ? (
-                    <Image
-                      src={uploadedCertificates[currentCertificateIndex]}
-                      alt={`Certificate ${currentCertificateIndex + 1}`}
-                      width={400}
-                      height={300}
-                      objectFit="contain"
-                    />
+                    <div className="relative w-full h-[500px]">
+                      <Image
+                        src={uploadedCertificates[currentCertificateIndex]}
+                        alt={`Certificate ${currentCertificateIndex + 1}`}
+                        layout="fill"
+                        objectFit="contain"
+                        className="rounded-md"
+                      />
+                    </div>
                   ) : (
-                    <p className="text-center">
-                      Unsupported file type:{" "}
-                      {uploadedCertificates[currentCertificateIndex]
-                        .split(".")
-                        .pop()}
-                    </p>
+                    <div className="text-center p-8 bg-gray-800 rounded-lg">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-16 w-16 mx-auto text-gray-500 mb-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                      <p className="text-xl font-medium text-gray-300">
+                        Unsupported file type:{" "}
+                        {uploadedCertificates[currentCertificateIndex]
+                          .split(".")
+                          .pop()}
+                      </p>
+                    </div>
                   )}
                 </>
               )}
+            </div>
+
+            <div className="flex justify-between items-center p-6 border-t border-gray-700">
               <button
                 onClick={handlePrev}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-l"
+                className="flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-300"
               >
-                &#8249;
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Previous
+              </button>
+              <button
+                onClick={closeModal}
+                className="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition duration-300"
+              >
+                Close
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-r"
+                className="flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-300"
               >
-                &#8250;
+                Next
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 ml-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
               </button>
             </div>
-            <button
-              onClick={closeModal}
-              className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
     </div>
   );
 };
+
 export default TutorCertificates;

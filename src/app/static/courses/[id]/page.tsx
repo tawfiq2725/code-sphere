@@ -215,7 +215,6 @@ export default function CourseDetailsPage({
                   <div className="bg-gray-900/50 p-6 rounded-lg ">
                     <h3 className="font-semibold mb-2">Tutor Details</h3>
                     <div className="flex flex-col justify-center">
-                      {/* Profile Image */}
                       <div className="w-20 h-20 mb-4 rounded-full overflow-hidden border-2 border-gray-600 shadow-sm">
                         <Image
                           src={tutorData?.profile || "/default-profile.jpg"}

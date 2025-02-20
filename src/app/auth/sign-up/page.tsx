@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+
 import { SignIn } from "@/app/components/common/Common";
 import { showToast } from "@/utils/toastUtil";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/utils/validators";
 import { backendUrl } from "@/utils/backendUrl";
 import dynamic from "next/dynamic";
+import { Eye, EyeConfirm } from "@/app/components/common/Eye";
 const OtpPage = dynamic(() => import("@/app/components/common/Otp"), {
   loading: () => <div>Loading OTP...</div>,
 });
@@ -197,20 +198,10 @@ export default function SignupPage() {
                 placeholder="********"
                 className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-                <span className="sr-only">
-                  {showPassword ? "Hide password" : "Show password"}
-                </span>
-              </button>
+              <Eye
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+              />
             </div>
           </div>
 
@@ -233,20 +224,10 @@ export default function SignupPage() {
                 placeholder="Same as password"
                 className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300"
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-                <span className="sr-only">
-                  {showConfirmPassword ? "Hide password" : "Show password"}
-                </span>
-              </button>
+              <EyeConfirm
+                showConfirmPassword={showConfirmPassword}
+                setShowConfirmPassword={setShowConfirmPassword}
+              />
             </div>
           </div>
 

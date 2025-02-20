@@ -136,14 +136,14 @@ const UserLists = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 flex flex-col min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-8">
+    <div className=" bg-black container mx-auto p-4 flex flex-col min-h-screen">
+      <h1 className="text-3xl text-white font-bold text-center mb-8">
         Student Management
       </h1>
       <div className="mb-6 w-full max-w-md mx-auto">
         <Search searchTerm={searchTerm} onSearch={setSearchTerm} />
       </div>
-      <div className="bg-white shadow-md rounded-lg overflow-hidden flex-grow">
+      <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden mx-20">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
@@ -151,35 +151,35 @@ const UserLists = () => {
         ) : users.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-700 text-white">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="p-3 text-center ">S.no</th>
+                  <th className="pl-10 text-left ">Name</th>
+                  <th className="p-3 text-center ">Email</th>
+                  <th className="p-3 text-center ">Verified</th>
+                  <th className="p-3 text-center ">Status</th>
+                  <th className="p-3 text-center ">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+              <tbody>
+                {users.map((user, index) => (
+                  <tr
+                    key={user._id}
+                    className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center">
-                        <User className="h-5 w-5 text-gray-400 mr-3" />
-                        <div className="text-sm font-medium text-gray-900">
+                        <User className="h-5 w-5 text-gray-50 mr-3" />
+                        <div className="text-sm font-medium text-gray-50">
                           {user.name}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-50">{user.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex justify-center space-x-2">
@@ -194,6 +194,10 @@ const UserLists = () => {
                             aria-label="Not Verified"
                           />
                         )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex justify-center space-x-2">
                         {user.isBlocked ? (
                           <Shield
                             className="h-5 w-5 text-red-500"
@@ -230,12 +234,12 @@ const UserLists = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-64">
-            <User className="h-16 w-16 text-gray-400 mb-4" />
-            <p className="text-xl text-gray-500">No students found</p>
+            <User className="w-16 h-16 text-gray-500 mb-4" />
+            <p className="text-xl text-gray-400">No Students found</p>
           </div>
         )}
       </div>
-      {pagination && pagination.totalPages > 1 && (
+      {pagination && (
         <div className="mt-6">
           <Pagination
             currentPage={pagination.page}

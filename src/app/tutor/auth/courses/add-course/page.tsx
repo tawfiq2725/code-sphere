@@ -5,7 +5,7 @@ import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
-import axios from "axios"; // Import axios
+import axios from "axios";
 
 export default function AddCourseForm() {
   const [courseName, setCourseName] = useState("");
@@ -56,6 +56,38 @@ export default function AddCourseForm() {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (
+      !courseName ||
+      !courseDescription ||
+      !info ||
+      !price ||
+      !prerequisites ||
+      !selectedCategory
+    ) {
+      return showToast("Please fill all the fields", "error");
+    }
+    const priceRegex = /^[0-9]+(\.[0-9]{1,2})?$/;
+    const courseNameRegex = /^[a-zA-Z\s]+$/;
+    const courseDescriptionRegex = /^[a-zA-Z.,\s]+$/;
+    const infoRegex = /^[a-zA-Z.,\s]+$/;
+    const prerequisitesRegex = /^[a-zA-Z.,\s]+$/;
+
+    if (!priceRegex.test(price.toString())) {
+      return showToast("Please enter a valid price", "error");
+    }
+    if (!courseNameRegex.test(courseName)) {
+      return showToast("Please enter a valid course name", "error");
+    }
+    if (!courseDescriptionRegex.test(courseDescription)) {
+      return showToast("Please enter a valid course description", "error");
+    }
+    if (!infoRegex.test(info)) {
+      return showToast("Please enter a valid course information", "error");
+    }
+    if (!prerequisitesRegex.test(prerequisites)) {
+      return showToast("Please enter a valid course prerequisites", "error");
+    }
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -199,7 +231,6 @@ export default function AddCourseForm() {
               className="w-full px-3 py-2 border bg-gray-800 text-white border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 transition-all duration-200 rounded-md"
               placeholder="Enter course price"
               min="0"
-              step="0.01"
             />
           </div>
 
