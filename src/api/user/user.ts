@@ -60,3 +60,19 @@ export const getMembershipByUserId = async (id: any, token: any) => {
     console.log(err);
   }
 };
+
+export const getUserCertficates = async (userId: string, token: any) => {
+  try {
+    const response = await axios.get(
+      `${backendUrl}/get-certifcates/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data.data;
+  } catch (err) {
+    console.log(err);
+  }
+};

@@ -38,11 +38,9 @@ export default function SimpleCourseManagement() {
   const tutorId: string = localStorage.getItem("tutor_id") || "";
 
   useEffect(() => {
-    // Fetch courses first
     getCourseData(token, tutorId)
       .then(async (res) => {
         const coursesData: Course[] = res.data;
-        // For each course, fetch the enrollment count.
         const coursesWithEnrollment = await Promise.all(
           coursesData.map(async (course) => {
             try {
@@ -153,7 +151,15 @@ export default function SimpleCourseManagement() {
                         <Link
                           href={`/tutor/auth/enroll-students/${course.courseId}`}
                         >
-                          <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-1 px-2 rounded text-xs">
+                          <button
+                            onClick={() =>
+                              localStorage.setItem(
+                                "courseName",
+                                course.courseName
+                              )
+                            }
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-1 px-2 rounded text-xs"
+                          >
                             Check
                           </button>
                         </Link>

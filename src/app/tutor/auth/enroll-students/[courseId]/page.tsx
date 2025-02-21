@@ -1,20 +1,26 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useRef, useEffect, useState, use } from "react";
 import Pagination from "@/app/components/common/pagination";
-import { MessageCircle, MessageCircleHeart } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getEnrollStudents } from "@/api/tutor";
+import { getEnrollStudents, getCourseById } from "@/api/tutor"; // Add getCourseById
 import Cookies from "js-cookie";
 import Link from "next/link";
+import { toast } from "react-toastify";
+import { ToastConfirm } from "@/app/components/common/Toast";
+import Certificate from "@/app/components/Tutor/Certificate";
+import Modal from "@/app/components/Tutor/canvas";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { useSelector } from "react-redux";
 
 interface CourseProgress {
   courseId: string;
   progress: number;
   completedChapters: string[];
-  _id: string;
-
   totalChapters: number;
+  _id?: string;
 }
 
 interface Student {
@@ -22,6 +28,7 @@ interface Student {
   name: string;
   email: string;
   courseProgress: CourseProgress[];
+  certificates?: string[];
 }
 
 export default function EnrollStudents({
@@ -29,24 +36,32 @@ export default function EnrollStudents({
 }: {
   params: Promise<{ courseId: string }>;
 }) {
-  // Using the course id from the route params
   const { courseId } = use(params);
   const router = useRouter();
-  const token = Cookies.get("jwt_token");
+  const token = Cookies.get("jwt_token") || "";
+  const { user } = useSelector((state: any) => state.auth);
 
   const [students, setStudents] = useState<Student[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [tutorName, setTutorName] = useState("");
+  const [courseName, setCourseName] = useState("");
+  const certificateRef = useRef<HTMLDivElement>(null); // Ref for certificate
   const itemsPerPage = 5;
 
   useEffect(() => {
-    getEnrollStudents(courseId, token)
-      .then((response) => {
-        const enrolledStudents: Student[] = response;
-        setStudents(enrolledStudents);
-      })
-      .catch((error) => {
-        console.error("Error fetching enrolled students:", error);
-      });
+    if (courseId) {
+      let course = localStorage.getItem("courseName");
+      if (course) setCourseName(course);
+      getEnrollStudents(courseId, token)
+        .then((response) => {
+          setStudents(response);
+        })
+        .catch((error) => {
+          console.error("Error fetching enrolled students:", error);
+        });
+    }
   }, [courseId, token]);
 
   // Pagination logic
@@ -69,6 +84,81 @@ export default function EnrollStudents({
     );
   };
 
+  const openModal = (student: Student) => {
+    setSelectedStudent(student);
+    setTutorName("");
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedStudent(null);
+    setTutorName("");
+  };
+
+  const handleApproveCertificate = async () => {
+    toast.info(
+      <ToastConfirm
+        message="Are you sure you want to approve this certificate?"
+        onConfirm={async () => {
+          toast.dismiss();
+
+          const certificateElement = certificateRef.current;
+          if (!certificateElement) {
+            toast.error("Error: Certificate element not found");
+            return;
+          }
+
+          try {
+            const canvas = await html2canvas(certificateElement);
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF();
+            pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+            const pdfBlob = pdf.output("blob");
+            const formData = new FormData();
+            formData.append("pdf", pdfBlob, "certificate.pdf");
+            formData.append("tutorName", user.user.name);
+            if (selectedStudent) {
+              formData.append("studentId", selectedStudent._id);
+            }
+            formData.append("courseId", courseId);
+
+            const response = await fetch(
+              "http://localhost:5000/tutor/api/approve-certificate",
+              {
+                method: "POST",
+                body: formData,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (response.ok) {
+              toast.success("Certificate approved successfully");
+              closeModal();
+            } else {
+              toast.error("Error approving certificate");
+            }
+          } catch (error) {
+            console.error("Error generating or sending certificate:", error);
+            toast.error("Error approving certificate");
+          }
+        }}
+        onCancel={() => {
+          toast.dismiss();
+        }}
+      />,
+      {
+        position: "top-right",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+      }
+    );
+  };
+
   return (
     <div className="mx-auto p-4 w-full h-screen flex justify-center bg-black">
       <div className="bg-gray-800 h-max shadow-md rounded-lg overflow-hidden w-8/12">
@@ -81,7 +171,7 @@ export default function EnrollStudents({
           </p>
         </div>
         <div className="p-6">
-          <div className="mb-4">
+          <div className="mb-4 flex justify-between">
             <button
               className="bg-purple-500 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded"
               onClick={() => router.back()}
@@ -101,6 +191,7 @@ export default function EnrollStudents({
                     Status
                   </th>
                   <th className="p-3 border-b text-center">Message</th>
+                  <th className="p-3 border-b text-center">Certificate</th>
                 </tr>
               </thead>
               <tbody>
@@ -113,6 +204,11 @@ export default function EnrollStudents({
                     progress && progress.progress === 100
                       ? "Completed"
                       : "Pending";
+                  const isApproved =
+                    progress &&
+                    progress.progress === 100 &&
+                    student.certificates &&
+                    student.certificates.includes(courseId);
 
                   return (
                     <tr key={student._id} className="text-gray-50">
@@ -128,21 +224,39 @@ export default function EnrollStudents({
                       </td>
                       <td className="p-3 border-b hidden sm:table-cell text-center">
                         {status === "Completed" ? (
-                          <span className="bg-green-500 text-white px-2 py-1 rounded-full">
+                          <span className="bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
                             {status}
                           </span>
                         ) : (
-                          <span className="bg-red-500 text-white px-2 py-1 rounded-full">
+                          <span className="bg-red-500/20 text-red-300 px-2 py-1 rounded-full">
                             {status}
                           </span>
                         )}
                       </td>
-                      <td className="p-3 border-b ">
-                        <Link href={`/tutor/auth/message/${student._id}`}>
-                          <p>
-                            <MessageCircle className="w-5 h-5 text-white " />
-                          </p>
-                        </Link>
+                      <td className="p-3 border-b">
+                        <div className="flex justify-center items-center">
+                          <Link href={`/tutor/auth/message/${student._id}`}>
+                            <MessageCircle className="w-5 h-5 text-white" />
+                          </Link>
+                        </div>
+                      </td>
+                      <td className="p-3 border-b text-center">
+                        {status === "Completed" && !isApproved ? (
+                          <button
+                            onClick={() => openModal(student)}
+                            className="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1 rounded"
+                          >
+                            Approve
+                          </button>
+                        ) : status === "Completed" && isApproved ? (
+                          <span className="bg-green-500 text-white px-3 py-1 rounded">
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="bg-gray-500 text-white px-3 py-1 rounded">
+                            Pending
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -157,6 +271,54 @@ export default function EnrollStudents({
           </div>
         </div>
       </div>
+
+      {/* Approval Modal */}
+      <Modal isOpen={isModalOpen} onClose={closeModal}>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-white">
+            Approve Certificate for {selectedStudent?.name}
+          </h2>
+          <div>
+            <label className="block text-gray-200 mb-2">
+              Tutor Name:
+              <input
+                type="text"
+                value={tutorName}
+                onChange={(e) => setTutorName(e.target.value)}
+                className="w-full p-2 mt-1 bg-gray-700 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter your name"
+              />
+            </label>
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-gray-200 mb-2">
+              Certificate Preview
+            </h3>
+            <div ref={certificateRef}>
+              <Certificate
+                studentName={selectedStudent?.name || ""}
+                courseName={courseName || "Default Course"} // Use fetched course name
+                tutorName={tutorName}
+                date={new Date().toLocaleDateString()}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={closeModal}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleApproveCertificate}
+              className="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded"
+            >
+              Approve
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

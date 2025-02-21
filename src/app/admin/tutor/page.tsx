@@ -25,6 +25,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const TutorList = () => {
   interface User {
     _id: string;
+    profile: string;
     name: string;
     email: string;
     isVerified: boolean;
@@ -158,6 +159,8 @@ const TutorList = () => {
             <table className="w-full">
               <thead className="bg-gray-700">
                 <tr>
+                  <th className="p-3 text-left">S.no</th>
+                  <th className="p-3 text-left">Profile</th>
                   <th className="p-3 text-left">Name</th>
                   <th className="p-3 text-left">Email</th>
                   <th className="p-3 text-left">Subjects</th>
@@ -167,13 +170,20 @@ const TutorList = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {users.map((user, index) => (
                   <tr
                     key={user._id}
                     className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors"
                   >
-                    <td className="p-3 flex items-center space-x-3">
-                      <User className="w-5 h-5 text-gray-400" />
+                    <td className="p-3 ">
+                      <span>{index + 1}</span>
+                    </td>
+                    <td className="p-3 ">
+                      <div className="w-11 h-11 relative flex-shrink-0  py-1">
+                        <img src={user.profile} />
+                      </div>
+                    </td>
+                    <td className="p-3">
                       <span>{user.name}</span>
                     </td>
                     <td className="p-3">{user.email}</td>

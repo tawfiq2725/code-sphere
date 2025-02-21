@@ -14,6 +14,7 @@ import {
   Users,
   X,
   FormInput,
+  BookIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,6 +30,11 @@ const navigation = [
   },
   { name: "Orders", href: "/student/profile/my-orders", icon: ShoppingCart },
   { name: "Membership", href: "/student/profile/membership", icon: Gift },
+  {
+    name: "Certificates",
+    href: "/student/profile/certificates",
+    icon: BookIcon,
+  },
 ];
 
 export default function Sidebar() {

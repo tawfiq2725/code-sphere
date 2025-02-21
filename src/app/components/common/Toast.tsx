@@ -9,7 +9,7 @@ interface ToastProps {
 
 export const ToastConfirm = ({ message, onConfirm, onCancel }: ToastProps) => {
   const handleConfirm = () => {
-    toast.dismiss(); // Dismiss the toast
+    toast.dismiss();
     onConfirm && onConfirm();
   };
 
