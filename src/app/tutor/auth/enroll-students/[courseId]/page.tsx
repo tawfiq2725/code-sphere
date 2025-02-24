@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, use } from "react";
 import Pagination from "@/app/components/common/pagination";
 import { MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getEnrollStudents, getCourseById } from "@/api/tutor"; // Add getCourseById
+import { getEnrollStudents } from "@/api/tutor";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { toast } from "react-toastify";
@@ -14,6 +14,7 @@ import Modal from "@/app/components/Tutor/canvas";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useSelector } from "react-redux";
+import { set } from "nprogress";
 
 interface CourseProgress {
   courseId: string;
@@ -23,12 +24,20 @@ interface CourseProgress {
   _id?: string;
 }
 
+interface UserCertificate {
+  courseId: string;
+  status: "approved" | "unavailable";
+  certificateUrl?: string;
+  issuedDate?: Date;
+  approvedBy?: string;
+}
+
 interface Student {
   _id: string;
   name: string;
   email: string;
   courseProgress: CourseProgress[];
-  certificates?: string[];
+  CourseCertificate?: UserCertificate[];
 }
 
 export default function EnrollStudents({
@@ -47,7 +56,8 @@ export default function EnrollStudents({
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [tutorName, setTutorName] = useState("");
   const [courseName, setCourseName] = useState("");
-  const certificateRef = useRef<HTMLDivElement>(null); // Ref for certificate
+  const [isLoading, setIsLoading] = useState(false);
+  const certificateRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -57,6 +67,7 @@ export default function EnrollStudents({
       getEnrollStudents(courseId, token)
         .then((response) => {
           setStudents(response);
+          console.log("Enrolled students:", response);
         })
         .catch((error) => {
           console.error("Error fetching enrolled students:", error);
@@ -110,6 +121,7 @@ export default function EnrollStudents({
           }
 
           try {
+            setIsLoading(true);
             const canvas = await html2canvas(certificateElement);
             const imgData = canvas.toDataURL("image/png");
             const pdf = new jsPDF();
@@ -137,6 +149,7 @@ export default function EnrollStudents({
             if (response.ok) {
               toast.success("Certificate approved successfully");
               closeModal();
+              setIsLoading(false);
             } else {
               toast.error("Error approving certificate");
             }
@@ -204,11 +217,10 @@ export default function EnrollStudents({
                     progress && progress.progress === 100
                       ? "Completed"
                       : "Pending";
-                  const isApproved =
-                    progress &&
-                    progress.progress === 100 &&
-                    student.certificates &&
-                    student.certificates.includes(courseId);
+                  const certificate = student.CourseCertificate?.find(
+                    (cert) => cert.courseId === courseId
+                  );
+                  const isApproved = certificate?.status === "approved";
 
                   return (
                     <tr key={student._id} className="text-gray-50">
@@ -235,7 +247,7 @@ export default function EnrollStudents({
                       </td>
                       <td className="p-3 border-b">
                         <div className="flex justify-center items-center">
-                          <Link href={`/tutor/auth/message/${student._id}`}>
+                          <Link href={`/tutor/auth/message`}>
                             <MessageCircle className="w-5 h-5 text-white" />
                           </Link>
                         </div>
@@ -273,7 +285,7 @@ export default function EnrollStudents({
       </div>
 
       {/* Approval Modal */}
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
+      <Modal isOpen={isModalOpen} onClose={closeModal} isLoading={isLoading}>
         <div className="space-y-6">
           <h2 className="text-2xl font-bold text-white">
             Approve Certificate for {selectedStudent?.name}

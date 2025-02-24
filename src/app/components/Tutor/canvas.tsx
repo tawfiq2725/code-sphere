@@ -4,13 +4,27 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  isLoading?: boolean;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  children,
+  isLoading,
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div
+            className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"
+            role="status"
+          ></div>
+        </div>
+      )}
       <div className="bg-gray-900 rounded-xl w-[95%] max-w-3xl p-6 relative shadow-2xl">
         <button
           onClick={onClose}

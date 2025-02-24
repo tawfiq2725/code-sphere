@@ -31,8 +31,8 @@ const authSlice = createSlice({
       state.role = role;
       console.log(token);
       console.log(role);
-      Cookies.set("jwt_token", token, { expires: 7 });
-      Cookies.set("role", role, { expires: 7 });
+      Cookies.set("jwt_token", token, { expires: 1 / (24 * 60) });
+      Cookies.set("role", role, { expires: 1 / (24 * 60) });
       console.log(state.isAuthenticated, state.token, state.role);
     },
     logout: (state) => {

@@ -4,42 +4,9 @@ import { StatItem } from "@/app/components/User/stat-item";
 import { FeatureCard } from "@/app/components/User/feature-card";
 import { CodeEditor } from "@/app/components/User/code-editor";
 import TrustedSection from "@/app/components/User/end-hero";
-import { useEffect } from "react";
-import { showToast } from "@/utils/toastUtil";
-import { backendUrl } from "@/utils/backendUrl";
+
 import { useDispatch } from "react-redux";
-import { getUserDetails } from "@/store/slice/authSlice";
 export default function Home() {
-  const dispatch = useDispatch();
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const email = localStorage.getItem("userEmail");
-        const token = localStorage.getItem("jwt_token");
-        const response = await fetch(
-          `${backendUrl}/get-profile?email=${email}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
-
-        if (data.success) {
-          dispatch(getUserDetails({ user: data.data }));
-        } else {
-          showToast(data.message, "error");
-        }
-      } catch (error: any) {
-        console.log("Error fetching user profile:", error);
-      }
-    };
-    fetchUserProfile();
-  }, []);
-
   return (
     <>
       <div className="min-h-screen bg-black text-white px-10">
@@ -85,13 +52,13 @@ export default function Home() {
             <FeatureCard
               title="Perfectly Structured Courses"
               description="No more jumping between random YouTube tutorials. Follow a clear, logical path designed to build your skills step by step."
-              imageUrl="/public/img-1.PNG"
+              imageUrl="/img-1.png"
               align="left"
             />
             <FeatureCard
               title="Clear and Bite-Sized Lessons"
               description="Each lesson is focused and fast-paced, so you can make real progress every day with a bite-sized learning approach averaging 5 minutes."
-              imageUrl="/public/img-2.PNG"
+              imageUrl="/img-2.png"
               align="right"
             />
           </section>

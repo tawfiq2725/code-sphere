@@ -1,15 +1,14 @@
 "use client";
 
-import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
-
+import api from "@/api/axios";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import Otp from "@/app/components/common/Otp-Forgot";
 
 const Page = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [otpPage, setOtpPage] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,24 +21,14 @@ const Page = () => {
     }
 
     try {
-      const response = await fetch(backendUrl + "/forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-        }),
-      });
-
-      const data = await response.json();
       localStorage.setItem("userEmail", email);
-
-      if (data.success) {
-        showToast("OTP sent successfully.", "success");
-        router.push("/auth/forgotpass/verify-otp");
+      const response = await api.post("/forgot-password", { email });
+      const { success, message } = await response.data;
+      if (success) {
+        showToast(message || "OTP sent successfully.", "success");
+        setOtpPage(true);
       } else {
-        showToast(data.message || "Failed to send OTP.", "error");
+        showToast(message || "Failed to send OTP.", "error");
       }
     } catch (error: any) {
       console.error(error);
@@ -48,7 +37,9 @@ const Page = () => {
       setIsLoading(false);
     }
   }
-
+  if (otpPage) {
+    return <Otp userEmail={email} />;
+  }
   return (
     <div className="min-h-screen flex items-center justify-center bg-black p-4">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-6 text-white">

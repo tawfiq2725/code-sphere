@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { showToast } from "@/utils/toastUtil";
-import { backendUrl } from "@/utils/backendUrl";
-
+import api from "@/api/axios";
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [password, setPassword] = useState("");
@@ -16,26 +15,20 @@ export default function LoginPage() {
     const email = localStorage.getItem("userEmail");
     // ithu form submission
     try {
-      const respone = await fetch(backendUrl + "/new-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          confirm,
-        }),
+      const respone = await api.post("/new-password", {
+        email,
+        password,
+        confirm,
       });
-      const data = await respone.json();
-      if (!data.success) {
-        showToast(data.message, "error");
+      const { success, message } = await respone.data;
+      if (!success) {
+        showToast(message, "error");
       } else {
-        showToast("Password Changed Successfully", "success");
-        router.push("/student/sign-in");
+        showToast(message || "Password Changed Successfully", "success");
+        router.push("/auth/sign-in");
       }
-    } catch (error) {
-      showToast("Your Blocked From Admin or Your not Registered", "error");
+    } catch (error: any) {
+      showToast(error.response.message, "error");
     }
     setTimeout(() => setIsLoading(false), 1000);
   }

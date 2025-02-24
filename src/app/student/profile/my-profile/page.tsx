@@ -1,39 +1,31 @@
 "use client";
 import { logout, getUserDetails } from "@/store/slice/authSlice";
-import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
 import { useState, useRef, useEffect } from "react";
-import Cookies from "js-cookie";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
 import { Eye, EyeConfirm } from "@/app/components/common/Eye";
+import api from "@/api/axios";
 
 export default function UserProfile() {
   const dispatch = useDispatch();
-  const router = useRouter();
-  const token = Cookies.get("jwt_token");
-
   const { user } = useSelector((state: any) => state.auth);
-
-  // Fetch user profile data
+  const email = user.user.email;
+  console.log(email);
   const fetchUserProfile = async () => {
     try {
-      const email = localStorage.getItem("userEmail");
-      const token = localStorage.getItem("jwt_token");
-      const response = await fetch(`${backendUrl}/get-profile?email=${email}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await api.get("/get-profile", {
+        params: {
+          email,
         },
       });
-      const data = await response.json();
+      console.log(res.data);
+      const { message, success, data } = await res.data;
 
-      if (data.success) {
-        dispatch(getUserDetails({ user: data.data }));
+      if (success) {
+        dispatch(getUserDetails({ user: data }));
       } else {
-        showToast(data.message, "error");
+        showToast(message, "error");
       }
     } catch (error: any) {
       console.log("Error fetching user profile:", error);
@@ -44,7 +36,6 @@ export default function UserProfile() {
     fetchUserProfile();
   }, []);
 
-  // State for image upload and password change
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -72,30 +63,28 @@ export default function UserProfile() {
     const formData = new FormData();
     formData.append("profileImage", selectedImage);
     formData.append("userId", user.user._id);
+    console.log(formData);
 
     try {
-      const response = await fetch(
-        `${backendUrl}/api/user/update-profile-image`,
+      const response = await api.patch(
+        "/api/user/update-profile-image",
+        formData,
         {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
-      const data = await response.json();
-      if (data.success) {
-        showToast("Profile image updated successfully", "success");
-        router.refresh();
-        fetchUserProfile();
+      const { success, message, data } = response.data;
+      if (success) {
+        showToast(message, "success");
+        dispatch(getUserDetails({ user: data }));
         setSelectedImage(null);
       } else {
-        showToast(data.message, "error");
+        showToast(message, "error");
       }
-    } catch (error) {
-      showToast("Error uploading image", "error");
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || "Error uploading image";
+      showToast(errorMsg, "error");
     } finally {
       setLoading(false);
     }
@@ -103,29 +92,33 @@ export default function UserProfile() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      showToast("Please fill in all fields", "error");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       showToast("Passwords do not match", "error");
       return;
     }
 
-    const response = await fetch(`${backendUrl}/api/user/change-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
+    try {
+      const response = await api.post("/api/user/change-password", {
         oldPassword,
         newPassword,
         userId: user.user._id,
-      }),
-    });
+      });
 
-    const data = await response.json();
-    if (data.success) {
-      showToast("Password changed successfully", "success");
-    } else {
-      showToast(data.message, "error");
+      const { success, message } = response.data;
+      if (success) {
+        showToast(message, "success");
+      } else {
+        showToast(message, "error");
+      }
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.message || "Error changing password";
+      console.log(errorMsg);
     }
   };
 
@@ -220,7 +213,6 @@ export default function UserProfile() {
                   onChange={(e) => setOldPassword(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter your old password"
-                  required
                   autoComplete="off"
                 />
                 <Eye
@@ -244,7 +236,6 @@ export default function UserProfile() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter your new password"
-                  required
                   autoComplete="off"
                 />
                 <Eye
@@ -268,7 +259,6 @@ export default function UserProfile() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Confirm your new password"
-                  required
                   autoComplete="off"
                 />
                 <EyeConfirm

@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "@/store/slice/authSlice";
+import api from "@/api/axios";
 const page = () => {
   const router = useRouter();
   const [role, setRole] = React.useState("");
@@ -26,24 +27,22 @@ const page = () => {
     const userId = localStorage.getItem("UserId");
 
     try {
-      const response = await fetch(`${backendUrl}/auth/set-role`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, userId }),
+      const response = await api.post("/auth/set-role", {
+        role,
+        userId,
       });
-      const data = await response.json();
+      const { data, message, success } = await response.data;
+      localStorage.setItem("userEmail", data.email);
 
-      localStorage.setItem("userEmail", data.data.email);
-
-      if (data.success) {
+      if (success) {
         dispatch(
           loginSuccess({
-            token: data.data.jwt_token,
-            role: data.data.role,
+            token: data.jwt_token,
+            role: data.role,
           })
         );
 
-        showToast(data.message, "success");
+        showToast(message, "success");
 
         const routes: Record<string, string> = {
           student: "/student",
@@ -51,7 +50,7 @@ const page = () => {
           admin: "/admin/dashboard",
         };
 
-        router.push(routes[data.data.role]);
+        router.push(routes[data.role]);
       } else {
         showToast("Failed to set role", "error");
       }

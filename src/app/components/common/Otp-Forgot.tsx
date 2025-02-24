@@ -1,11 +1,10 @@
 "use client";
-
-import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import api from "@/api/axios";
 
-export default function OTPVerification() {
+export default function OTPVerification({ userEmail }: { userEmail: string }) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(30);
   const [canResend, setCanResend] = useState(false);
@@ -13,10 +12,7 @@ export default function OTPVerification() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
   useEffect(() => {
-    // Focus first input on mount
     inputRefs.current[0]?.focus();
-
-    // Start countdown
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -72,18 +68,12 @@ export default function OTPVerification() {
     // Simulate API call
     const email = localStorage.getItem("userEmail");
     try {
-      const response = await fetch(backendUrl + "/resend-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
-      if (!data.success) {
-        showToast(data.message, "error");
+      const response = await api.post("/resend-otp", { email });
+      const { success, message } = await response.data;
+      if (!success) {
+        showToast(message, "error");
       } else {
-        showToast(data.message, "success");
+        showToast(message, "success");
       }
     } catch (error) {
       showToast("Otp Resend Failed", "error");
@@ -93,27 +83,21 @@ export default function OTPVerification() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    const email = localStorage.getItem("userEmail");
     const otpFormated = otp.join("");
     try {
-      const response = await fetch(backendUrl + "/verify-forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, otp: otpFormated }),
+      const response = await api.post("/verify-forgot-password", {
+        email: userEmail,
+        otp: otpFormated,
       });
-      const data = await response.json();
-      if (!response.ok) {
-        showToast(data.message, "error");
+      const { message, success } = await response.data;
+      if (!success) {
+        showToast(message, "error");
       } else {
         router.push("/auth/forgotpass/new-password");
-
-        showToast(data.message, "success");
+        showToast(message, "success");
       }
     } catch (error) {
-      showToast("Otp Wrong", "error");
+      console.error(error);
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsLoading(false);
@@ -127,7 +111,6 @@ export default function OTPVerification() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* OTP Input Group */}
           <div className="flex justify-between gap-2 sm:gap-4">
             {otp.map((digit, index) => (
               <input

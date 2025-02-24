@@ -7,6 +7,7 @@ import { backendUrl } from "@/utils/backendUrl";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { getUserDetails } from "@/store/slice/authSlice";
+import api from "@/api/axios";
 
 const TutorProfile = () => {
   const { user } = useSelector((state: any) => state.auth);
@@ -41,23 +42,16 @@ const TutorProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch(
-        `${backendUrl}/tutor/profile?email=${email}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await api.get("/tutor/profile", {
+        params: { email },
+      });
+      const { data, success, message } = await response.data;
 
-      localStorage.setItem("tutor_id", data.data._id);
-      if (!data.success) {
-        showToast(data.message, "error");
+      localStorage.setItem("tutor_id", data._id);
+      if (!success) {
+        showToast(message, "error");
       } else {
-        dispatch(getUserDetails({ user: data.data }));
+        dispatch(getUserDetails({ user: data }));
       }
     } catch (error) {
       console.error("Error fetching user details", error);
@@ -98,21 +92,19 @@ const TutorProfile = () => {
         console.log(pair[0], pair[1]);
       }
 
-      const response = await fetch(`${backendUrl}/tutor/profile/`, {
-        method: "PATCH",
+      const response = await api.patch("/tutor/profile/", formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        body: formData,
       });
 
-      const data = await response.json();
-      if (!data.success) {
-        showToast(data.message, "error");
+      const { success, message, data } = await response.data;
+      if (!success) {
+        showToast(message, "error");
       } else {
-        setUploadedCertificates(data.data.certificates);
+        setUploadedCertificates(data.certificates);
         showToast("Profile updated successfully", "success");
-        fetchProfile();
+        dispatch(getUserDetails({ user: data }));
         setEditedFields({});
       }
     } catch (error) {

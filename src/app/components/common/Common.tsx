@@ -2,9 +2,10 @@ import { showToast } from "@/utils/toastUtil";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { backendUrl } from "@/utils/backendUrl";
+import api from "@/api/axios";
 import { auth } from "@/utils/config/firebase";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "@/store/slice/authSlice";
+import { getUserDetails, loginSuccess } from "@/store/slice/authSlice";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 export const SignIn = () => {
@@ -18,31 +19,20 @@ export const SignIn = () => {
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
 
-      const res = await fetch(`${backendUrl}/api/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json();
+      const res = await api.post("/api/auth/google", { idToken });
+      const { data, message } = await res.data;
 
-      const {
-        newUser,
-        userId,
-        email,
-        role,
-        jwt_token: token,
-        message,
-      } = data.data;
+      const { isNewUser, userId, email, role, jwt_token: token } = data;
 
-      localStorage.setItem("UserId", newUser ? userId : userId);
+      localStorage.setItem("UserId", userId);
       localStorage.setItem("userEmail", email);
 
-      if (newUser) {
+      if (isNewUser) {
         router.push(`/auth/role-page`);
       } else {
         dispatch(loginSuccess({ token, role }));
+        dispatch(getUserDetails({ user: data.user }));
         showToast(message, "success");
-
         const roleRoutes: { [key: string]: string } = {
           student: "/student",
           admin: "/admin/dashboard",

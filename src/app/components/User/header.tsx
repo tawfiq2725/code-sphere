@@ -3,12 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { logout } from "@/store/slice/authSlice";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const dispatch = useDispatch();
   const { isAuthenticated, role, user } = useSelector(
     (state: any) => state.auth
   );

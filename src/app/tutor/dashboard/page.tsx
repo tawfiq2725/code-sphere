@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import { getUserDetails } from "@/store/slice/authSlice";
 import { useEffect, useState } from "react";
+import api from "@/api/axios";
 export default function Page() {
   useEffect(() => {
     fetchProfile();
@@ -13,27 +14,21 @@ export default function Page() {
 
   const dispatch = useDispatch();
   const email = localStorage.getItem("userEmail");
-  const token = Cookies.get("jwt_token");
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch(
-        `${backendUrl}/tutor/profile?email=${email}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await api.get(`/tutor/profile`, {
+        params: {
+          email,
+        },
+      });
+      const { data, success, message } = await response.data;
 
-      localStorage.setItem("tutor_id", data.data._id);
-      if (!data.success) {
-        showToast(data.message, "error");
+      localStorage.setItem("tutor_id", data._id);
+      if (!success) {
+        showToast(message, "error");
       } else {
-        dispatch(getUserDetails({ user: data.data }));
+        dispatch(getUserDetails({ user: data }));
       }
     } catch (error) {
       console.error("Error fetching user details", error);

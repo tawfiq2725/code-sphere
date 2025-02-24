@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-
+import api from "@/api/axios";
 import { SignIn } from "@/app/components/common/Common";
 import { showToast } from "@/utils/toastUtil";
 import {
@@ -9,7 +9,6 @@ import {
   validateEmail,
   validatePassword,
 } from "@/utils/validators";
-import { backendUrl } from "@/utils/backendUrl";
 import dynamic from "next/dynamic";
 import { Eye, EyeConfirm } from "@/app/components/common/Eye";
 const OtpPage = dynamic(() => import("@/app/components/common/Otp"), {
@@ -43,58 +42,57 @@ export default function SignupPage() {
     }));
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsLoading(true);
+
+    // Validate all form fields
     const allFieldsFilled = Object.values(formData).every(
       (field) => field.trim() !== ""
     );
     if (!allFieldsFilled) {
       showToast("All fields are required", "error");
-      setIsLoading(false);
       return;
     }
+
+    // Validate email
     const emailError = validateEmail(formData.email);
     if (emailError !== true) {
       showToast(emailError as string, "error");
-      setIsLoading(false);
       return;
     }
 
+    // Validate password
     const passwordError = validatePassword(formData.password);
     if (passwordError !== true) {
       showToast(passwordError as string, "error");
-      setIsLoading(false);
       return;
     }
 
+    // Validate confirm password
     const confirmPasswordError = validateConfirmPassword(
       formData.password,
       formData.confirmPassword
     );
     if (confirmPasswordError !== true) {
       showToast(confirmPasswordError as string, "error");
-      setIsLoading(false);
       return;
     }
 
-    try {
-      const response = await fetch(`${backendUrl}/user`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
+    setIsLoading(true);
 
-      if (!data.success) {
-        showToast(data.message, "error");
+    try {
+      // Sign up API call
+      const response = await api.post("/user", formData);
+      const { success, message } = response.data;
+      if (!success) {
+        showToast(message, "error");
         return;
       }
+      showToast(message, "success");
 
-      showToast(data.message, "success");
-
-      setUserEmail(formData.email);
+      // Store user email and update local state
       localStorage.setItem("userEmail", formData.email);
+      setUserEmail(formData.email);
       setFormData({
         name: "",
         email: "",
@@ -103,24 +101,25 @@ export default function SignupPage() {
         role: "",
       });
 
-      const otpResponse = await fetch(`${backendUrl}/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
+      // Send OTP API call
+      const otpResponse = await api.post("/send-otp", {
+        email: formData.email,
       });
-
-      if (!otpResponse.ok) {
+      if (!otpResponse.data.success) {
         showToast("Failed to send OTP", "error");
       } else {
         showToast("OTP sent successfully", "success");
         setIsOtpStep(true);
       }
     } catch (error: any) {
-      showToast(error.message, "error");
+      showToast(
+        error.message || "Something went wrong. Please contact admin.",
+        "error"
+      );
     } finally {
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 1000);
     }
-  };
+  }
 
   if (isOtpStep) {
     return <OtpPage userEmail={userEmail} />;

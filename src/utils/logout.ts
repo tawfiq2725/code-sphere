@@ -1,18 +1,14 @@
 import { showToast } from "./toastUtil";
+import api from "@/api/axios";
 
 export const logoutUser = async () => {
   try {
-    const response = await fetch("http://localhost:5000/logout", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    if (data.success) {
+    const response = await api.get("/logout");
+    const { success, message } = await response.data;
+    if (success) {
       localStorage.clear();
     } else {
-      showToast(data.message, "error");
+      showToast(message, "error");
     }
   } catch (error) {
     console.error(error);

@@ -59,13 +59,13 @@ export default function Home() {
             <FeatureCard
               title="Perfectly Structured Courses"
               description="No more jumping between random YouTube tutorials. Follow a clear, logical path designed to build your skills step by step."
-              imageUrl="/public/img-1.PNG"
+              imageUrl="/img-1.png"
               align="left"
             />
             <FeatureCard
               title="Clear and Bite-Sized Lessons"
               description="Each lesson is focused and fast-paced, so you can make real progress every day with a bite-sized learning approach averaging 5 minutes."
-              imageUrl="/public/img-2.PNG"
+              imageUrl="/img-2.png"
               align="right"
             />
           </section>

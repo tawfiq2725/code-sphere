@@ -6,10 +6,10 @@ import { SignIn } from "@/app/components/common/Common";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "@/utils/toastUtil";
-import { loginSuccess } from "@/store/slice/authSlice";
+import { getUserDetails, loginSuccess } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
-import { validateForm } from "@/utils/validators";
 import { Eye } from "@/app/components/common/Eye";
+import api from "@/api/axios";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -44,28 +44,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await api.post("/login", { email, password });
+      const { data } = response.data;
+      if (!data) throw new Error("No data returned");
 
-      const data = await response.json();
-      if (!data.data) throw new Error();
-
-      const { jwt_token, role } = data.data;
+      const { jwt_token, role } = data;
       localStorage.setItem("userEmail", email);
       dispatch(loginSuccess({ token: jwt_token, role }));
-      showToast(data.message, "success");
+      dispatch(getUserDetails({ user: data.user }));
+      showToast(response.data.message, "success");
 
       const routes: Record<string, string> = {
         student: "/student",
         admin: "/admin/dashboard",
         tutor: "/tutor/dashboard",
       };
+
       router.push(routes[role] || "/auth/sign-in");
     } catch (error: any) {
-      showToast("Contact Admin Something Went wrong", "error");
+      console.log(error);
     } finally {
       setTimeout(() => setIsLoading(false), 1000);
     }
