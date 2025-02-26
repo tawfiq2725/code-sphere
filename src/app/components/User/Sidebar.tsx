@@ -15,6 +15,7 @@ import {
   X,
   FormInput,
   BookIcon,
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
@@ -34,6 +35,11 @@ const navigation = [
     name: "Certificates",
     href: "/student/profile/certificates",
     icon: BookIcon,
+  },
+  {
+    name: "Chat",
+    href: "/student/profile/message",
+    icon: MessageCircle,
   },
 ];
 

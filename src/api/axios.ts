@@ -1,8 +1,7 @@
 import { toast } from "react-toastify";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import Cookies from "js-cookie";
-import { loginSuccess, logout } from "@/store/slice/authSlice";
+import { logout } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
 
 const axiosInstance = axios.create({
@@ -15,7 +14,7 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    let token = Cookies.get("jwt_token");
+    let token = sessionStorage.getItem("jwt_token");
     console.log(token, "check");
     console.log("Auth Token (Before Request):", token);
     if (token) {
@@ -44,12 +43,13 @@ axiosInstance.interceptors.response.use(
         );
         console.log("working.......3");
         console.log("New Access Token:", data.data);
-        Cookies.set("jwt_token", data.data, { expires: 1 / (24 * 60) });
+        sessionStorage.setItem("jwt_token", data.data);
         const decodedToken = jwtDecode(data.data) as { role: string };
         console.log("working.......4");
         console.log("Decoded Role:", decodedToken.role);
         let role = decodedToken.role;
-        Cookies.set("role", role, { expires: 1 / (24 * 60) });
+        sessionStorage.setItem("role", role);
+        console.log("working.......5");
         originalRequest.headers.Authorization = `Bearer ${data.data}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {

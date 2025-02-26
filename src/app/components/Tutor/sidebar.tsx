@@ -10,6 +10,7 @@ import {
   UserIcon,
   BookDownIcon,
   BookUser,
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Profile", href: "/tutor/profile", icon: UserIcon },
   { name: "Courses", href: "/tutor/auth/courses", icon: Book },
   { name: "Enrollments", href: "/tutor/auth/enroll-students", icon: BookUser },
+  { name: "Message", href: "/tutor/auth/message", icon: MessageCircle },
 ];
 
 export default function Sidebar() {

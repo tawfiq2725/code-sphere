@@ -36,7 +36,7 @@ export default function RootLayout({
       <title>{"Code Sphere"}</title>
 
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`custom-scrollbar ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>

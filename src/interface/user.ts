@@ -16,4 +16,13 @@ export interface User {
   tutorStatus?: "pending" | "approved" | "rejected";
   profile?: string;
   bio?: string;
+  unreadCount?: number;
+}
+
+export interface Message {
+  _id: string;
+  message: string;
+  sender: "student" | "tutor";
+  timestamp: string;
+  createdAt: string;
 }

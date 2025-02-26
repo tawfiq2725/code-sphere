@@ -10,9 +10,9 @@ import api from "@/api/axios";
 import { createSocket } from "@/utils/config/socket";
 import Image from "next/image";
 
-export default function TutorChat() {
-  const [students, setStudents] = useState<User[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+export default function StudentChat() {
+  const [doctors, setDoctors] = useState<User[]>([]);
+  const [selectedTutor, setSelectedTutor] = useState<User | null>(null);
   const [inputMessage, setInputMessage] = useState("");
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const { user } = useSelector((state: any) => state.auth);
@@ -27,30 +27,29 @@ export default function TutorChat() {
 
     s.on("connect", () => {
       console.log("Socket connected:", s.id);
-      s.emit("join:user", { tutorId: storedUserId });
+      // Join the user's personal notification room
+      s.emit("join:user", { userId: storedUserId });
     });
 
-    s.on("chat:history", (chat) => {
+    s.on("chat:history", (chat: any) => {
       console.log("Chat history received:", chat);
       if (
         chat &&
         chat._id &&
-        selectedStudent &&
-        chat.userId === selectedStudent._id
+        selectedTutor &&
+        chat.tutorId === selectedTutor._id
       ) {
         setChatId(chat._id);
         setCurrentMessages(chat.messages || []);
-
-        // Clear unread count for this student
-        setStudents((prev) =>
-          prev.map((student) =>
-            student._id === selectedStudent._id
-              ? { ...student, unreadCount: 0 }
-              : student
+        // Update doctors to set unreadCount to 0 for this tutor
+        setDoctors((prevDoctors) =>
+          prevDoctors.map((doctor) =>
+            doctor._id === selectedTutor._id
+              ? { ...doctor, unreadCount: 0 }
+              : doctor
           )
         );
-
-        // Mark messages as read on server
+        // Emit 'chat:read' to mark messages as read
         s.emit("chat:read", { chatId: chat._id, readerRole: user.role });
       }
     });
@@ -60,27 +59,35 @@ export default function TutorChat() {
       setCurrentMessages((prev) => [...prev, message]);
     });
 
+    // Handle notifications for new messages
     s.on("notification:newMessage", (data) => {
-      const { userId } = data;
-      setStudents((prev) =>
-        prev.map((student) =>
-          student._id === userId
-            ? { ...student, unreadCount: (student.unreadCount || 0) + 1 }
-            : student
+      const { tutorId } = data;
+      setDoctors((prevDoctors) =>
+        prevDoctors.map((doctor) =>
+          doctor._id === tutorId
+            ? { ...doctor, unreadCount: (doctor.unreadCount || 0) + 1 }
+            : doctor
         )
       );
     });
 
+    // Cleanup on component unmount.
     return () => {
       s.disconnect();
     };
-  }, [selectedStudent, storedUserId]);
+  }, [selectedTutor, storedUserId]);
 
+  // Fetch list of tutors/doctors.
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data } = await api.get(`/tutor/get-students/${storedUserId}`);
-        setStudents(data.data);
+        const { data } = await api.get(`/student/tutor/${storedUserId}`);
+        // Ensure each tutor has an unreadCount field
+        const tutorsWithUnread = data.data.map((tutor: User) => ({
+          ...tutor,
+          unreadCount: tutor.unreadCount || 0,
+        }));
+        setDoctors(tutorsWithUnread);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -88,32 +95,41 @@ export default function TutorChat() {
     fetchData();
   }, [storedUserId]);
 
+  // Handle joining a chat room when a tutor is selected.
   useEffect(() => {
-    if (socket && selectedStudent && storedUserId) {
+    if (socket && selectedTutor && storedUserId) {
       if (chatId) {
         socket.emit("leave", chatId);
       }
       setChatId(null);
       setCurrentMessages([]);
       socket.emit("join:chat", {
-        userId: selectedStudent._id,
-        tutorId: storedUserId,
+        tutorId: selectedTutor._id,
+        userId: storedUserId,
       });
     }
-  }, [selectedStudent, socket, storedUserId]);
+  }, [selectedTutor, socket, storedUserId]);
 
-  const handleStudentSelect = (student: User) => {
-    setSelectedStudent(student);
+  const handleTutorSelect = (tutor: User) => {
+    setSelectedTutor(tutor);
   };
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || !selectedStudent || !chatId || !socket) return;
+  const handleSendMessage = async () => {
+    if (
+      !inputMessage.trim() ||
+      !selectedTutor ||
+      !chatId ||
+      !storedUserId ||
+      !socket
+    )
+      return;
 
+    // Emit the message to the server.
     socket.emit("message:send", {
       chatId,
-      userId: selectedStudent._id,
-      tutorId: storedUserId,
-      sender: "tutor",
+      tutorId: selectedTutor._id,
+      userId: storedUserId,
+      sender: "student",
       message: inputMessage,
       type: "txt",
     });
@@ -124,59 +140,55 @@ export default function TutorChat() {
   return (
     <div className="flex h-screen bg-black items-center justify-center p-4">
       <div className="flex flex-col md:flex-row w-full max-w-6xl h-[90vh] bg-gray-950 rounded-xl shadow-2xl overflow-hidden border border-purple-800">
+        {/* Left Panel - Tutor List */}
         <div className="w-full md:w-1/3 border-r border-purple-900 flex flex-col">
           <div className="bg-purple-800 p-4 shadow-xl h-20 flex items-center justify-between">
             <h2 className="text-white text-lg font-bold tracking-wide">
               Messages
             </h2>
             <div className="bg-purple-700 px-3 py-1 rounded-full text-xs text-white font-medium">
-              {students.length} Students
+              {doctors.length} Tutors
             </div>
           </div>
 
-          <div className="custom-scrollbar flex-1 overflow-y-auto bg-gray-950 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-900">
-            {students.map((student) => (
+          <div className=".custom-scrollbar flex-1 overflow-y-auto bg-gray-950 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-900">
+            {doctors.map((tutor, index) => (
               <div
-                key={student._id}
+                key={index}
                 className={`p-4 border-b border-gray-800 hover:bg-gray-900 cursor-pointer transition-all duration-200 ${
-                  selectedStudent?._id === student._id
+                  selectedTutor?._id === tutor._id
                     ? "bg-gray-900 border-l-4 border-l-purple-600"
                     : ""
                 }`}
-                onClick={() => handleStudentSelect(student)}
+                onClick={() => handleTutorSelect(tutor)}
               >
                 <div className="flex items-center space-x-3">
                   <div className="relative">
                     <Image
-                      src={student.profile || "/default-profile.jpg"}
-                      alt={student.name}
-                      width={48}
-                      height={48}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                      src={tutor.profile || "/default-profile.jpg"}
+                      alt={tutor.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-purple-500 shadow-md"
+                      width={12}
+                      height={12}
+                      priority
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold text-white truncate">
-                        {student.name}
+                        {tutor.name}
                       </h3>
-                      {(student.unreadCount ?? 0) > 0 && (
-                        <Bell
-                          size={16}
-                          className="text-pink-500 animate-pulse"
-                        />
+                      {(tutor.unreadCount ?? 0) > 0 && (
+                        <Bell size={16} className="text-pink-500" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-400 truncate">
-                      {student.email}
-                    </p>
+                    <p className="text-sm text-gray-400 truncate mt-1"></p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-
-          <Link href="/tutor/dashboard">
+          <Link href={`/tutor/auth/enroll-student`}>
             <button className="mx-4 my-4 p-3 text-white rounded-lg border border-purple-600 hover:bg-purple-900/30 flex items-center justify-center space-x-2 transition-all duration-200">
               <ArrowLeft size={20} />
               <span className="font-medium">Back to Dashboard</span>
@@ -184,22 +196,26 @@ export default function TutorChat() {
           </Link>
         </div>
 
+        {/* Right Panel - Chat Area */}
         <div className="flex-1 flex flex-col bg-black">
-          {selectedStudent ? (
+          {selectedTutor ? (
             <>
               <div className="bg-purple-800 p-4 flex items-center shadow-xl h-20">
                 <div className="relative">
                   <Image
-                    src={selectedStudent.profile || "/default-profile.jpg"}
-                    alt={selectedStudent.name}
-                    width={48}
-                    height={48}
+                    src={selectedTutor.profile || "/placeholder.svg"}
+                    alt={selectedTutor.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                    width={12}
+                    height={12}
+                    priority
                   />
                 </div>
                 <div className="text-white ml-3">
-                  <h2 className="font-bold text-lg">{selectedStudent.name}</h2>
-                  <p className="text-sm opacity-90">{selectedStudent.email}</p>
+                  <h2 className="font-bold text-lg">{selectedTutor.name}</h2>
+                  <p className="text-sm opacity-90">
+                    {selectedTutor.subjects?.join(", ")}
+                  </p>
                 </div>
               </div>
 
@@ -212,19 +228,18 @@ export default function TutorChat() {
                         hour: "2-digit",
                         minute: "2-digit",
                       });
-
                   return (
                     <div
                       key={index}
                       className={`flex ${
-                        message.sender === "tutor"
+                        message.sender === "student"
                           ? "justify-end"
                           : "justify-start"
                       }`}
                     >
                       <div
                         className={`max-w-[80%] rounded-2xl p-4 shadow-xl ${
-                          message.sender === "tutor"
+                          message.sender === "student"
                             ? "bg-purple-600 text-white rounded-tr-none"
                             : "bg-purple-200 text-gray-900 rounded-tl-none"
                         }`}
@@ -232,7 +247,7 @@ export default function TutorChat() {
                         <p className="text-base">{message.message}</p>
                         <div
                           className={`text-xs mt-2 ${
-                            message.sender === "tutor"
+                            message.sender === "student"
                               ? "text-purple-200"
                               : "text-gray-700"
                           }`}
@@ -278,7 +293,8 @@ export default function TutorChat() {
                 </h1>
                 <p className="text-gray-300 mb-8 text-lg">
                   Select a conversation from the left to start chatting with
-                  your students.
+                  your healthcare provider. All your medical conversations are
+                  secure and encrypted.
                 </p>
               </div>
             </div>

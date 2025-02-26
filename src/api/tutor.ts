@@ -1,16 +1,11 @@
 import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
+import api from "@/api/axios";
 
 export const getEnrollStudents = async (courseId: string, token: any) => {
   try {
-    let response = await axios.get(
-      `${backendUrl}/tutor/enroll-students/${courseId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    let response = await api.get(`/tutor/enroll-students/${courseId}`);
+
     return response.data.data;
   } catch (error: any) {
     console.error(error);
