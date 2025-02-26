@@ -1,49 +1,27 @@
-import { backendUrl } from "@/utils/backendUrl";
-import axios from "axios";
+import api from "@/api/axios";
 
-export const fetchMemberships = async (token: any) => {
+export const fetchMemberships = async () => {
   try {
-    const response = await axios.get(`${backendUrl}/admin/get-memberships`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("Memberships fetched successfully:", response.data.data);
+    const response = await api.get("/admin/get-memberships");
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to fetch memberships:", error);
   }
 };
 
-export const addMembership = async (token: any, data: any) => {
+export const addMembership = async (data: any) => {
   try {
-    const response = await axios.post(
-      `${backendUrl}/admin/add-membership`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    console.log("Membership added successfully:", response.data.data);
+    const response = await api.post("/admin/add-membership", data);
+
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to add membership:", error);
   }
 };
 
-export const updateMembership = async (token: any, id: any, data: any) => {
+export const updateMembership = async (id: any, data: any) => {
   try {
-    const response = await axios.patch(
-      `${backendUrl}/admin/edit-membership/${id}`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.patch(`/admin/edit-membership/${id}`, data);
     console.log("Membership updated successfully:", response.data.data);
     return response.data.data;
   } catch (error: any) {
@@ -51,17 +29,9 @@ export const updateMembership = async (token: any, id: any, data: any) => {
   }
 };
 
-export const toggleStatusMembership = async (token: any, id: any) => {
+export const toggleStatusMembership = async (id: any) => {
   try {
-    const response = await axios.patch(
-      `${backendUrl}/admin/toggle-membership/${id}`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.patch(`/admin/toggle-membership/${id}`);
     console.log("Membership status toggled successfully:", response.data.data);
     return response.data.data;
   } catch (error: any) {
@@ -71,63 +41,35 @@ export const toggleStatusMembership = async (token: any, id: any) => {
 
 export const getMembershipOrders = async (token: any) => {
   try {
-    const response = await axios.get(
-      `${backendUrl}/admin/get-memberships/orders`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.get("/admin/get-memberships/orders");
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to fetch membership orders:", error);
   }
 };
 
-export const getMembershipOrderById = async (token: string, id: string) => {
+export const getMembershipOrderById = async (id: string) => {
   try {
-    const response = await axios.get(
-      `${backendUrl}/admin/get-memberships/orders/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.get(`/admin/get-memberships/orders/${id}`);
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to fetch membership order details:", error);
   }
 };
 
-export const getOrderById = async (token: string, id: string) => {
+export const getOrderById = async (id: string) => {
   try {
-    const response = await axios.get(
-      `${backendUrl}/api/order/get-all-orders/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.get(`/api/order/get-all-orders/${id}`);
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to fetch order details:", error);
   }
 };
 
-export const dashboardData = async (token: string) => {
+export const dashboardData = async () => {
   try {
-    const response = await axios.get(
-      `${backendUrl}/api/reports/admin/dashboard`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data.data;
+    const { data } = await api.get("/api/reports/admin/dashboard");
+    return data.data;
   } catch (error: any) {
     console.log("Failed to fetch dashboard data:", error);
   }

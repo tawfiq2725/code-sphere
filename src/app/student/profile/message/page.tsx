@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Send, ArrowLeft, MessageSquare, Bell } from "lucide-react";
+import { Send, ArrowLeft, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { Message, User } from "@/interface/user";
@@ -27,8 +27,6 @@ export default function StudentChat() {
 
     s.on("connect", () => {
       console.log("Socket connected:", s.id);
-      // Join the user's personal notification room
-      s.emit("join:user", { userId: storedUserId });
     });
 
     s.on("chat:history", (chat: any) => {
@@ -41,16 +39,6 @@ export default function StudentChat() {
       ) {
         setChatId(chat._id);
         setCurrentMessages(chat.messages || []);
-        // Update doctors to set unreadCount to 0 for this tutor
-        setDoctors((prevDoctors) =>
-          prevDoctors.map((doctor) =>
-            doctor._id === selectedTutor._id
-              ? { ...doctor, unreadCount: 0 }
-              : doctor
-          )
-        );
-        // Emit 'chat:read' to mark messages as read
-        s.emit("chat:read", { chatId: chat._id, readerRole: user.role });
       }
     });
 
@@ -59,35 +47,18 @@ export default function StudentChat() {
       setCurrentMessages((prev) => [...prev, message]);
     });
 
-    // Handle notifications for new messages
-    s.on("notification:newMessage", (data) => {
-      const { tutorId } = data;
-      setDoctors((prevDoctors) =>
-        prevDoctors.map((doctor) =>
-          doctor._id === tutorId
-            ? { ...doctor, unreadCount: (doctor.unreadCount || 0) + 1 }
-            : doctor
-        )
-      );
-    });
-
     // Cleanup on component unmount.
     return () => {
       s.disconnect();
     };
-  }, [selectedTutor, storedUserId]);
+  }, [selectedTutor]);
 
   // Fetch list of tutors/doctors.
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { data } = await api.get(`/student/tutor/${storedUserId}`);
-        // Ensure each tutor has an unreadCount field
-        const tutorsWithUnread = data.data.map((tutor: User) => ({
-          ...tutor,
-          unreadCount: tutor.unreadCount || 0,
-        }));
-        setDoctors(tutorsWithUnread);
+        setDoctors(data.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -141,7 +112,7 @@ export default function StudentChat() {
     <div className="flex h-screen bg-black items-center justify-center p-4">
       <div className="flex flex-col md:flex-row w-full max-w-6xl h-[90vh] bg-gray-950 rounded-xl shadow-2xl overflow-hidden border border-purple-800">
         {/* Left Panel - Tutor List */}
-        <div className="w-full md:w-1/3 border-r border-purple-900 flex flex-col">
+        <div className="w-full md:w-1/3 border-r border-purple-900 flex flex-col ">
           <div className="bg-purple-800 p-4 shadow-xl h-20 flex items-center justify-between">
             <h2 className="text-white text-lg font-bold tracking-wide">
               Messages
@@ -178,9 +149,7 @@ export default function StudentChat() {
                       <h3 className="font-semibold text-white truncate">
                         {tutor.name}
                       </h3>
-                      {(tutor.unreadCount ?? 0) > 0 && (
-                        <Bell size={16} className="text-pink-500" />
-                      )}
+                      <span className="text-xs text-gray-400"></span>
                     </div>
                     <p className="text-sm text-gray-400 truncate mt-1"></p>
                   </div>

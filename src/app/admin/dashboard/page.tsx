@@ -17,6 +17,7 @@ import {
 } from "chart.js";
 import Link from "next/link";
 import { dashboardData } from "@/api/admin";
+import api from "@/api/axios";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { showToast } from "@/utils/toastUtil";
@@ -47,16 +48,11 @@ const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
 );
 
 const AdminDashboard: React.FC = () => {
-  const token = Cookies.get("jwt_token");
-  const [data, setData] = useState<any>({}); // Consider defining a proper type for dashboard data
-
-  if (!token) {
-    return <div>Unauthorized</div>;
-  }
+  const [data, setData] = useState<any>({});
 
   // Fetch dashboard data
   useEffect(() => {
-    dashboardData(token)
+    dashboardData()
       .then((data) => {
         console.log(data);
         setData(data);
@@ -64,9 +60,8 @@ const AdminDashboard: React.FC = () => {
       .catch((error) => {
         console.log("Failed to fetch dashboard data:", error);
       });
-  }, [token]);
+  }, []);
 
-  // Define chart data types
   const [revenueFilter, setRevenueFilter] = useState<
     "daily" | "weekly" | "monthly" | "yearly"
   >("daily");
@@ -85,11 +80,11 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(
-          `http://localhost:5000/api/reports/revenue?filter=${revenueFilter}`
-        );
-        if (response.data.success) {
-          setRevenueData(response.data.data);
+        const { data } = await api.get("/api/reports/revenue", {
+          params: { filter: revenueFilter },
+        });
+        if (data.success) {
+          setRevenueData(data.data);
         } else {
           showToast("Failed to fetch revenue data", "error");
           setError("Failed to fetch revenue data");
@@ -136,11 +131,9 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/reports/enrollments"
-        );
-        if (response.data.success) {
-          setEnrollmentData(response.data.data);
+        const { data } = await api.get("/api/reports/enrollments");
+        if (data.success) {
+          setEnrollmentData(data.data);
         } else {
           setError("Failed to fetch enrollment data");
         }
@@ -160,9 +153,7 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/reports/get-toptutors"
-        );
+        const response = await api.get("/api/reports/get-toptutors");
         if (response.data.success) {
           const labels = response.data.data.map(
             (tutor: any) => tutor.tutorName
