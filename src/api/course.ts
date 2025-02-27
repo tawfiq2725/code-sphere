@@ -1,5 +1,6 @@
 import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
+import api from "@/api/axios";
 
 export const getCourseData = async (token: string, id: string) => {
   const response = await axios.get(
@@ -14,13 +15,8 @@ export const getCourseData = async (token: string, id: string) => {
   return response.data;
 };
 
-export const getCourseDataByAdmin = async (token: string) => {
-  const response = await axios.get(`${backendUrl}/admin/get-courses`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+export const getCourseDataByAdmin = async () => {
+  const response = await api.get(`/admin/get-courses`);
   return response.data.data;
 };
 

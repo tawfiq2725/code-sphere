@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
 import { logoutUser } from "@/utils/logout";
 import { User } from "@/interface/user";
 interface AuthState {

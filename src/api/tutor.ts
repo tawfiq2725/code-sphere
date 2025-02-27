@@ -31,16 +31,9 @@ export async function approveCertificate(
   return response.data.data;
 }
 
-export const getCourseById = async (courseId: string, token: any) => {
+export const getCourseById = async (courseId: string) => {
   try {
-    const res = await axios.get(
-      `${backendUrl}/api/course/get-course/${courseId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const res = await api.get(`/api/course/get-course/${courseId}`);
     return res.data.data;
   } catch (err) {
     console.log(err);

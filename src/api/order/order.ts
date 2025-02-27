@@ -1,5 +1,6 @@
 import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
+import api from "@/api/axios";
 
 export const createOrder = async (data: any, token: any) => {
   try {
@@ -49,13 +50,9 @@ export const verifyOrder = async (
   }
 };
 
-export const getAllorders = async (token: any) => {
+export const getAllorders = async () => {
   try {
-    const response = await axios.get(`${backendUrl}/api/order/get-all-orders`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await api.get("/api/order/get-all-orders");
     return response.data;
   } catch (error) {
     console.log(error);

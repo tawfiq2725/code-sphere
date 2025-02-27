@@ -1,5 +1,6 @@
 import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
+import api from "@/api/axios";
 
 interface Category {
   categoryName: string;
@@ -7,25 +8,13 @@ interface Category {
   _id?: string;
 }
 
-export const addCategory = async (category: Category, token: string) => {
-  const response = await axios.post(
-    `${backendUrl}/api/course/add-category`,
-    category,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export const addCategory = async (category: Category) => {
+  const response = await api.post(`/api/course/add-category`, category);
   return response.data;
 };
 
-export const getCategories = async (token: string) => {
-  const response = await axios.get(`${backendUrl}/api/course/get-categories`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getCategories = async () => {
+  const response = await api.get(`/api/course/get-categories`);
   return response.data.data;
 };
 export const updateCategory = async (

@@ -5,9 +5,9 @@ import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
-import { backendUrl } from "@/utils/backendUrl";
 import type { IPagination } from "@/interface/pagination";
 import { User, CheckCircle, XCircle, Shield, ShieldOff } from "lucide-react";
+import api from "@/api/axios";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -55,18 +55,9 @@ const TutorList = () => {
           limit: usersPerPage.toString(),
           search: debouncedSearchTerm,
         });
-        const response = await fetch(
-          `${backendUrl}/admin/get-tutors?${params}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await api.get(`/admin/get-tutors`, { params });
 
-        const data = await response.json();
+        const data = await response.data;
         if (!data.success) {
           showToast(data.message, "error");
         } else {
@@ -87,14 +78,8 @@ const TutorList = () => {
   const blockUser = async (userId: string) => {
     try {
       const token = Cookies.get("jwt_token");
-      const response = await fetch(`${backendUrl}/admin/block-user/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
+      const response = await api.patch(`/admin/block-user/${userId}`);
+      const data = await response.data;
       if (data.success) {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
@@ -114,17 +99,8 @@ const TutorList = () => {
   const unblockUser = async (userId: string) => {
     try {
       const token = Cookies.get("jwt_token");
-      const response = await fetch(
-        `${backendUrl}/admin/unblock-user/${userId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await api.patch(`/admin/unblock-user/${userId}`);
+      const data = await response.data;
       if (data.success) {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
@@ -142,130 +118,178 @@ const TutorList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
-      <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text text-white">
-        Tutor Management
-      </h1>
-      <div className="mb-6">
-        <Search searchTerm={searchTerm} onSearch={setSearchTerm} />
-      </div>
-      <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden mx-20">
+    <div className="w-full min-h-screen bg-gray-900 text-white p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+            Tutor Management
+          </h1>
+          <p className="text-gray-400">View and manage active tutors</p>
+        </div>
+
+        {/* Search and Content */}
+        <div className="mb-6 w-full max-w-md">
+          <Search searchTerm={searchTerm} onSearch={setSearchTerm} />
+        </div>
+
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+          <div className="flex justify-center items-center py-32">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
           </div>
         ) : users.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-700">
-                <tr>
-                  <th className="p-3 text-left">S.no</th>
-                  <th className="p-3 text-left">Profile</th>
-                  <th className="p-3 text-left">Name</th>
-                  <th className="p-3 text-left">Email</th>
-                  <th className="p-3 text-left">Subjects</th>
-                  <th className="p-3 text-center">Verified</th>
-                  <th className="p-3 text-center">Status</th>
-                  <th className="p-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user, index) => (
-                  <tr
-                    key={user._id}
-                    className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors"
-                  >
-                    <td className="p-3 ">
-                      <span>{index + 1}</span>
-                    </td>
-                    <td className="p-3 ">
-                      <div className="w-11 h-11 relative flex-shrink-0  py-1">
-                        <img src={user.profile} />
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <span>{user.name}</span>
-                    </td>
-                    <td className="p-3">{user.email}</td>
-                    <td className="p-3">
-                      <div className="flex flex-wrap gap-1">
-                        {user.subjects.map((subject, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-purple-600 rounded-full text-xs"
-                          >
-                            {subject}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex justify-center space-x-2">
-                        {user.isVerified ? (
-                          <CheckCircle
-                            className="w-5 h-5 text-green-500"
-                            aria-label="Verified"
-                          />
-                        ) : (
-                          <XCircle
-                            className="w-5 h-5 text-red-500"
-                            aria-label="Not Verified"
-                          />
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <div className="flex justify-center space-x-2">
-                        {user.isBlocked ? (
-                          <Shield
-                            className="w-5 h-5 text-red-500"
-                            aria-label="Blocked"
-                          />
-                        ) : (
-                          <ShieldOff
-                            className="w-5 h-5 text-green-500"
-                            aria-label="Active"
-                          />
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-3 text-center">
-                      <button
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                          user.isBlocked
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-red-600 hover:bg-red-700 text-white"
-                        }`}
-                        onClick={() =>
-                          user.isBlocked
-                            ? unblockUser(user._id)
-                            : blockUser(user._id)
-                        }
-                      >
-                        {user.isBlocked ? "Unblock" : "Block"}
-                      </button>
-                    </td>
+          <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-700/70 text-gray-300 text-sm uppercase">
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      S.No
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Profile
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Subjects
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Verified
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.map((user, index) => (
+                    <tr
+                      key={user._id}
+                      className="border-b border-gray-700 hover:bg-gray-700/40 transition-all duration-200"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                        {index + 1}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex justify-center">
+                          <div className="w-12 h-12 rounded-full overflow-hidden">
+                            <img
+                              src={user.profile}
+                              alt={`${user.name}'s profile`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-white font-medium">
+                        {user.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-gray-300">
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {user.subjects && user.subjects.length > 0 ? (
+                          <span className="inline-flex flex-wrap justify-center gap-1">
+                            {user.subjects.map((subject, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-1 bg-purple-500 text-gray-50 text-xs rounded-full"
+                              >
+                                {subject}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {user.isVerified ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/20 text-green-300 text-sm">
+                            <CheckCircle size={14} />
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-sm">
+                            <XCircle size={14} />
+                            Not Verified
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {user.isBlocked ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-sm">
+                            <Shield size={14} />
+                            Blocked
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/20 text-green-300 text-sm">
+                            <ShieldOff size={14} />
+                            Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          className={`px-4 py-2 rounded-lg font-medium transition duration-300 inline-flex items-center gap-2 ${
+                            user.isBlocked
+                              ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                              : "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
+                          }`}
+                          onClick={() =>
+                            user.isBlocked
+                              ? unblockUser(user._id)
+                              : blockUser(user._id)
+                          }
+                        >
+                          {user.isBlocked ? (
+                            <>
+                              <ShieldOff size={16} />
+                              Unblock
+                            </>
+                          ) : (
+                            <>
+                              <Shield size={16} />
+                              Block
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-64">
-            <User className="w-16 h-16 text-gray-500 mb-4" />
-            <p className="text-xl text-gray-400">No tutors found</p>
+          <div className="flex flex-col items-center justify-center py-32 px-4 bg-gray-800/50 rounded-xl border border-gray-700">
+            <User className="h-16 w-16 text-gray-500 mb-4" />
+            <p className="text-xl font-semibold text-gray-300 mb-2">
+              No Tutors Found
+            </p>
+            <p className="text-gray-400 text-center max-w-md">
+              There are currently no tutors matching your search criteria.
+            </p>
+          </div>
+        )}
+
+        {pagination && (
+          <div className="mt-8 flex justify-center">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>
-      {pagination && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </div>
-      )}
     </div>
   );
 };

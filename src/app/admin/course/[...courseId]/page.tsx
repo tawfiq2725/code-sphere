@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import Pagination from "@/app/components/common/pagination";
 import CourseAction from "@/app/components/Admin/Action";
 import VideoModal from "@/app/components/common/VideoModal";
+import { useRouter } from "next/navigation";
 
 export default function CourseChapterPage({
   params,
@@ -21,6 +22,7 @@ export default function CourseChapterPage({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
   console.log("courseId", courseId);
   console.log(courseId[0], courseId[1]);
   const thumbnail = localStorage.getItem("thumbnail");
@@ -100,9 +102,30 @@ export default function CourseChapterPage({
         <div className="bg-gray-800 shadow-lg rounded-lg overflow-hidden">
           <div className="p-6 border-b border-gray-700 flex justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Chapter Management</h1>
-              <h3 className="text-lg mt-2">{courseName}</h3>
+              <div>
+                <h1 className="text-2xl font-bold">Chapter Management</h1>
+                <h3 className="text-lg mt-2">{courseName}</h3>
+              </div>
+              <button
+                onClick={() => router.back()}
+                className="px-4 py-1 my-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition duration-300 ease-in-out font-semibold shadow-md flex items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L6.414 9H17a1 1 0 110 2H6.414l3.293 3.293a1 1 0 010 1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Back
+              </button>
             </div>
+
             <div>
               {status !== "approved" && <CourseAction courseId={courseId[0]} />}
             </div>
