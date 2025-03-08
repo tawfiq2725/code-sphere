@@ -74,3 +74,12 @@ export const dashboardData = async () => {
     console.log("Failed to fetch dashboard data:", error);
   }
 };
+
+export const fetchOffers = async () => {
+  try {
+    const response = await api.get("/get-offers");
+    return response.data.data;
+  } catch (error: any) {
+    console.log("Failed to fetch offers:", error);
+  }
+};

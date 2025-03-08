@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
-
+import api from "@/api/axios";
 interface CourseActionProps {
   courseId: string;
 }
@@ -14,8 +14,6 @@ const CourseAction = ({ courseId }: CourseActionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const router = useRouter();
-  const token = Cookies.get("jwt_token") || "";
-
   const handleCourseAction = async (
     action: "approved" | "rejected",
     percent: number
@@ -27,18 +25,11 @@ const CourseAction = ({ courseId }: CourseActionProps) => {
       };
       console.log("Payload:", payload);
 
-      const response = await fetch(
-        `${backendUrl}/admin/api/approve-or-reject-course/${courseId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
+      const response = await api.patch(
+        `/admin/api/approve-or-reject-course/${courseId}`,
+        payload
       );
-      const data = await response.json();
+      const data = await response.data;
       if (data.success) {
         showToast(`Course ${action}d successfully`, "success");
         setIsModalOpen(false);

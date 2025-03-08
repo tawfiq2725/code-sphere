@@ -5,7 +5,8 @@ import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import api from "@/api/axios";
+import { useSelector } from "react-redux";
 
 export default function AddCourseForm() {
   const [courseName, setCourseName] = useState("");
@@ -18,21 +19,15 @@ export default function AddCourseForm() {
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-
-  const tutorId: any = localStorage.getItem("tutor_id");
+  const { user } = useSelector((state: any) => state.auth);
+  const tutorId: any = user.user._id;
+  console.log("tutorId", tutorId);
   const token: any = Cookies.get("jwt_token");
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(
-          `${backendUrl}/api/course/get-categories`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await api.get("/api/course/get-categories");
         setCategories(response.data.data);
         console.log(response.data.data);
       } catch (error) {
@@ -103,15 +98,13 @@ export default function AddCourseForm() {
     formData.append("tutorId", tutorId);
 
     try {
-      const response = await fetch(`${backendUrl}/api/course/add-course`, {
-        method: "POST",
+      const response = await api.post("/api/course/add-course", formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        body: formData,
       });
 
-      const data = await response.json();
+      const data = await response.data;
 
       if (data.success) {
         showToast(data.message, "success");

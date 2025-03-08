@@ -1,26 +1,23 @@
 "use client";
 
 import { getMembershipById, getMemberships } from "@/api/user/user";
-import { getAllCategories, getCategories } from "@/api/category";
-import {
-  createOrder,
-  membershipOrder,
-  verifyMembershipOrder,
-} from "@/api/order/order";
+import { getAllCategories } from "@/api/category";
+import { membershipOrder, verifyMembershipOrder } from "@/api/order/order";
 import { showToast } from "@/utils/toastUtil";
 import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import Cookies from "js-cookie";
 
 interface Membership {
   _id: string;
-  name: string;
-  description: string;
+  membershipId: string;
+  membershipName: string;
+  membershipDescription: string;
+  membershipPlan: "Basic" | "Standard" | "Premium";
   price: number;
-
   label: string;
+  status: boolean;
 }
 
 interface Category {
@@ -39,11 +36,25 @@ export default function MembershipCheckoutPage({
   const router = useRouter();
   const [selectedMembership, setSelectedMembership] =
     useState<Membership | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const token = Cookies.get("jwt_token");
+  // selectedCategory is either a string (for non-Premium plans) or string[] (for Premium)
+  const [selectedCategory, setSelectedCategory] = useState<string | string[]>(
+    []
+  );
   const { user } = useSelector((state: any) => state.auth);
-  let membershipName = localStorage.getItem("membershipName");
-  let membershipPrice = Number(localStorage.getItem("membershipId"));
+  const userMembershipCategoryIds = user.user.membership?.categoryId || [];
+  let membershipPrice = Number(localStorage.getItem("membershipId")) || 0;
+  let membershipName = localStorage.getItem("membershipName") || "";
+
+  useEffect(() => {
+    if (selectedMembership) {
+      if (selectedMembership.membershipPlan === "Premium") {
+        setSelectedCategory([]);
+      } else {
+        setSelectedCategory("");
+      }
+    }
+  }, [selectedMembership]);
+
   useEffect(() => {
     getMemberships()
       .then((data) => {
@@ -55,9 +66,12 @@ export default function MembershipCheckoutPage({
       .catch((err) => {
         console.error("Error fetching memberships:", err);
       });
-    getMembershipById(id, token)
+    getMembershipById(id)
       .then((data) => {
+        console.log("Membership retrieved:", data);
         setSelectedMembership(data);
+        membershipPrice += data.price; // update membershipPrice if needed
+        membershipName = data.membershipName;
       })
       .catch((err) => {
         console.error("Error fetching membership:", err);
@@ -66,7 +80,11 @@ export default function MembershipCheckoutPage({
     getAllCategories()
       .then((data) => {
         console.log("Categories:", data);
-        setCategories(data);
+        const filteredCategories = data.filter(
+          (category: Category) =>
+            !userMembershipCategoryIds.includes(category._id)
+        );
+        setCategories(filteredCategories);
       })
       .catch((err) => {
         console.error("Error fetching categories:", err);
@@ -75,36 +93,35 @@ export default function MembershipCheckoutPage({
 
   const taxRate = 0.18;
   const estimatedTax = Math.round(membershipPrice * taxRate * 100) / 100;
-
   const totalAmount = membershipPrice + estimatedTax;
 
   const [isChecked, setIsChecked] = useState(false);
-  const data = {
+
+  const dataForOrder = {
     currency: "INR",
     amount: totalAmount,
     userId: user.user._id,
     membershipId: selectedMembership?._id,
     categoryId: selectedCategory,
+    membershipPlan: selectedMembership?.membershipPlan,
   };
-  console.log(data);
+  console.log(dataForOrder);
+
   const handleProceed = async () => {
     if (!isChecked) {
       showToast("You must agree to the terms before proceeding.", "error");
       return;
     }
-    if (!selectedCategory) {
+
+    if (
+      (typeof selectedCategory === "string" && !selectedCategory) ||
+      (Array.isArray(selectedCategory) && selectedCategory.length === 0)
+    ) {
       showToast("Please select a category.", "error");
       return;
     }
-    const data = {
-      currency: "INR",
-      amount: totalAmount,
-      userId: user.user._id,
-      membershipId: selectedMembership?._id,
-      categoryId: selectedCategory,
-    };
     try {
-      const order: any = await membershipOrder(data, token);
+      const order: any = await membershipOrder(dataForOrder);
       if (!order) {
         showToast("Failed to create order. Try again.", "error");
         return;
@@ -122,6 +139,7 @@ export default function MembershipCheckoutPage({
     categoryId: selectedCategory,
   };
   console.log(details);
+
   const openRazorpay = (orderData: any) => {
     interface RazorpayOptions {
       key_id: string;
@@ -149,7 +167,7 @@ export default function MembershipCheckoutPage({
       order_id: orderData.id,
       handler: async function (response: any) {
         console.log("Payment Response:", response);
-        const verify = await verifyMembershipOrder(response, details, token);
+        const verify = await verifyMembershipOrder(response, details);
         console.log("Verify Response:", verify);
         if (verify.success) {
           showToast("Payment Successful", "success");
@@ -166,6 +184,23 @@ export default function MembershipCheckoutPage({
     };
     const rzp = new window.Razorpay(options);
     rzp.open();
+  };
+
+  // Handler for multi-select dropdown (for Premium plan)
+  const handleMultiSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(
+      e.target.selectedOptions,
+      (option) => option.value
+    );
+
+    if (selectedOptions.length <= 3) {
+      setSelectedCategory(selectedOptions);
+    } else {
+      showToast("You can select only 3 categories", "error");
+
+      // Keep only the first 3 selections
+      setSelectedCategory(selectedOptions.slice(0, 3));
+    }
   };
 
   return (
@@ -192,27 +227,50 @@ export default function MembershipCheckoutPage({
 
             <div className="space-y-1.5">
               <label className="text-sm text-gray-400">Choose Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full bg-black text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:ring-1 focus:ring-purple-500 transition-all appearance-none"
-              >
-                <option
-                  value=""
-                  className="bg-black  hover:bg-purple-500 text-gray-400"
+              {selectedMembership?.membershipPlan === "Premium" ? (
+                <select
+                  multiple
+                  value={
+                    Array.isArray(selectedCategory) ? selectedCategory : []
+                  }
+                  onChange={handleMultiSelect}
+                  className="w-full bg-black text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:ring-1 focus:ring-purple-500 transition-all appearance-none"
                 >
-                  Select a category
-                </option>
-                {categories.map((category) => (
+                  {categories.map((category) => (
+                    <option
+                      key={category._id}
+                      value={category._id}
+                      className="bg-black hover:bg-purple-500"
+                    >
+                      {category.categoryName}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  value={
+                    typeof selectedCategory === "string" ? selectedCategory : ""
+                  }
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full bg-black text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:ring-1 focus:ring-purple-500 transition-all appearance-none"
+                >
                   <option
-                    key={category._id}
-                    value={category._id}
-                    className="bg-black hover:bg-purple-500"
+                    value=""
+                    className="bg-black hover:bg-purple-500 text-gray-400"
                   >
-                    {category.categoryName}
+                    Select a category
                   </option>
-                ))}
-              </select>
+                  {categories.map((category) => (
+                    <option
+                      key={category._id}
+                      value={category._id}
+                      className="bg-black hover:bg-purple-500"
+                    >
+                      {category.categoryName}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -259,16 +317,18 @@ export default function MembershipCheckoutPage({
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
                   src={"/membership.png"}
-                  alt={"Course Thumbnail"}
+                  alt={"Membership Thumbnail"}
                   className="w-full h-full object-contain"
                 />
               </div>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
             </div>
             <div>
-              <h3 className="font-medium mb-1">{selectedMembership?.name}</h3>
+              <h3 className="font-medium mb-1">
+                {selectedMembership?.membershipName}
+              </h3>
               <p className="text-sm text-gray-400 mb-2">
-                {selectedMembership?.description}
+                {selectedMembership?.membershipDescription}
               </p>
               <div className="text-2xl font-semibold">₹{membershipPrice}</div>
             </div>

@@ -9,6 +9,7 @@ import Pagination from "@/app/components/common/pagination";
 import CourseAction from "@/app/components/Admin/Action";
 import VideoModal from "@/app/components/common/VideoModal";
 import { useRouter } from "next/navigation";
+import api from "@/api/axios";
 
 export default function CourseChapterPage({
   params,
@@ -42,16 +43,8 @@ export default function CourseChapterPage({
   console.log(`${backendUrl}/api/course/get-chapters/${courseId[0]}`);
   const fetchCapterData = async () => {
     try {
-      const response = await fetch(
-        `${backendUrl}/api/course/get-chapters/${courseId[0]}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await api.get(`/api/course/get-chapters/${courseId[0]}`);
+      const data = await response.data;
       console.log(data.data);
       if (data.success) {
         setChapterData(data.data);

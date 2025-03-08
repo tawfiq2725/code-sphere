@@ -6,6 +6,7 @@ import { showToast } from "@/utils/toastUtil";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 interface Params {
   Id: string;
@@ -35,7 +36,11 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
         const response = await api.get(`/admin/tutor/certificates/${Id}`);
         const { success, message, data } = await response.data;
         if (success && Array.isArray(data)) {
-          setUploadedCertificates(data);
+          for (let certificate of data) {
+            const signedUrl = certificate;
+            const normalUrl = signedUrltoNormalUrl(signedUrl);
+            setUploadedCertificates((prev) => [...prev, normalUrl]);
+          }
           showToast("Certificates fetched successfully", "success");
         } else {
           showToast(message || "Unexpected response format", "error");

@@ -2,7 +2,7 @@ import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
 import api from "@/api/axios";
 
-export const getUserOrders = async (userId: string, token: any) => {
+export const getUserOrders = async (userId: string) => {
   try {
     const response = await api.get(`/api/order/get-user-orders/${userId}`);
     return response.data;
@@ -54,10 +54,28 @@ export const getMembershipByUserId = async (id: any) => {
     console.log(err);
   }
 };
+export const getMembershipByUserOId = async (id: any) => {
+  try {
+    const response = await api.get(`/get-membership/order/${id}`);
+    return response.data.data;
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 export const getUserCertficates = async (userId: string) => {
   try {
     const response = await api.get(`/get-certifcates/${userId}`);
+    return response.data.data;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const getOffers = async () => {
+  try {
+    const response = await api.get("/api/offers");
+    console.log(response.data.data);
     return response.data.data;
   } catch (err) {
     console.log(err);

@@ -170,6 +170,8 @@ export default function UserProfile() {
         ) / totalCourses
       : 0;
 
+  let googleId = user.user.googleId ? true : false;
+  console.log(googleId);
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col items-center py-12 px-4">
       {/* Header with profile image and name */}
@@ -416,87 +418,102 @@ export default function UserProfile() {
 
           {/* Security Tab */}
           {activeTab === "security" && (
-            <div className="bg-gray-800 bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl p-8">
-              <h2 className="text-2xl font-semibold text-white mb-6 border-b border-gray-700 pb-3">
-                Change Password
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
-                <div>
-                  <label
-                    htmlFor="old-password"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="old-password"
-                      type={showPassword ? "text" : "password"}
-                      value={oldPassword}
-                      onChange={(e) => setOldPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Enter your current password"
-                      autoComplete="off"
-                    />
-                    <Eye
-                      showPassword={showPassword}
-                      setShowPassword={setShowPassword}
-                    />
-                  </div>
+            <div>
+              {!googleId && (
+                <div className="bg-gray-800 bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl p-8">
+                  <h2 className="text-2xl font-semibold text-white mb-6 border-b border-gray-700 pb-3">
+                    Change Password
+                  </h2>
+                  <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
+                    <div>
+                      <label
+                        htmlFor="old-password"
+                        className="block text-sm font-medium text-gray-300 mb-1"
+                      >
+                        Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="old-password"
+                          type={showPassword ? "text" : "password"}
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Enter your current password"
+                          autoComplete="off"
+                        />
+                        <Eye
+                          showPassword={showPassword}
+                          setShowPassword={setShowPassword}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="new-password"
+                        className="block text-sm font-medium text-gray-300 mb-1"
+                      >
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="new-password"
+                          type={showPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Enter your new password"
+                          autoComplete="off"
+                        />
+                        <Eye
+                          showPassword={showPassword}
+                          setShowPassword={setShowPassword}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="confirm-password"
+                        className="block text-sm font-medium text-gray-300 mb-1"
+                      >
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Confirm your new password"
+                          autoComplete="off"
+                        />
+                        <EyeConfirm
+                          showConfirmPassword={showConfirmPassword}
+                          setShowConfirmPassword={setShowConfirmPassword}
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-lg"
+                    >
+                      Update Password
+                    </button>
+                  </form>
                 </div>
-                <div>
-                  <label
-                    htmlFor="new-password"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="new-password"
-                      type={showPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Enter your new password"
-                      autoComplete="off"
-                    />
-                    <Eye
-                      showPassword={showPassword}
-                      setShowPassword={setShowPassword}
-                    />
-                  </div>
+              )}
+              {googleId === true && (
+                <div className="bg-gray-800 bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl p-8">
+                  <h2 className="text-2xl font-semibold text-white mb-6">
+                    Google Account
+                  </h2>
+                  <p className="text-gray-300">
+                    You are signed in with Google. Password management is
+                    handled through your Google account.
+                  </p>
                 </div>
-                <div>
-                  <label
-                    htmlFor="confirm-password"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Confirm your new password"
-                      autoComplete="off"
-                    />
-                    <EyeConfirm
-                      showConfirmPassword={showConfirmPassword}
-                      setShowConfirmPassword={setShowConfirmPassword}
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-lg"
-                >
-                  Update Password
-                </button>
-              </form>
+              )}
             </div>
           )}
 

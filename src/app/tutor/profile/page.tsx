@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { getUserDetails } from "@/store/slice/authSlice";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 const TutorProfile = () => {
   const { user } = useSelector((state: any) => state.auth);
@@ -46,6 +47,9 @@ const TutorProfile = () => {
         params: { email },
       });
       const { data, success, message } = await response.data;
+      let profile = signedUrltoNormalUrl(data.profile);
+      data.profile = profile;
+      dispatch(getUserDetails({ user: data }));
 
       localStorage.setItem("tutor_id", data._id);
       if (!success) {
@@ -57,6 +61,10 @@ const TutorProfile = () => {
       console.error("Error fetching user details", error);
     }
   };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -319,43 +327,41 @@ const TutorProfile = () => {
               Certificates
             </h2>
             <div className="relative">
-              {uploadedCertificates[currentCertificateIndex] && (
-                <>
-                  {uploadedCertificates[currentCertificateIndex].endsWith(
-                    ".pdf"
-                  ) ? (
-                    <iframe
-                      src={uploadedCertificates[currentCertificateIndex]}
-                      title={`Certificate ${currentCertificateIndex + 1}`}
-                      className="w-full h-96 border rounded-md"
-                    ></iframe>
-                  ) : uploadedCertificates[currentCertificateIndex].endsWith(
-                      ".jpg"
-                    ) ||
-                    uploadedCertificates[currentCertificateIndex].endsWith(
-                      ".jpeg"
-                    ) ||
-                    uploadedCertificates[currentCertificateIndex].endsWith(
-                      ".png"
-                    ) ? (
-                    <Image
-                      src={uploadedCertificates[currentCertificateIndex]}
-                      alt={`Certificate ${currentCertificateIndex + 1}`}
-                      width={400}
-                      height={300}
-                      objectFit="contain"
-                      className="rounded-md"
-                    />
-                  ) : (
-                    <p className="text-center text-gray-600">
-                      Unsupported file type:{" "}
-                      {uploadedCertificates[currentCertificateIndex]
-                        .split(".")
-                        .pop()}
-                    </p>
-                  )}
-                </>
-              )}
+              {uploadedCertificates[currentCertificateIndex] &&
+                (() => {
+                  const fileUrl = uploadedCertificates[currentCertificateIndex];
+                  // Remove query string before extracting the extension.
+                  const fileWithoutQuery = fileUrl.split("?")[0];
+                  const ext =
+                    fileWithoutQuery.split(".").pop()?.toLowerCase() ?? "";
+
+                  if (ext === "pdf") {
+                    return (
+                      <iframe
+                        src={fileUrl}
+                        title={`Certificate ${currentCertificateIndex + 1}`}
+                        className="w-full h-96 border rounded-md"
+                      ></iframe>
+                    );
+                  } else if (ext === "jpg" || ext === "jpeg" || ext === "png") {
+                    return (
+                      <Image
+                        src={fileUrl}
+                        alt={`Certificate ${currentCertificateIndex + 1}`}
+                        width={400}
+                        height={300}
+                        objectFit="contain"
+                        className="rounded-md"
+                      />
+                    );
+                  } else {
+                    return (
+                      <p className="text-center text-gray-600">
+                        Unsupported file type: {ext}
+                      </p>
+                    );
+                  }
+                })()}
               <button
                 onClick={handlePrev}
                 className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-60 text-white p-2 rounded-l hover:bg-opacity-80 transition"

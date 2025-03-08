@@ -4,8 +4,6 @@ import { StatItem } from "@/app/components/User/stat-item";
 import { FeatureCard } from "@/app/components/User/feature-card";
 import { CodeEditor } from "@/app/components/User/code-editor";
 import TrustedSection from "@/app/components/User/end-hero";
-
-import { useDispatch } from "react-redux";
 export default function Home() {
   return (
     <>

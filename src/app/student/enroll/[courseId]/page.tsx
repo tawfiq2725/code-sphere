@@ -1,13 +1,15 @@
 "use client";
 import { getCoursById } from "@/api/course";
+import { getAllCategories } from "@/api/category";
+import { getOffers } from "@/api/user/user";
 import { createOrder, verifyOrder } from "@/api/order/order";
 import { showToast } from "@/utils/toastUtil";
-import { Shield, Tag } from "lucide-react";
+import { AlertCircle, Shield, Tag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import Cookies from "js-cookie";
-import { backendUrl } from "@/utils/backendUrl";
+import api from "@/api/axios";
 import { couponApply, couponRemove } from "@/store/slice/orderSlice";
 
 interface Course {
@@ -16,6 +18,30 @@ interface Course {
   thumbnail: string;
   courseId: string;
   sellingPrice: number;
+  category: string;
+  categoryName: string; // This actually contains the category ID, not the name
+  offerPrice?: number;
+  discountPercentage?: number;
+  offerName?: string;
+}
+
+interface Category {
+  _id: string;
+  categoryName: string;
+}
+
+interface Offer {
+  _id: string;
+  offerName: string;
+  discount: number;
+  categoryId: {
+    _id: string;
+    categoryName: string;
+    status: boolean;
+  };
+  startsFrom: string;
+  endsFrom: string;
+  status: boolean;
 }
 
 export default function CheckoutPage({
@@ -25,52 +51,140 @@ export default function CheckoutPage({
 }) {
   const { courseId } = use(params);
   const [courseData, setCourseData] = useState<Course>();
+  const [processedCourse, setProcessedCourse] = useState<any>(null);
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const router = useRouter();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    getCoursById(courseId).then((data) => {
-      setCourseData(data.data);
-    });
-  }, [courseId]);
 
   const { user } = useSelector((state: any) => state.auth);
   const { couponApplied, totalAmount, discountAmount, couponUser } =
     useSelector((state: any) => state.order);
 
+  // Fetch course, categories, and offers
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [courseResponse, categoriesResponse, offersResponse] =
+          await Promise.all([
+            getCoursById(courseId),
+            getAllCategories(),
+            getOffers(),
+          ]);
+
+        if (courseResponse && courseResponse.data) {
+          setCourseData(courseResponse.data);
+        }
+
+        if (categoriesResponse) {
+          setCategories(categoriesResponse);
+        }
+
+        if (offersResponse && offersResponse.data) {
+          setOffers(offersResponse.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        showToast("Failed to load course data", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [courseId]);
+
+  // Process course with offer if applicable
+  useEffect(() => {
+    if (!courseData || !categories.length || !offers.length) return;
+
+    // Get the category ID
+    const categoryId = courseData.categoryName || courseData.category;
+
+    // Find matching category
+    const category = categories.find((cat) => cat._id === categoryId);
+
+    // Filter active offers
+    const activeOffers = offers.filter((offer) => offer.status === true);
+
+    // Find matching offer for this category
+    const matchingOffer = activeOffers.find(
+      (offer) => offer.categoryId._id === categoryId
+    );
+
+    // Create the processed course
+    const processed = {
+      ...courseData,
+      actualCategoryName: category ? category.categoryName : "Unknown Category",
+    };
+
+    // Apply offer if available
+    if (matchingOffer) {
+      console.log(
+        `Applying offer to course ${courseData.courseName}:`,
+        matchingOffer
+      );
+
+      const offerDiscount = matchingOffer.discount;
+      const discountAmount = (courseData.sellingPrice * offerDiscount) / 100;
+      const discountedPrice = Math.floor(
+        courseData.sellingPrice - discountAmount
+      );
+
+      processed.offerPrice = discountedPrice;
+      processed.discountPercentage = offerDiscount;
+      processed.offerName = matchingOffer.offerName;
+    }
+
+    setProcessedCourse(processed);
+  }, [courseData, categories, offers]);
+
+  // Check if user is already enrolled in this course
+  useEffect(() => {
+    if (user?.user?.courseProgress && courseId) {
+      const isEnrolled = user.user.courseProgress.some(
+        (course: any) => course.courseId === courseId
+      );
+      setIsAlreadyEnrolled(isEnrolled);
+
+      if (isEnrolled) {
+        showToast("You are already enrolled in this course", "info");
+      }
+    }
+  }, [user, courseId]);
+
   // Constants for tax and price calculations
   const taxRate = 0.18;
-  const originalPrice = courseData?.sellingPrice ?? 0;
-  const originalTax = Math.round(originalPrice * taxRate * 100) / 100;
-  const originalTotalAmount = originalPrice + originalTax;
 
-  // Use the coupon only if it was applied by the current user.
+  // Use offerPrice if available, otherwise use original price
+  const basePrice =
+    processedCourse?.offerPrice || courseData?.sellingPrice || 0;
+  const baseTax = Math.round(basePrice * taxRate * 100) / 100;
+  const baseTotalAmount = basePrice + baseTax;
+
+  // Use the coupon if it was applied by the current user
   const finalTotal =
-    couponApplied && couponUser === user.user._id
+    couponApplied && couponUser === user?.user?._id
       ? discountAmount
-      : originalTotalAmount;
+      : baseTotalAmount;
 
   const [isChecked, setIsChecked] = useState(false);
-  const token = Cookies.get("jwt_token");
-
   const verifyCoupon = async (code: string) => {
     try {
-      const response = await fetch(`${backendUrl}/api/verify-coupon`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          couponCode: code,
-          userId: user.user._id,
-        }),
+      const response = await api.post(`/api/verify-coupon`, {
+        couponCode: code,
+        courseId: courseId,
+        userId: user.user._id,
       });
-      const data = await response.json();
+      const data = await response.data;
       return data.data;
     } catch (error) {
       console.error("Error verifying coupon:", error);
@@ -94,15 +208,15 @@ export default function CheckoutPage({
       if (result.couponStatus && result.couponDiscount) {
         // Calculate discounted price using coupon discount percentage
         const discountPercent = result.couponDiscount / 100;
-        const discountValue = originalPrice * discountPercent;
-        const discountedPrice = originalPrice - discountValue;
+        const discountValue = basePrice * discountPercent;
+        const discountedPrice = basePrice - discountValue;
         const discountedTax = Math.round(discountedPrice * taxRate * 100) / 100;
         const newTotalAmount = discountedPrice + discountedTax;
 
         // Dispatch to Redux: store the original total, new total, and current user id.
         dispatch(
           couponApply({
-            originalTotal: originalTotalAmount,
+            originalTotal: baseTotalAmount,
             newTotal: newTotalAmount,
             userId: user.user._id,
           })
@@ -127,10 +241,16 @@ export default function CheckoutPage({
   };
 
   const handleProceed = async () => {
+    if (isAlreadyEnrolled) {
+      router.push(`/student/profile/my-courses/${courseId}`);
+      return;
+    }
+
     if (!isChecked) {
       showToast("You must agree to the terms before proceeding.", "error");
       return;
     }
+
     const data = {
       currency: "INR",
       amount: finalTotal,
@@ -139,9 +259,14 @@ export default function CheckoutPage({
       isApplied: couponApplied && couponUser === user.user._id,
       couponCode: appliedCoupon ? appliedCoupon : null,
       couponDiscount: appliedCoupon ? discount : null,
+      // Add offer information if available
+      isOfferApplied: !!processedCourse?.offerPrice,
+      offerName: processedCourse?.offerName || null,
+      offerDiscount: processedCourse?.discountPercentage || null,
     };
+
     try {
-      const order: any = await createOrder(data, token);
+      const order: any = await createOrder(data);
       if (!order) {
         showToast("Failed to create order. Try again.", "error");
         return;
@@ -153,9 +278,13 @@ export default function CheckoutPage({
     }
   };
 
+  const navigateToCourse = () => {
+    router.push(`/student/profile/my-courses/${courseId}`);
+  };
+
   const details = {
     courseId: courseData?.courseId,
-    userId: user.user._id,
+    userId: user?.user?._id,
   };
 
   const openRazorpay = (orderData: any) => {
@@ -185,7 +314,7 @@ export default function CheckoutPage({
       order_id: orderData.id,
       handler: async function (response: any) {
         console.log("Payment Response:", response);
-        const verify = await verifyOrder(response, details, token);
+        const verify = await verifyOrder(response, details);
         console.log("Verify Response:", verify);
         if (verify.success) {
           showToast("Payment Successful", "success");
@@ -193,8 +322,8 @@ export default function CheckoutPage({
         }
       },
       prefill: {
-        name: user.user.name,
-        email: user.user.email,
+        name: user?.user?.name || "",
+        email: user?.user?.email || "",
       },
       theme: {
         color: "#3399cc",
@@ -204,9 +333,52 @@ export default function CheckoutPage({
     rzp.open();
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  // Original price (before any discounts)
+  const originalPrice = courseData?.sellingPrice || 0;
+  const originalTax = Math.round(originalPrice * taxRate * 100) / 100;
+  const originalTotalAmount = originalPrice + originalTax;
+
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-6">
       <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-8">
+        {/* Already Enrolled Alert */}
+        {isAlreadyEnrolled && (
+          <div className="md:col-span-5 bg-purple-900/30 border border-purple-700 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-purple-300">
+                You're already enrolled in this course!
+              </h3>
+              <p className="text-sm text-purple-300/80 mt-1">
+                You have already purchased this course. Continue learning or
+                explore your other courses.
+              </p>
+              <div className="mt-3 flex gap-3">
+                <button
+                  onClick={navigateToCourse}
+                  className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  Continue Learning
+                </button>
+                <button
+                  onClick={() => router.push("/student/profile/my-profile")}
+                  className="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="md:col-span-3 space-y-6">
           <h1 className="text-2xl font-semibold">Billing Details</h1>
 
@@ -217,7 +389,7 @@ export default function CheckoutPage({
               <div className="relative">
                 <input
                   type="email"
-                  value={user.user.email}
+                  value={user?.user?.email || ""}
                   disabled
                   className="w-full bg-gray-900/50 border border-gray-800 rounded-lg px-4 py-2.5 focus:ring-1 focus:ring-purple-500 transition-all disabled:opacity-75"
                 />
@@ -258,13 +430,16 @@ export default function CheckoutPage({
                 />
                 <button
                   onClick={handleApplyCoupon}
-                  disabled={couponApplied && couponUser === user.user._id}
+                  disabled={
+                    (couponApplied && couponUser === user?.user?._id) ||
+                    isAlreadyEnrolled
+                  }
                   className="bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-lg px-4 py-2.5 flex items-center gap-2 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Tag className="w-4 h-4" />
                   {isApplyingCoupon ? "Applying..." : "Apply"}
                 </button>
-                {couponApplied && couponUser === user.user._id && (
+                {couponApplied && couponUser === user?.user?._id && (
                   <button
                     className="text-sm text-red-500"
                     onClick={() => {
@@ -285,7 +460,8 @@ export default function CheckoutPage({
                 type="checkbox"
                 checked={isChecked}
                 onChange={() => setIsChecked(!isChecked)}
-                className="mt-1 rounded border-gray-700 bg-gray-900/50 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+                disabled={isAlreadyEnrolled}
+                className="mt-1 rounded border-gray-700 bg-gray-900/50 text-purple-500 focus:ring-purple-500 focus:ring-offset-0 disabled:opacity-50"
               />
               <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
                 By completing this purchase, you agree to Code Sphere Privacy &
@@ -296,10 +472,20 @@ export default function CheckoutPage({
             {/* Proceed / Pay Now Button */}
             <button
               onClick={handleProceed}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-6 py-2.5 flex items-center justify-center gap-2 transition-colors"
+              className={`w-full ${
+                isAlreadyEnrolled
+                  ? "bg-purple-700 hover:bg-purple-800"
+                  : "bg-purple-600 hover:bg-purple-700"
+              } text-white rounded-lg px-6 py-2.5 flex items-center justify-center gap-2 transition-colors`}
             >
-              <Shield className="w-4 h-4" />
-              Pay Now (₹{finalTotal})
+              {isAlreadyEnrolled ? (
+                <>Continue to Course</>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" />
+                  Pay Now (₹{finalTotal})
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -317,6 +503,13 @@ export default function CheckoutPage({
                 />
               </div>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+
+              {/* Offer badge if available */}
+              {processedCourse?.discountPercentage && (
+                <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  {processedCourse.discountPercentage}% OFF
+                </div>
+              )}
             </div>
 
             <div>
@@ -324,18 +517,59 @@ export default function CheckoutPage({
               <p className="text-sm text-gray-400 mb-2">
                 {courseData?.courseDescription}
               </p>
-              <div className="text-2xl font-semibold">₹{originalPrice}</div>
+
+              {/* Show price with offer if available */}
+              {processedCourse?.offerPrice ? (
+                <div className="flex items-end gap-2">
+                  <span className="text-2xl font-semibold">
+                    ₹{processedCourse.offerPrice}
+                  </span>
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{originalPrice}
+                  </span>
+                  <span className="text-xs text-green-400">
+                    {processedCourse.offerName ||
+                      `${processedCourse.discountPercentage}% OFF`}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-2xl font-semibold">₹{originalPrice}</div>
+              )}
             </div>
 
             <div className="space-y-3 pt-4 border-t border-gray-800">
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <span>Estimated Tax</span>
-                <span>₹{originalTax}</span>
+                <span>₹{baseTax}</span>
               </div>
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <span>Miscellaneous Tax</span>
                 <span>₹0</span>
               </div>
+
+              {/* If offer is applied, show the offer details */}
+              {processedCourse?.offerPrice && (
+                <div className="flex justify-between items-center text-sm text-green-500">
+                  <span>Offer Discount</span>
+                  <span>-₹{originalPrice - processedCourse.offerPrice}</span>
+                </div>
+              )}
+
+              {/* If coupon is applied, show the coupon details */}
+              {couponApplied && couponUser === user?.user?._id && (
+                <div className="flex justify-between items-center text-sm text-green-500">
+                  <span>Coupon Discount</span>
+                  <span>-₹{baseTotalAmount - discountAmount}</span>
+                </div>
+              )}
+
+              {isAlreadyEnrolled && (
+                <div className="flex justify-between items-center text-sm text-green-500 pt-3 border-t border-gray-800">
+                  <span>Status</span>
+                  <span>Already Enrolled</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center text-base font-medium pt-3 border-t border-gray-800">
                 <span>Total</span>
                 <span>₹{finalTotal}</span>

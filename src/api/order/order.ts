@@ -1,19 +1,8 @@
-import { backendUrl } from "@/utils/backendUrl";
-import axios from "axios";
 import api from "@/api/axios";
 
-export const createOrder = async (data: any, token: any) => {
+export const createOrder = async (data: any) => {
   try {
-    const response = await axios.post(
-      `${backendUrl}/api/order/create-order`,
-      data,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.post(`/api/order/create-order`, data);
     console.log(response.data);
     localStorage.setItem("orderId", response.data.data.orderId);
     return response.data.data.order;
@@ -22,27 +11,14 @@ export const createOrder = async (data: any, token: any) => {
   }
 };
 
-export const verifyOrder = async (
-  data: any,
-  courseDetails: any,
-  token: any
-) => {
+export const verifyOrder = async (data: any, courseDetails: any) => {
   try {
     const orderId = localStorage.getItem("orderId");
-    const response = await axios.post(
-      `${backendUrl}/api/order/verify-order`,
-      {
-        data,
-        orderId,
-        courseDetails,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.post("/api/order/verify-order", {
+      data,
+      orderId,
+      courseDetails,
+    });
     console.log("safaana id", response.data);
     return response.data;
   } catch (err) {
@@ -59,18 +35,9 @@ export const getAllorders = async () => {
   }
 };
 
-export const membershipOrder = async (data: any, token: any) => {
+export const membershipOrder = async (data: any) => {
   try {
-    const response = await axios.post(
-      `${backendUrl}/api/order/membership/create-order`,
-      data,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.post("/api/order/membership/create-order", data);
     localStorage.setItem("orderId", response.data.data.orderId);
     return response.data.data.order;
   } catch (err) {
@@ -78,27 +45,14 @@ export const membershipOrder = async (data: any, token: any) => {
   }
 };
 
-export const verifyMembershipOrder = async (
-  data: any,
-  courseDetails: any,
-  token: any
-) => {
+export const verifyMembershipOrder = async (data: any, courseDetails: any) => {
   try {
     const orderId = localStorage.getItem("orderId");
-    const response = await axios.post(
-      `${backendUrl}/api/order/membership/verify-order`,
-      {
-        data,
-        orderId,
-        courseDetails,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.post("/api/order/membership/verify-order", {
+      data,
+      orderId,
+      courseDetails,
+    });
     return response.data;
   } catch (err) {
     console.log(err);

@@ -2,21 +2,25 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMembershipByUserId } from "@/api/user/user";
+import { getMembershipByUserOId } from "@/api/user/user";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
 
 interface Membership {
   _id: string;
+  membershipOrderId: string;
   membershipId: {
     _id: string;
     membershipName: string;
-    description?: string;
-    benefits?: string[];
   };
+  membershipPlan: string;
+  totalAmount: number;
+  orderStatus: string;
+  paymentStatus: string;
   membershipStatus: string;
-  membershipStartDate: string;
-  membershipEndDate: string;
+  membershipStartDate?: string;
+  membershipEndDate?: string;
+  categoryId: string[];
 }
 
 interface User {
@@ -40,10 +44,10 @@ export default function Courses() {
 
   useEffect(() => {
     setLoading(true);
-    getMembershipByUserId(userId)
-      .then((data) => {
-        console.log(data, "Membership data");
-        setMembershipData(data);
+    getMembershipByUserOId(userId)
+      .then((response) => {
+        console.log(response, "Membership data");
+        setMembershipData(response || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -54,9 +58,9 @@ export default function Courses() {
 
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
-      case "active":
+      case "success":
         return "bg-green-500";
-      case "expired":
+      case "failed":
         return "bg-red-500";
       case "pending":
         return "bg-yellow-500";
@@ -65,12 +69,14 @@ export default function Courses() {
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const formatDate = (dateString?: string): string => {
+    return dateString
+      ? new Date(dateString).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "N/A";
   };
 
   return (
@@ -107,24 +113,25 @@ export default function Courses() {
 
                   <img
                     src="/membership.PNG"
-                    alt={membership.membershipId.membershipName}
+                    alt="Membership"
                     className="w-full h-56 object-cover transition-all duration-500 group-hover:scale-105"
                   />
 
                   {/* Status badge */}
                   <div
                     className={`absolute top-4 right-4 z-20 px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                      membership.membershipStatus
+                      membership.paymentStatus
                     )}`}
                   >
-                    {membership.membershipStatus.charAt(0).toUpperCase() +
-                      membership.membershipStatus.slice(1)}
+                    {membership.paymentStatus.charAt(0).toUpperCase() +
+                      membership.paymentStatus.slice(1)}
                   </div>
                 </div>
 
                 <div className="p-6">
                   <h3 className="text-2xl font-bold mb-4 group-hover:text-blue-400 transition-colors">
-                    {membership.membershipId.membershipName}
+                    {membership.membershipId.membershipName} -{" "}
+                    {membership.membershipPlan}
                   </h3>
 
                   <div className="space-y-4 mb-6">
@@ -154,11 +161,9 @@ export default function Courses() {
                         </svg>
                       </div>
                       <div>
-                        <span className="text-xs text-gray-400">
-                          Start Date
-                        </span>
+                        <span className="text-xs text-gray-400">Order ID</span>
                         <p className="text-sm font-medium">
-                          {formatDate(membership.membershipStartDate)}
+                          {membership.membershipOrderId}
                         </p>
                       </div>
                     </div>
@@ -175,48 +180,42 @@ export default function Courses() {
                           strokeLinejoin="round"
                           className="text-blue-400"
                         >
-                          <rect
-                            width="18"
-                            height="18"
-                            x="3"
-                            y="4"
-                            rx="2"
-                            ry="2"
-                          ></rect>
-                          <line x1="16" x2="16" y1="2" y2="6"></line>
-                          <line x1="8" x2="8" y1="2" y2="6"></line>
-                          <line x1="3" x2="21" y1="10" y2="10"></line>
+                          <path d="M12 2v10l4.5 4.5"></path>
+                          <path d="M16 16h6"></path>
+                          <path d="M19 16v6"></path>
+                          <circle cx="12" cy="12" r="10"></circle>
                         </svg>
                       </div>
                       <div>
-                        <span className="text-xs text-gray-400">End Date</span>
+                        <span className="text-xs text-gray-400">
+                          Total Amount
+                        </span>
                         <p className="text-sm font-medium">
-                          {formatDate(membership.membershipEndDate)}
+                          ₹{membership.totalAmount.toLocaleString()}
                         </p>
                       </div>
                     </div>
 
-                    {/* Benefits section */}
-                    {membership.membershipId.benefits && (
-                      <div className="mt-4">
-                        <h4 className="text-sm font-semibold text-gray-400 mb-2">
-                          Membership Benefits
-                        </h4>
-                        <ul className="text-sm space-y-1">
-                          {(
-                            membership.membershipId.benefits || [
-                              "Access to courses",
-                              "Premium content",
-                            ]
-                          ).map((benefit, index) => (
-                            <li key={index} className="flex items-center">
-                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                              <span className="text-gray-300">{benefit}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {/* Order Details section */}
+                    <div className="mt-4">
+                      <h4 className="text-sm font-semibold text-gray-400 mb-2">
+                        Order Details
+                      </h4>
+                      <ul className="text-sm space-y-1">
+                        <li className="flex items-center">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                          <span className="text-gray-300">
+                            Order Status: {membership.orderStatus}
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                          <span className="text-gray-300">
+                            Payment Status: {membership.paymentStatus}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
                   <Link href={`/student/profile/my-courses`}>

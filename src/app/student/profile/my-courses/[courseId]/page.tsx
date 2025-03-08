@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import { backendUrl } from "@/utils/backendUrl";
 import { getUserDetails } from "@/store/slice/authSlice";
-
+import api from "@/api/axios";
 export default function CourseDetailsAndChapters({
   params,
 }: {
@@ -48,28 +48,19 @@ export default function CourseDetailsAndChapters({
     );
 
     try {
-      let response = await fetch(`${backendUrl}/api/course/update-progress`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId, chapterId, courseId }),
+      let response = await api.patch("/api/course/update-progress", {
+        userId,
+        courseId,
+        chapterId,
       });
-      let data = await response.json();
+      let data = await response.data;
       console.log(data);
       if (data.success) {
         console.log("Chapter progress updated successfully");
 
-        const updateUser = await fetch(
-          `${backendUrl}/api/user/find-user/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const userData = await updateUser.json();
+        const updateUser = await api.get(`/api/user/find-user/${userId}`);
+        const userData = await updateUser.data;
+
         console.log(userData, "roshan");
         dispatch(getUserDetails({ user: userData.data }));
       } else {

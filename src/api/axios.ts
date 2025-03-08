@@ -14,7 +14,7 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    let token = sessionStorage.getItem("jwt_token");
+    const token = localStorage.getItem("jwt_token");
     console.log(token, "check");
     console.log("Auth Token (Before Request):", token);
     if (token) {
@@ -43,12 +43,12 @@ axiosInstance.interceptors.response.use(
         );
         console.log("working.......3");
         console.log("New Access Token:", data.data);
-        sessionStorage.setItem("jwt_token", data.data);
+        localStorage.setItem("jwt_token", data.data);
         const decodedToken = jwtDecode(data.data) as { role: string };
         console.log("working.......4");
         console.log("Decoded Role:", decodedToken.role);
         let role = decodedToken.role;
-        sessionStorage.setItem("role", role);
+        localStorage.setItem("role", role);
         console.log("working.......5");
         originalRequest.headers.Authorization = `Bearer ${data.data}`;
         return axiosInstance(originalRequest);

@@ -18,8 +18,7 @@ import {
 import Link from "next/link";
 import { dashboardData } from "@/api/admin";
 import api from "@/api/axios";
-import Cookies from "js-cookie";
-import axios from "axios";
+
 import { showToast } from "@/utils/toastUtil";
 
 // Register necessary ChartJS components
@@ -154,6 +153,7 @@ const AdminDashboard: React.FC = () => {
       setError(null);
       try {
         const response = await api.get("/api/reports/get-toptutors");
+        console.log(response.data.data);
         if (response.data.success) {
           const labels = response.data.data.map(
             (tutor: any) => tutor.tutorName
@@ -281,16 +281,26 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
         {/* Reports */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg shadow-xl transform hover:scale-105 transition duration-300">
-          <h2 className="text-2xl font-bold text-white mb-2">Reports</h2>
-          <p className="text-gray-300 mb-6">
-            Gain insights with detailed order analytics and reports.
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Reports & Analytics
+          </h2>
+          <p className="text-gray-300 mb-8">
+            Dive deep into your data with detailed order and membership
+            analytics.
           </p>
-          <div className="flex justify-center">
-            <Link href="/admin/order-reports">
-              <p className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-md transition-colors duration-300">
-                Check Order Reports
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link
+              href="/admin/order-reports"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-md transition-colors duration-300 text-center"
+            >
+              Order Reports
+            </Link>
+            <Link
+              href="/admin/membership-reports"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-md transition-colors duration-300 text-center"
+            >
+              Membership Reports
             </Link>
           </div>
         </div>

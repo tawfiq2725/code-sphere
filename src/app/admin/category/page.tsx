@@ -137,11 +137,7 @@ export default function Category() {
       );
     }
     try {
-      let res = await updateCategoryApi(
-        editingCategory,
-        token,
-        editingCategory._id
-      );
+      let res = await updateCategoryApi(editingCategory, editingCategory._id);
       if (res.success) {
         fetchCategories();
         setIsEditModalOpen(false);

@@ -38,7 +38,7 @@ export default function SimpleCourseManagement() {
   const tutorId: string = localStorage.getItem("tutor_id") || "";
 
   useEffect(() => {
-    getCourseData(token, tutorId)
+    getCourseData(tutorId)
       .then(async (res) => {
         const coursesData: Course[] = res.data;
         const coursesWithEnrollment = await Promise.all(

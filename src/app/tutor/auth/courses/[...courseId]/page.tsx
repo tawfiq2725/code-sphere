@@ -6,6 +6,7 @@ import { showToast } from "@/utils/toastUtil";
 import { backendUrl } from "@/utils/backendUrl";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import api from "@/api/axios";
 import VideoModal from "@/app/components/common/VideoModal";
 
 export default function CourseChapterPage({
@@ -35,16 +36,8 @@ export default function CourseChapterPage({
   console.log(`${backendUrl}/api/course/get-chapters/${courseId[0]}`);
   const fetchCapterData = async () => {
     try {
-      const response = await fetch(
-        `${backendUrl}/api/course/get-chapters/${courseId[0]}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await api.get(`/api/course/get-chapters/${courseId[0]}`);
+      const data = await response.data;
       console.log("----------------------", data);
       console.log(data.data);
       if (data.success) {
@@ -128,15 +121,13 @@ export default function CourseChapterPage({
       formData.append("video", newChapter.video);
     }
     try {
-      const response = await fetch(`${backendUrl}/api/course/add-chapter`, {
-        method: "POST",
+      const response = await api.post(`/api/course/add-chapter`, formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        body: formData,
       });
 
-      const data = await response.json();
+      const data = await response.data;
       if (data.success) {
         showToast(data.message, "success");
         setChapters([...chapters, data.chapter]);

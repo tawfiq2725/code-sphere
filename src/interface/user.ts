@@ -16,7 +16,7 @@ export interface User {
   tutorStatus?: "pending" | "approved" | "rejected";
   profile?: string;
   bio?: string;
-  unreadCount?: number;
+  hasNewMessage?: boolean;
 }
 
 export interface Message {

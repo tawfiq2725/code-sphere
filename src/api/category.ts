@@ -17,19 +17,10 @@ export const getCategories = async () => {
   const response = await api.get(`/api/course/get-categories`);
   return response.data.data;
 };
-export const updateCategory = async (
-  category: Category,
-  token: string,
-  id: string
-) => {
-  const response = await axios.patch(
-    `${backendUrl}/api/course/update-category/${id}`,
-    category,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+export const updateCategory = async (category: Category, id: string) => {
+  const response = await api.patch(
+    `/api/course/update-category/${id}`,
+    category
   );
   return response.data;
 };
@@ -50,9 +41,7 @@ export const toggleVisiblity = async (id: string, token: string) => {
 };
 
 export const getByNameById = async (id: string) => {
-  const response = await axios.get(
-    `${backendUrl}/api/course/get-category/${id}`
-  );
+  const response = await api.get(`/api/course/get-category/${id}`);
   return response.data.data;
 };
 

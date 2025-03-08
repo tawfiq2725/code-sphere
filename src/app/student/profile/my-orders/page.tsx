@@ -26,7 +26,7 @@ export default function SimpleCourseManagement() {
   const userId: string = user.user._id;
   console.log("This is actual userId", userId);
   useEffect(() => {
-    getUserOrders(userId, token)
+    getUserOrders(userId)
       .then((data) => {
         setOrders(data.data);
         showToast("Orders fetched successfully", "success");

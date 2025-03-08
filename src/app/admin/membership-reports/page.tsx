@@ -1,22 +1,41 @@
 "use client";
-import { backendUrl } from "@/utils/backendUrl";
 import { useState } from "react";
-import { Orders } from "@/interface/order";
 import pdfMake from "pdfmake/build/pdfmake";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { showToast } from "@/utils/toastUtil";
 import Pagination from "@/app/components/common/pagination";
 import api from "@/api/axios";
+import { text } from "stream/consumers";
+
+// Define interface for membership data
+interface MembershipOrders {
+  _id: string;
+  membershipOrderId: string;
+  membershipId: string;
+  userId: string;
+  categoryId: string;
+  totalAmount: number;
+  orderStatus: string;
+  paymentStatus: string;
+  createdAt: string;
+  updatedAt: string;
+  membershipEndDate: string;
+  membershipStartDate: string;
+  membershipStatus: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}
 
 pdfMake.vfs = pdfFonts.vfs;
 
 export default function Page() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [orderData, setOrderData] = useState<Orders[]>([]);
-  const [currentPage, setCurrentPage] = useState(1); // State for current page
-  const itemsPerPage = 5; // Number of items per page (adjust as needed)
+  const [membershipData, setMembershipData] = useState<MembershipOrders[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +44,7 @@ export default function Page() {
     }
     console.log(`Searching from ${startDate} to ${endDate}`);
     try {
-      const res = await api.get(`/api/reports/get-reports/orders`, {
+      const res = await api.get(`/api/reports/get-reports/member/orders`, {
         params: {
           startDate,
           endDate,
@@ -33,7 +52,7 @@ export default function Page() {
       });
       const data = await res.data;
       console.log(data.data);
-      setOrderData(data.data);
+      setMembershipData(data.data);
       setCurrentPage(1); // Reset to first page after new search
     } catch (error) {
       console.error(error);
@@ -45,16 +64,21 @@ export default function Page() {
     const tableBody = [
       [
         { text: "S.no", bold: true, fillColor: "#4a4a4a", color: "white" },
-        { text: "Order ID", bold: true, fillColor: "#4a4a4a", color: "white" },
-        { text: "Course ID", bold: true, fillColor: "#4a4a4a", color: "white" },
+        {
+          text: "Membership Order ID",
+          bold: true,
+          fillColor: "#4a4a4a",
+          color: "white",
+        },
         {
           text: "Total Amount",
           bold: true,
           fillColor: "#4a4a4a",
           color: "white",
         },
+        { text: "Status", bold: true, fillColor: "#4a4a4a", color: "white" },
         {
-          text: "Order Status",
+          text: "Payment Status",
           bold: true,
           fillColor: "#4a4a4a",
           color: "white",
@@ -66,12 +90,12 @@ export default function Page() {
           color: "white",
         },
         {
-          text: "Coupon Code",
+          text: "Start Date",
           bold: true,
           fillColor: "#4a4a4a",
           color: "white",
         },
-        { text: "Discount", bold: true, fillColor: "#4a4a4a", color: "white" },
+        { text: "End Date", bold: true, fillColor: "#4a4a4a", color: "white" },
         {
           text: "Created Date",
           bold: true,
@@ -79,18 +103,16 @@ export default function Page() {
           color: "white",
         },
       ],
-      ...orderData.map((order, index) => [
+      ...membershipData.map((membership, index) => [
         index + 1,
-        order.orderId,
-        order.courseId,
-        `₹${parseFloat(order.totalAmount).toFixed(2)}`,
-        order.orderStatus,
-        "Razorpay",
-        order.couponCode || "N/A",
-        order.couponDiscount
-          ? `${((parseFloat(order.couponDiscount) ?? 0) * 100).toFixed(0)}%`
-          : "N/A",
-        new Date(order.createdAt).toLocaleDateString(),
+        membership.membershipOrderId,
+        `₹${parseFloat(membership.totalAmount.toString()).toFixed(2)}`,
+        membership.membershipStatus,
+        membership.paymentStatus,
+        `Razorpay`,
+        new Date(membership.membershipStartDate).toLocaleDateString(),
+        new Date(membership.membershipEndDate).toLocaleDateString(),
+        new Date(membership.createdAt).toLocaleDateString(), // Added the 9th column
       ]),
     ];
 
@@ -103,7 +125,7 @@ export default function Page() {
           margin: [0, 0, 0, 20],
         },
         {
-          text: "Order Reports",
+          text: "Membership Reports",
           alignment: "left",
           margin: [0, 0, 0, 10],
         },
@@ -158,14 +180,14 @@ export default function Page() {
       },
     };
 
-    pdfMake.createPdf(documentDefinition).download("order_report.pdf");
+    pdfMake.createPdf(documentDefinition).download("membership_report.pdf");
   };
 
   // Pagination logic
-  const totalPages = Math.ceil(orderData.length / itemsPerPage);
+  const totalPages = Math.ceil(membershipData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentOrders = orderData.slice(startIndex, endIndex);
+  const currentMemberships = membershipData.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -175,7 +197,7 @@ export default function Page() {
     <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8">
       {/* Header */}
       <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 tracking-wide">
-        Order Reports
+        Membership Reports
       </h1>
 
       {/* Filter Section */}
@@ -201,7 +223,7 @@ export default function Page() {
         <button
           onClick={handleDownloadPDF}
           className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-2 px-4 rounded-md hover:from-blue-600 hover:to-blue-800 transition-all duration-300 w-full sm:w-auto"
-          disabled={orderData.length === 0}
+          disabled={membershipData.length === 0}
         >
           Download PDF
         </button>
@@ -213,28 +235,27 @@ export default function Page() {
           <thead>
             <tr className="bg-gray-800">
               <th className="p-4 text-sm font-semibold rounded-tl-lg">
-                Order ID
+                Membership Order ID
               </th>
-              <th className="p-4 text-sm font-semibold">Course ID</th>
               <th className="p-4 text-sm font-semibold">Total Amount</th>
-              <th className="p-4 text-sm font-semibold">Order Status</th>
+              <th className="p-4 text-sm font-semibold">Membership Status</th>
               <th className="p-4 text-sm font-semibold">Payment Status</th>
-              <th className="p-4 text-sm font-semibold">Coupon Code</th>
-              <th className="p-4 text-sm font-semibold">Discount</th>
+              <th className="p-4 text-sm font-semibold">Start Date</th>
+              <th className="p-4 text-sm font-semibold">End Date</th>
               <th className="p-4 text-sm font-semibold rounded-tr-lg">
                 Created Date
               </th>
             </tr>
           </thead>
           <tbody>
-            {orderData.length === 0 ? (
+            {membershipData.length === 0 ? (
               <tr>
                 <td colSpan={8} className="p-4 text-center text-gray-400">
-                  No data available. Please search for orders.
+                  No data available. Please search for memberships.
                 </td>
               </tr>
             ) : (
-              currentOrders.map((order, index) => (
+              currentMemberships.map((membership, index) => (
                 <tr
                   key={index}
                   className={`${
@@ -242,32 +263,30 @@ export default function Page() {
                   } hover:bg-gray-700 transition-colors duration-200`}
                 >
                   <td className="p-4 text-sm border-t border-gray-700">
-                    {order.orderId}
+                    {membership.membershipOrderId}
+                  </td>
+
+                  <td className="p-4 text-sm border-t border-gray-700">
+                    ₹{parseFloat(membership.totalAmount.toString()).toFixed(2)}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
-                    {order.courseId}
+                    {membership.membershipStatus}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
-                    ₹{parseFloat(order.totalAmount).toFixed(2)}
+                    {membership.paymentStatus}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
-                    {order.orderStatus}
+                    {new Date(
+                      membership.membershipStartDate
+                    ).toLocaleDateString()}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
-                    {order.paymentStatus}
+                    {new Date(
+                      membership.membershipEndDate
+                    ).toLocaleDateString()}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
-                    {order.couponCode || "N/A"}
-                  </td>
-                  <td className="p-4 text-sm border-t border-gray-700">
-                    {order.couponDiscount
-                      ? `${(
-                          (parseFloat(order.couponDiscount) ?? 0) * 100
-                        ).toFixed(0)}%`
-                      : "N/A"}
-                  </td>
-                  <td className="p-4 text-sm border-t border-gray-700">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {new Date(membership.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
               ))
@@ -277,7 +296,7 @@ export default function Page() {
       </div>
 
       {/* Pagination */}
-      {orderData.length > 0 && (
+      {membershipData.length > 0 && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

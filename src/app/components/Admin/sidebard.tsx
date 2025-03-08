@@ -40,7 +40,7 @@ const navigation = [
     href: "/admin/membership-orders",
     icon: Package,
   },
-  { name: "Offer Management", href: "/offers", icon: Gift },
+  { name: "Offer Management", href: "/admin/offer", icon: Gift },
 ];
 
 export default function Sidebar() {

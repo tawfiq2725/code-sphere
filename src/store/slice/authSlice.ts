@@ -30,21 +30,21 @@ const authSlice = createSlice({
       state.role = role;
       console.log(token);
       console.log(role);
-      sessionStorage.setItem("jwt_token", token);
-      sessionStorage.setItem("role", role);
+      localStorage.setItem("jwt_token", token);
+      localStorage.setItem("role", role);
       console.log(state.isAuthenticated, state.token, state.role);
     },
     logout: (state) => {
       state.isAuthenticated = false;
       state.token = null;
       state.role = null;
-      sessionStorage.clear();
+      localStorage.clear();
       localStorage.clear();
       logoutUser();
     },
     loadAuthFromCookies: (state) => {
-      const token = sessionStorage.getItem("jwt_token");
-      const role = sessionStorage.getItem("role");
+      const token = localStorage.getItem("jwt_token");
+      const role = localStorage.getItem("role");
       console.log("Token from cookies:", token);
       console.log("Role from cookies:", role);
 

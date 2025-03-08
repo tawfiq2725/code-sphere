@@ -519,19 +519,12 @@ export default function CouponManagement() {
                     Coupon Code
                   </label>
                   <input
-                    className="w-full p-3 rounded-lg bg-gray-700/50 text-white border border-gray-600 focus:outline-none focus:border-amber-500 transition-colors font-mono"
+                    className="w-full p-3 rounded-lg bg-gray-700/50 text-white border border-gray-600 cursor-not-allowed opacity-70 font-mono"
                     placeholder="e.g. SUMMER20"
                     value={couponData.couponCode}
-                    onChange={(e) =>
-                      setCouponData({
-                        ...couponData,
-                        couponCode: e.target.value.toUpperCase(),
-                      })
-                    }
+                    readOnly
+                    disabled
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    6-10 alphanumeric characters, no spaces or special symbols
-                  </p>
                 </div>
 
                 <div>
@@ -567,11 +560,10 @@ export default function CouponManagement() {
                         : ""
                     }
                     onChange={(e) => {
-                      const selectedDateTime = new Date(e.target.value);
-                      if (!isNaN(selectedDateTime.getTime())) {
-                        const isoDateTime = selectedDateTime.toISOString();
-                        setCouponData({ ...couponData, expireAt: isoDateTime });
-                      }
+                      setCouponData({
+                        ...couponData,
+                        expireAt: e.target.value,
+                      });
                     }}
                   />
                 </div>

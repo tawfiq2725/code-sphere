@@ -2,7 +2,8 @@ export interface Memberships {
   _id: string;
   membershipId: string;
   membershipName: string;
-  membershipDescription: string[];
+  membershipDescription: string;
+  membershiPlan: "Basic" | "Standard" | "Premium";
   price: number;
   label: string;
   originalPrice: number;

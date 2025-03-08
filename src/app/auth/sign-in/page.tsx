@@ -10,6 +10,7 @@ import { getUserDetails, loginSuccess } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
 import { Eye } from "@/app/components/common/Eye";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +52,8 @@ export default function LoginPage() {
       const { jwt_token, role } = data;
       localStorage.setItem("userEmail", email);
       dispatch(loginSuccess({ token: jwt_token, role }));
+      let profile = signedUrltoNormalUrl(data.user.profile);
+      data.user.profile = profile;
       dispatch(getUserDetails({ user: data.user }));
       showToast(response.data.message, "success");
 

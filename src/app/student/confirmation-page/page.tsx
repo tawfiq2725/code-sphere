@@ -18,9 +18,9 @@ export default function OrderConfirmation() {
             <p className="text-lg font-semibold text-gray-900">{orderId}</p>
           </div>
         )}
-        <Link href="/student/profile/my-profile">
+        <Link href={`/student/profile/my-courses`}>
           <button className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg text-lg font-medium hover:bg-blue-700 transition">
-            Explore Your Course
+            Explore This Course
           </button>
         </Link>
       </div>

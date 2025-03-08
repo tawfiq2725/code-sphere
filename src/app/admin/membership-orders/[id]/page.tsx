@@ -46,7 +46,7 @@ export default function MembershipOrders({
   const router = useRouter();
   useEffect(() => {
     if (id) {
-      getMembershipOrderById(token, id)
+      getMembershipOrderById(token)
         .then((response) => {
           setOrder(response);
         })
