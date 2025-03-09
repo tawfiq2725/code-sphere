@@ -9,6 +9,7 @@ import Header from "@/app/components/header";
 import Image from "next/image";
 import Link from "next/link";
 import ChapterAccordion from "@/app/components/common/ChapterAccordian";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 interface Course {
   _id: string;
@@ -81,6 +82,13 @@ export default function CourseDetailsPage({
         setIsLoading(false);
       });
   }, [id]);
+
+  if (courseData) {
+    courseData.thumbnail = signedUrltoNormalUrl(courseData.thumbnail);
+  }
+  if (tutorData?.profile) {
+    tutorData.profile = signedUrltoNormalUrl(tutorData.profile);
+  }
 
   // Fetch offers
   useEffect(() => {

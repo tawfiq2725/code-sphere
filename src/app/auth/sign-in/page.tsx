@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "@/utils/toastUtil";
 import { getUserDetails, loginSuccess } from "@/store/slice/authSlice";
-import { backendUrl } from "@/utils/backendUrl";
 import { Eye } from "@/app/components/common/Eye";
 import api from "@/api/axios";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";

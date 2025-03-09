@@ -10,6 +10,7 @@ import Cookies from "js-cookie";
 import { backendUrl } from "@/utils/backendUrl";
 import { getUserDetails } from "@/store/slice/authSlice";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 export default function CourseDetailsAndChapters({
   params,
 }: {
@@ -19,7 +20,7 @@ export default function CourseDetailsAndChapters({
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const dispatch = useDispatch();
-  const token = Cookies.get("jwt_token");
+
   const { user } = useSelector((state: any) => state.auth);
   const userId = user.user._id;
   useEffect(() => {
@@ -39,7 +40,10 @@ export default function CourseDetailsAndChapters({
         console.error(error);
       });
   }, [courseId]);
-
+  for (const chapter of chapters) {
+    let videoUrl = signedUrltoNormalUrl(chapter.video);
+    chapter.video = videoUrl;
+  }
   const handleChapterComplete = async (chapterId: string) => {
     setChapters((prevChapters) =>
       prevChapters.map((chapter) =>

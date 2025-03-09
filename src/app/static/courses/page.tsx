@@ -7,6 +7,7 @@ import { getCourses } from "@/api/course";
 import { getAllCategories } from "@/api/category";
 import Pagination from "@/app/components/common/pagination";
 import { getOffers } from "@/api/user/user";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function Courses() {
   interface Category {
@@ -84,7 +85,9 @@ export default function Courses() {
 
     fetchData();
   }, []);
-
+  for (let course of courseData) {
+    course.thumbnail = signedUrltoNormalUrl(course.thumbnail);
+  }
   // Process courses with offers and category names
   useEffect(() => {
     if (!courseData.length || !categories.length) return;

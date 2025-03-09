@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, use } from "react";
 import Pagination from "@/app/components/common/pagination";
 import { MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getEnrollStudents } from "@/api/tutor";
+import { approveCertificate, getEnrollStudents } from "@/api/tutor";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { toast } from "react-toastify";
@@ -64,7 +64,7 @@ export default function EnrollStudents({
     if (courseId) {
       let course = localStorage.getItem("courseName");
       if (course) setCourseName(course);
-      getEnrollStudents(courseId, token)
+      getEnrollStudents(courseId)
         .then((response) => {
           setStudents(response);
           console.log("Enrolled students:", response);
@@ -135,24 +135,17 @@ export default function EnrollStudents({
             }
             formData.append("courseId", courseId);
 
-            const response = await fetch(
-              "http://localhost:5000/tutor/api/approve-certificate",
-              {
-                method: "POST",
-                body: formData,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-
-            if (response.ok) {
-              toast.success("Certificate approved successfully");
-              closeModal();
-              setIsLoading(false);
-            } else {
-              toast.error("Error approving certificate");
-            }
+            approveCertificate(formData)
+              .then((data) => {
+                toast.success("Certificate approved successfully");
+                closeModal();
+                setIsLoading(false);
+              })
+              .catch((error) => {
+                console.error("Error approving certificate:", error);
+                toast.error("Error approving certificate");
+                setIsLoading(false);
+              });
           } catch (error) {
             console.error("Error generating or sending certificate:", error);
             toast.error("Error approving certificate");
@@ -203,7 +196,6 @@ export default function EnrollStudents({
                   <th className="p-3 border-b hidden sm:table-cell text-center">
                     Status
                   </th>
-                  <th className="p-3 border-b text-center">Message</th>
                   <th className="p-3 border-b text-center">Certificate</th>
                 </tr>
               </thead>
@@ -245,13 +237,7 @@ export default function EnrollStudents({
                           </span>
                         )}
                       </td>
-                      <td className="p-3 border-b">
-                        <div className="flex justify-center items-center">
-                          <Link href={`/tutor/auth/message`}>
-                            <MessageCircle className="w-5 h-5 text-white" />
-                          </Link>
-                        </div>
-                      </td>
+
                       <td className="p-3 border-b text-center">
                         {status === "Completed" && !isApproved ? (
                           <button

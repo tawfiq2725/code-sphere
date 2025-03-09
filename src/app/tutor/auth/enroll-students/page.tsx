@@ -9,6 +9,8 @@ import { getCourseData } from "@/api/course";
 import { Link2 } from "lucide-react";
 import Pagination from "@/app/components/common/pagination";
 import { getEnrollStudents } from "@/api/tutor";
+import { useSelector } from "react-redux";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 interface Course {
   serialNo: number;
@@ -33,9 +35,10 @@ export default function SimpleCourseManagement() {
   const token: any = Cookies.get("jwt_token");
   const router = useRouter();
   const [courses, setCourses] = useState<CourseWithEnrollment[]>([]);
+  const { user } = useSelector((state: any) => state.auth);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const tutorId: string = localStorage.getItem("tutor_id") || "";
+  const tutorId: string = user.user._id;
 
   useEffect(() => {
     getCourseData(tutorId)
@@ -44,10 +47,7 @@ export default function SimpleCourseManagement() {
         const coursesWithEnrollment = await Promise.all(
           coursesData.map(async (course) => {
             try {
-              const enrolledStudents = await getEnrollStudents(
-                course.courseId,
-                token
-              );
+              const enrolledStudents = await getEnrollStudents(course.courseId);
               return { ...course, enrollmentCount: enrolledStudents.length };
             } catch (error) {
               console.error(
@@ -64,6 +64,11 @@ export default function SimpleCourseManagement() {
         console.error("Error fetching course data:", error);
       });
   }, [token, tutorId]);
+
+  for (const course of courses) {
+    const thumnailUrl = signedUrltoNormalUrl(course.thumbnail);
+    course.thumbnail = thumnailUrl;
+  }
 
   // Pagination logic
   const indexOfLastCourse = currentPage * itemsPerPage;

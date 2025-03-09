@@ -10,6 +10,7 @@ import api from "@/api/axios";
 import { createSocket } from "@/utils/config/socket";
 import Image from "next/image";
 import { showToast } from "@/utils/toastUtil";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function TutorChat() {
   const [students, setStudents] = useState<User[]>([]);
@@ -99,7 +100,10 @@ export default function TutorChat() {
     };
     fetchData();
   }, [storedUserId]);
-
+  for (const student of students) {
+    if (student.profile)
+      student.profile = signedUrltoNormalUrl(student.profile);
+  }
   useEffect(() => {
     if (socket && selectedStudent && storedUserId) {
       if (chatId) {

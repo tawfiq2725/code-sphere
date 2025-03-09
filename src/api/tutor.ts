@@ -2,7 +2,7 @@ import { backendUrl } from "@/utils/backendUrl";
 import axios from "axios";
 import api from "@/api/axios";
 
-export const getEnrollStudents = async (courseId: string, token: any) => {
+export const getEnrollStudents = async (courseId: string) => {
   try {
     let response = await api.get(`/tutor/enroll-students/${courseId}`);
 
@@ -12,22 +12,12 @@ export const getEnrollStudents = async (courseId: string, token: any) => {
   }
 };
 
-export async function approveCertificate(
-  studentId: string,
-  courseId: string,
-  tutorName: string,
-  token: string
-) {
-  const response = await axios.post(
-    "/api/tutor/approveCertificate",
-    { studentId, courseId, tutorName },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export async function approveCertificate(data: any) {
+  const response = await api.post("/tutor/api/approve-certificate", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data.data;
 }
 
@@ -39,3 +29,12 @@ export const getCourseById = async (courseId: string) => {
     console.log(err);
   }
 };
+
+// export const approveCertificate = async()=>{
+//   try {
+//     const res = await api.post(`/api/tutor/approveCertificate`, {studentId, courseId, tutorName});
+//     return res.data.data;
+//   } catch (err) {
+//     console.log(err);
+//   }
+// }

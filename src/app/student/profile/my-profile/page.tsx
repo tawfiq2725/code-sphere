@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { Eye, EyeConfirm } from "@/app/components/common/Eye";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function UserProfile() {
   const dispatch = useDispatch();
@@ -27,6 +28,8 @@ export default function UserProfile() {
       const { message, success, data } = res.data;
 
       if (success) {
+        let profile = signedUrltoNormalUrl(data.profile);
+        data.profile = profile;
         dispatch(getUserDetails({ user: data }));
       } else {
         showToast(message, "error");
@@ -81,6 +84,8 @@ export default function UserProfile() {
       const { success, message, data } = response.data;
       if (success) {
         showToast(message, "success");
+        let profile = signedUrltoNormalUrl(data.profile);
+        data.profile = profile;
         dispatch(getUserDetails({ user: data }));
         setSelectedImage(null);
       } else {

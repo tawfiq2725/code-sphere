@@ -7,6 +7,7 @@ import { findUserById } from "@/api/user/user";
 import { getCourses } from "@/api/course";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function Courses() {
   interface Course {
@@ -51,7 +52,10 @@ export default function Courses() {
         setIsLoading(false);
       });
   }, [userId]);
-
+  for (const course of courseData) {
+    let thumbnailUrl = signedUrltoNormalUrl(course.thumbnail);
+    course.thumbnail = thumbnailUrl;
+  }
   useEffect(() => {
     if (courseData.length > 0 && enrollData.length > 0) {
       const enrolledCourses = courseData

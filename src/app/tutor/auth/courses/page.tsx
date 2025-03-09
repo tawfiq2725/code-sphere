@@ -14,6 +14,7 @@ import Pagination from "@/app/components/common/pagination";
 import api from "@/api/axios";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function SimpleCourseManagement() {
   interface Course {
@@ -55,6 +56,11 @@ export default function SimpleCourseManagement() {
         console.log("Course data fetched successfully");
       });
   }, []);
+
+  for (const course of courses) {
+    let thumnailUrl = signedUrltoNormalUrl(course.thumbnail);
+    course.thumbnail = thumnailUrl;
+  }
 
   useEffect(() => {
     const fetchCategories = async () => {

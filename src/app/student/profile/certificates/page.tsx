@@ -6,6 +6,7 @@ import { getUserCertficates } from "@/api/user/user";
 import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
 import { getCourseById } from "@/api/tutor";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function StudentCertifications() {
   const [certifications, setCertifications] = useState<
@@ -17,6 +18,7 @@ export default function StudentCertifications() {
       approvedBy: string;
       certificateUrl: string | null;
       completedDate?: string;
+      isDownloading?: boolean;
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,7 @@ export default function StudentCertifications() {
         for (const cert of certData) {
           try {
             const courseData = await getCourseById(cert.courseId);
+            courseData.thumbnail = signedUrltoNormalUrl(courseData.thumbnail);
 
             if (courseData) {
               updatedCertifications.push({
@@ -60,6 +63,7 @@ export default function StudentCertifications() {
                 completedDate: new Date(
                   cert.approvedAt || Date.now()
                 ).toLocaleDateString(),
+                isDownloading: false,
               });
             }
           } catch (courseError) {
@@ -72,6 +76,7 @@ export default function StudentCertifications() {
               ...cert,
               courseName: "Course information unavailable",
               coursePic: "/placeholder-course.jpg",
+              isDownloading: false,
             });
           }
         }
@@ -89,14 +94,69 @@ export default function StudentCertifications() {
     fetchCertifications();
   }, [userId]);
 
-  const handleDownload = (url: string, courseName: string) => {
-    if (url) {
+  for (const cert of certifications) {
+    if (cert.certificateUrl) {
+      cert.certificateUrl = signedUrltoNormalUrl(cert.certificateUrl);
+    }
+  }
+
+  const handleDownload = async (
+    url: string,
+    courseName: string,
+    courseId: string
+  ) => {
+    try {
+      // Set downloading state for this specific certificate
+      setCertifications((prevCerts) =>
+        prevCerts.map((cert) =>
+          cert.courseId === courseId ? { ...cert, isDownloading: true } : cert
+        )
+      );
+
+      // Simulate network delay (remove in production)
+      // await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const blob = await response.blob();
+
+      // Optionally, check if the blob is a PDF
+      const contentType = blob.type;
+      if (!contentType.includes("pdf")) {
+        throw new Error("The downloaded file is not a valid PDF document");
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob);
+
       const link = document.createElement("a");
-      link.href = url;
+      link.href = blobUrl;
       link.download = `${courseName.replace(/\s+/g, "_")}_certificate.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+
+        // Reset downloading state
+        setCertifications((prevCerts) =>
+          prevCerts.map((cert) =>
+            cert.courseId === courseId
+              ? { ...cert, isDownloading: false }
+              : cert
+          )
+        );
+      }, 1000);
+    } catch (error) {
+      console.error("Download failed:", error);
+      // Reset downloading state on error too
+      setCertifications((prevCerts) =>
+        prevCerts.map((cert) =>
+          cert.courseId === courseId ? { ...cert, isDownloading: false } : cert
+        )
+      );
     }
   };
 
@@ -203,11 +263,30 @@ export default function StudentCertifications() {
                         <button
                           onClick={() =>
                             cert.certificateUrl &&
-                            handleDownload(cert.certificateUrl, cert.courseName)
+                            handleDownload(
+                              cert.certificateUrl,
+                              cert.courseName,
+                              cert.courseId
+                            )
                           }
-                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center gap-2 text-sm font-medium shadow-lg shadow-blue-900/20"
+                          disabled={cert.isDownloading}
+                          className={`${
+                            cert.isDownloading
+                              ? "bg-indigo-800"
+                              : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          } text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 text-sm font-medium shadow-lg shadow-blue-900/20`}
                         >
-                          <Download className="w-4 h-4" /> Download
+                          {cert.isDownloading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              Download
+                            </>
+                          )}
                         </button>
                       ) : (
                         <span className="px-4 py-2 bg-gray-800 text-gray-500 rounded-lg text-sm">
