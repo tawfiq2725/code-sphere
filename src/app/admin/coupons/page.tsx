@@ -10,8 +10,9 @@ import {
   addCoupon,
   updateCoupon,
   toggleCoupon,
+  deleteCoupon,
 } from "@/api/coupon/coupon";
-import { Tag, Edit, Archive, CheckCircle, Plus } from "lucide-react";
+import { Tag, Edit, Archive, CheckCircle, Plus, TrashIcon } from "lucide-react";
 
 export default function CouponManagement() {
   interface Coupon {
@@ -205,6 +206,18 @@ export default function CouponManagement() {
     });
   };
 
+  const handleDeleteCoupon = async (id: string) => {
+    try {
+      await deleteCoupon(id);
+      showToast("Deleted Successfully", "success");
+      setCoupons((prevCoupons) =>
+        prevCoupons.filter((coupon) => coupon._id !== id)
+      );
+    } catch (err) {
+      showToast("Something went wrong", "error");
+    }
+  };
+
   const indexOfLastCoupon = currentPage * itemsPerPage;
   const indexOfFirstCoupon = indexOfLastCoupon - itemsPerPage;
   const currentCoupons = coupons.slice(indexOfFirstCoupon, indexOfLastCoupon);
@@ -272,6 +285,9 @@ export default function CouponManagement() {
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Actions
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Delete
                     </th>
                   </tr>
                 </thead>
@@ -357,6 +373,15 @@ export default function CouponManagement() {
                               </button>
                             )}
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                            onClick={() => handleDeleteCoupon(coupon._id)}
+                            title="Delete coupon"
+                          >
+                            <TrashIcon size={16} />
+                          </button>
                         </td>
                       </tr>
                     );

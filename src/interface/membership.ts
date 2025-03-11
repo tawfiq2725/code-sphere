@@ -15,15 +15,13 @@ export interface MembershipOrder {
   membershipOrderId: string;
   membershipId: string;
   userId: string;
-  categoryId: string;
+  categoryId: string[];
+  membershipPlan: "Basic" | "Standard" | "Premium";
   totalAmount: number;
   orderStatus: string;
   paymentStatus: string;
   createdAt: string;
   updatedAt: string;
-  membershipStartDate: string;
-  membershipEndDate: string;
-  membershipStatus: string;
   razorpayOrderId: string;
   razorpayPaymentId: string;
   razorpaySignature: string;

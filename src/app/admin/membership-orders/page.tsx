@@ -5,9 +5,26 @@ import Cookies from "js-cookie";
 import Pagination from "@/app/components/common/pagination";
 import { showToast } from "@/utils/toastUtil";
 import { getMembershipOrders } from "@/api/admin";
-import { MembershipOrder } from "@/interface/membership";
 import Link from "next/link";
 import { InfoIcon, CreditCard, FileText, Award } from "lucide-react";
+
+// Updated interface to match the schema
+interface MembershipOrder {
+  _id: string;
+  membershipOrderId: string;
+  membershipId: string;
+  userId: string;
+  categoryId: string[];
+  membershipPlan: "Basic" | "Standard" | "Premium";
+  totalAmount: number;
+  orderStatus: "pending" | "success" | "failed";
+  paymentStatus: "pending" | "success" | "failed";
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function MembershipManagement() {
   const token: any = Cookies.get("jwt_token");
@@ -81,6 +98,9 @@ export default function MembershipManagement() {
                       Order ID
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Plan
+                    </th>
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Total Amount
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
@@ -90,10 +110,7 @@ export default function MembershipManagement() {
                       Payment Status
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
-                      Start Date
-                    </th>
-                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
-                      End Date
+                      Created At
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Details
@@ -112,6 +129,20 @@ export default function MembershipManagement() {
                       <td className="px-6 py-4 whitespace-nowrap text-center text-white font-medium">
                         {order.membershipOrderId}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm
+                          ${
+                            order.membershipPlan === "Basic"
+                              ? "bg-green-500/20 text-green-300"
+                              : order.membershipPlan === "Standard"
+                              ? "bg-blue-500/20 text-blue-300"
+                              : "bg-purple-500/20 text-purple-300"
+                          }`}
+                        >
+                          {order.membershipPlan}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-gray-300">
                         ₹{order.totalAmount}
                       </td>
@@ -121,6 +152,11 @@ export default function MembershipManagement() {
                             <CreditCard size={14} />
                             Success
                           </span>
+                        ) : order.orderStatus === "pending" ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 text-sm">
+                            <FileText size={14} />
+                            Pending
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-sm">
                             <FileText size={14} />
@@ -129,23 +165,22 @@ export default function MembershipManagement() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {order.paymentStatus === "paid" ? (
+                        {order.paymentStatus === "success" ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm">
                             Paid
                           </span>
-                        ) : (
+                        ) : order.paymentStatus === "pending" ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 text-sm">
                             Pending
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-sm">
+                            Failed
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-gray-300">
-                        {new Date(
-                          order.membershipStartDate
-                        ).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-gray-300">
-                        {new Date(order.membershipEndDate).toLocaleDateString()}
+                        {new Date(order.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <Link

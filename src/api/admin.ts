@@ -83,3 +83,13 @@ export const fetchOffers = async () => {
     console.log("Failed to fetch offers:", error);
   }
 };
+
+export const fetchUsersByAdmin = async (params: any) => {
+  try {
+    const response = await api.get(`/admin/get-users?`, { params });
+    const data = await response.data;
+    return data;
+  } catch (err) {
+    console.log(err);
+  }
+};

@@ -20,6 +20,7 @@ import {
   Tag,
   Receipt,
 } from "lucide-react";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 // Enhanced interface for the order details
 interface OrderDetails {
@@ -80,6 +81,8 @@ export default function OrderDetailsPage({
         });
     }
   }, [order?.userId]);
+
+  user.profile = signedUrltoNormalUrl(user.profile);
 
   // Format date function
   const formatDate = (dateString: string) => {

@@ -8,6 +8,7 @@ import Search from "@/app/components/common/search";
 import api from "@/api/axios";
 import { User, FileCheck, Info, CheckCircle, XCircle } from "lucide-react";
 import { IPagination } from "@/interface/pagination";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -35,6 +36,7 @@ const TutorList = () => {
     experience: string;
     subjects: string[];
     certfications: string[];
+    profile: string;
   }
 
   const [users, setUsers] = useState<User[]>([]);
@@ -84,7 +86,13 @@ const TutorList = () => {
 
     fetchUsers();
   }, [currentPage, debouncedSearchTerm]);
-
+  for (let user of users) {
+    if (user.profile) {
+      console.log(user.profile);
+      let url = signedUrltoNormalUrl(user.profile);
+      user.profile = url;
+    }
+  }
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     setCurrentPage(1);

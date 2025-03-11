@@ -7,15 +7,210 @@ import { useSelector, useDispatch } from "react-redux";
 import { Eye, EyeConfirm } from "@/app/components/common/Eye";
 import api from "@/api/axios";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+import Link from "next/link";
+import { Socket } from "socket.io-client";
+import { Bell, MessageSquare } from "lucide-react";
+import { createSocket } from "@/utils/config/socket";
+
+// Notification component for dashboard
+interface Notification {
+  id: string;
+  tutorName: string;
+  tutorId: string;
+  message: string;
+  timestamp: Date;
+  tutorProfile?: string;
+  read: boolean;
+}
+
+const NotificationPanel: React.FC<{
+  notifications: Notification[];
+  onMarkAsRead: (id: string) => void;
+}> = ({ notifications, onMarkAsRead }) => {
+  for (let user of notifications) {
+    if (user.tutorProfile) {
+      let url = signedUrltoNormalUrl(user.tutorProfile);
+      user.tutorProfile = url;
+    }
+  }
+  return (
+    <div className="bg-gray-800 p-4 rounded-lg shadow-md h-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-white">Recent Messages</h2>
+        <Link href="/student/profile/message">
+          <div className="text-green-400 hover:text-green-300 transition-colors flex items-center">
+            <MessageSquare size={16} className="mr-1" />
+            <span>Open Chat</span>
+          </div>
+        </Link>
+      </div>
+
+      <div className="overflow-y-auto max-h-64 custom-scrollbar">
+        {notifications.length === 0 ? (
+          <p className="text-gray-400 text-center py-4">
+            No new messages. All caught up!
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {notifications.map((notification) => (
+              <li
+                key={notification.id}
+                className={`flex items-center bg-gray-700 p-3 rounded transition-colors ${
+                  !notification.read ? "border-l-4 border-l-purple-600" : ""
+                }`}
+              >
+                <div className="flex items-center space-x-3 flex-1">
+                  <div className="relative">
+                    <Image
+                      src={notification.tutorProfile || "/default-profile.jpg"}
+                      alt={notification.tutorName}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-purple-500"
+                      priority
+                    />
+                    {!notification.read && (
+                      <div className="absolute -top-1 -right-1 bg-purple-600 rounded-full p-0.5">
+                        <Bell size={12} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-semibold text-white">
+                        {notification.tutorName}
+                      </h3>
+                      <span className="text-xs text-gray-400">
+                        {new Date(notification.timestamp).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-300 truncate mt-1">
+                      {notification.message}
+                    </p>
+                  </div>
+                </div>
+                {!notification.read && (
+                  <button
+                    onClick={() => onMarkAsRead(notification.id)}
+                    className="text-purple-400 hover:text-purple-300 ml-2 text-sm"
+                  >
+                    Mark as read
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface Tutor {
+  _id: string;
+  name: string;
+  email: string;
+  profile?: string;
+  hasNewMessage?: boolean;
+}
 
 export default function UserProfile() {
   const dispatch = useDispatch();
   const { user } = useSelector((state: any) => state.auth);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [students, setStudents] = useState<Tutor[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [studentId, setStudentId] = useState<string>("");
+  useEffect(() => {
+    const id = user.user._id;
+    setStudentId(id);
+  }, [user.user._id]);
 
-  // Parse the nested user object if it's a string
-  const userData =
-    typeof user.user === "string" ? JSON.parse(user.user) : user.user;
-  const userProfile = userData.user || userData;
+  // Setup socket connection
+  useEffect(() => {
+    if (!studentId) return;
+
+    const s = createSocket();
+    setSocket(s);
+
+    s.on("connect", () => {
+      console.log("Socket connected in dashboard:", s.id);
+      s.emit("register", { type: "student", id: studentId });
+    });
+    s.on(
+      "notification",
+      (notification: {
+        chatId: string;
+        senderType: "student" | "tutor";
+        senderId: string;
+        message: string;
+      }) => {
+        if (notification.senderType === "tutor") {
+          // Find student in the list
+          const student = students.find((s) => s._id === notification.senderId);
+
+          if (student) {
+            const newNotification: Notification = {
+              id: Date.now().toString(),
+              tutorName: student.name,
+              tutorId: student._id,
+              message: notification.message,
+              timestamp: new Date(),
+              tutorProfile: student.profile,
+              read: false,
+            };
+
+            setNotifications((prev) => [newNotification, ...prev.slice(0, 9)]);
+            setUnreadCount((prev) => prev + 1);
+            showToast(
+              `New message from ${student.name}: ${notification.message}`,
+              "info"
+            );
+          }
+        }
+      }
+    );
+
+    return () => {
+      s.disconnect();
+    };
+  }, [studentId, students]);
+
+  useEffect(() => {
+    if (!studentId) return;
+
+    const fetchStudents = async () => {
+      try {
+        const { data } = await api.get(`/student/tutor/${studentId}`);
+        if (data && data.data) {
+          setStudents(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+
+    fetchStudents();
+  }, [studentId]);
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications((prevNotifications) =>
+      prevNotifications.map((notif) =>
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
+
+  console.log(user.user);
+  const userProfile = user.user;
 
   const email = userProfile.email;
 
@@ -128,9 +323,7 @@ export default function UserProfile() {
         showToast(message, "error");
       }
     } catch (error: any) {
-      const errorMsg =
-        error.response?.data?.message || "Error changing password";
-      showToast(errorMsg, "error");
+      console.log(error.response?.data?.message || "Error changing password");
     }
   };
 
@@ -223,28 +416,42 @@ export default function UserProfile() {
       {/* Main content area with tabs */}
       <div className="w-full max-w-6xl pt-16 space-y-8">
         {/* User info header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          {/* Left side - User info */}
           <div>
             <h1 className="text-4xl font-bold text-white">
               {userProfile.name}
             </h1>
             <p className="mt-2 text-lg text-gray-300">{userProfile.email}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="inline-block bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+
+            <div className="mt-3 flex flex-wrap gap-2 items-center">
+              <span className="inline-flex items-center bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                 {userProfile.isVerified ? "Verified" : "Unverified"}
               </span>
-              <span className="inline-block bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+              <span className="inline-flex items-center bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
                 {userProfile.role}
               </span>
               {userProfile.isTutor && (
-                <span className="inline-block bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                <span className="inline-flex items-center bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                   Tutor
                 </span>
               )}
+              <Link href="/student/profile/message">
+                <span className="inline-flex items-center bg-purple-800 hover:bg-purple-700 px-3 py-1 rounded-full text-white text-xs font-semibold transition-colors cursor-pointer">
+                  <MessageSquare size={14} className="mr-1" />
+                  Messages
+                  {unreadCount > 0 && (
+                    <div className="ml-1 bg-purple-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      {unreadCount}
+                    </div>
+                  )}
+                </span>
+              </Link>
             </div>
           </div>
 
-          <div className="mt-6 md:mt-0 flex space-x-3">
+          {/* Right side - Action buttons */}
+          <div className="flex space-x-3 self-start md:self-center">
             {selectedImage && (
               <button
                 onClick={handleImageUpload}
@@ -298,6 +505,16 @@ export default function UserProfile() {
               }`}
             >
               Courses
+            </button>
+            <button
+              onClick={() => setActiveTab("message")}
+              className={`py-4 px-1 font-medium text-sm border-b-2 ${
+                activeTab === "message"
+                  ? "border-purple-500 text-purple-400"
+                  : "border-transparent text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              New Messages
             </button>
           </nav>
         </div>
@@ -569,6 +786,17 @@ export default function UserProfile() {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+          {activeTab === "message" && (
+            <div className="bg-gray-800 bg-opacity-80 backdrop-blur-md shadow-xl rounded-2xl p-8">
+              <h2 className="text-2xl font-semibold text-white mb-6 border-b border-gray-700 pb-3">
+                Recent Messages
+              </h2>
+              <NotificationPanel
+                notifications={notifications}
+                onMarkAsRead={markNotificationAsRead}
+              />
             </div>
           )}
         </div>

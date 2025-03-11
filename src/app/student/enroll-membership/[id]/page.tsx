@@ -1,7 +1,7 @@
 "use client";
 
 import { getMembershipById, getMemberships } from "@/api/user/user";
-import { getAllCategories } from "@/api/category";
+import { getAllCategories, getAllCategoriesUser } from "@/api/category";
 import { membershipOrder, verifyMembershipOrder } from "@/api/order/order";
 import { showToast } from "@/utils/toastUtil";
 import { Shield } from "lucide-react";
@@ -77,7 +77,7 @@ export default function MembershipCheckoutPage({
         console.error("Error fetching membership:", err);
       });
 
-    getAllCategories()
+    getAllCategoriesUser(user.user._id)
       .then((data) => {
         console.log("Categories:", data);
         const filteredCategories = data.filter(
@@ -170,6 +170,16 @@ export default function MembershipCheckoutPage({
         const verify = await verifyMembershipOrder(response, details);
         console.log("Verify Response:", verify);
         if (verify.success) {
+          // Clear existing data after successful verification
+          localStorage.removeItem("membershipId");
+          localStorage.removeItem("membershipName");
+
+          // Reset states if needed
+          setSelectedCategory(
+            selectedMembership?.membershipPlan === "Premium" ? [] : ""
+          );
+          setIsChecked(false);
+
           showToast("Payment Successful", "success");
           router.push("/student/confirmation-page");
         }

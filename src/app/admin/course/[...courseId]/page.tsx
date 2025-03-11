@@ -10,6 +10,7 @@ import CourseAction from "@/app/components/Admin/Action";
 import VideoModal from "@/app/components/common/VideoModal";
 import { useRouter } from "next/navigation";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function CourseChapterPage({
   params,
@@ -61,6 +62,11 @@ export default function CourseChapterPage({
   useEffect(() => {
     fetchCapterData();
   }, []);
+
+  for (let chapter of chapterData) {
+    if (typeof chapter.video === "string")
+      chapter.video = signedUrltoNormalUrl(chapter.video);
+  }
 
   console.log(chapterData);
 

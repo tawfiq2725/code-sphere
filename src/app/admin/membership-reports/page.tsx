@@ -6,34 +6,13 @@ import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { showToast } from "@/utils/toastUtil";
 import Pagination from "@/app/components/common/pagination";
 import api from "@/api/axios";
-import { text } from "stream/consumers";
-
-// Define interface for membership data
-interface MembershipOrders {
-  _id: string;
-  membershipOrderId: string;
-  membershipId: string;
-  userId: string;
-  categoryId: string;
-  totalAmount: number;
-  orderStatus: string;
-  paymentStatus: string;
-  createdAt: string;
-  updatedAt: string;
-  membershipEndDate: string;
-  membershipStartDate: string;
-  membershipStatus: string;
-  razorpayOrderId: string;
-  razorpayPaymentId: string;
-  razorpaySignature: string;
-}
-
+import { MembershipOrder } from "@/interface/membership";
 pdfMake.vfs = pdfFonts.vfs;
 
 export default function Page() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [membershipData, setMembershipData] = useState<MembershipOrders[]>([]);
+  const [membershipData, setMembershipData] = useState<MembershipOrder[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -71,12 +50,23 @@ export default function Page() {
           color: "white",
         },
         {
+          text: "Membership Plan",
+          bold: true,
+          fillColor: "#4a4a4a",
+          color: "white",
+        },
+        {
           text: "Total Amount",
           bold: true,
           fillColor: "#4a4a4a",
           color: "white",
         },
-        { text: "Status", bold: true, fillColor: "#4a4a4a", color: "white" },
+        {
+          text: "Order Status",
+          bold: true,
+          fillColor: "#4a4a4a",
+          color: "white",
+        },
         {
           text: "Payment Status",
           bold: true,
@@ -90,13 +80,6 @@ export default function Page() {
           color: "white",
         },
         {
-          text: "Start Date",
-          bold: true,
-          fillColor: "#4a4a4a",
-          color: "white",
-        },
-        { text: "End Date", bold: true, fillColor: "#4a4a4a", color: "white" },
-        {
           text: "Created Date",
           bold: true,
           fillColor: "#4a4a4a",
@@ -106,13 +89,12 @@ export default function Page() {
       ...membershipData.map((membership, index) => [
         index + 1,
         membership.membershipOrderId,
+        membership.membershipPlan,
         `₹${parseFloat(membership.totalAmount.toString()).toFixed(2)}`,
-        membership.membershipStatus,
+        membership.orderStatus,
         membership.paymentStatus,
         `Razorpay`,
-        new Date(membership.membershipStartDate).toLocaleDateString(),
-        new Date(membership.membershipEndDate).toLocaleDateString(),
-        new Date(membership.createdAt).toLocaleDateString(), // Added the 9th column
+        new Date(membership.createdAt).toLocaleDateString(),
       ]),
     ];
 
@@ -143,7 +125,6 @@ export default function Page() {
           table: {
             headerRows: 1,
             widths: [
-              "auto",
               "auto",
               "auto",
               "auto",
@@ -237,11 +218,10 @@ export default function Page() {
               <th className="p-4 text-sm font-semibold rounded-tl-lg">
                 Membership Order ID
               </th>
+              <th className="p-4 text-sm font-semibold">Membership Plan</th>
               <th className="p-4 text-sm font-semibold">Total Amount</th>
-              <th className="p-4 text-sm font-semibold">Membership Status</th>
+              <th className="p-4 text-sm font-semibold">Order Status</th>
               <th className="p-4 text-sm font-semibold">Payment Status</th>
-              <th className="p-4 text-sm font-semibold">Start Date</th>
-              <th className="p-4 text-sm font-semibold">End Date</th>
               <th className="p-4 text-sm font-semibold rounded-tr-lg">
                 Created Date
               </th>
@@ -250,7 +230,7 @@ export default function Page() {
           <tbody>
             {membershipData.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-4 text-center text-gray-400">
+                <td colSpan={6} className="p-4 text-center text-gray-400">
                   No data available. Please search for memberships.
                 </td>
               </tr>
@@ -265,25 +245,17 @@ export default function Page() {
                   <td className="p-4 text-sm border-t border-gray-700">
                     {membership.membershipOrderId}
                   </td>
-
+                  <td className="p-4 text-sm border-t border-gray-700">
+                    {membership.membershipPlan}
+                  </td>
                   <td className="p-4 text-sm border-t border-gray-700">
                     ₹{parseFloat(membership.totalAmount.toString()).toFixed(2)}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
-                    {membership.membershipStatus}
+                    {membership.orderStatus}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
                     {membership.paymentStatus}
-                  </td>
-                  <td className="p-4 text-sm border-t border-gray-700">
-                    {new Date(
-                      membership.membershipStartDate
-                    ).toLocaleDateString()}
-                  </td>
-                  <td className="p-4 text-sm border-t border-gray-700">
-                    {new Date(
-                      membership.membershipEndDate
-                    ).toLocaleDateString()}
                   </td>
                   <td className="p-4 text-sm border-t border-gray-700">
                     {new Date(membership.createdAt).toLocaleDateString()}

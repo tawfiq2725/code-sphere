@@ -1,15 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
-import { backendUrl } from "@/utils/backendUrl";
 import Image from "next/image";
 import { getCourseDataByAdmin } from "@/api/course";
 import { Link2 } from "lucide-react";
 import Link from "next/link";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 const CourseLists = () => {
   interface Course {
@@ -46,7 +45,9 @@ const CourseLists = () => {
         setIsLoading(false);
       });
   }, []);
-
+  for (let course of courses) {
+    course.thumbnail = signedUrltoNormalUrl(course.thumbnail);
+  }
   const toggleCourse = async (
     courseId: string,
     isCurrentlyVisible: boolean

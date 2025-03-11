@@ -9,6 +9,8 @@ import type { IPagination } from "@/interface/pagination";
 import { User, CheckCircle, XCircle, Shield, ShieldOff } from "lucide-react";
 import api from "@/api/axios";
 import Image from "next/image";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+import { fetchUsersByAdmin } from "@/api/admin";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -50,15 +52,14 @@ const UserLists = () => {
           limit: usersPerPage.toString(),
           search: debouncedSearchTerm,
         });
-        const response = await api.get(`/admin/get-users?`, { params });
-
-        const data = await response.data;
-        if (!data.success) {
-          showToast(data.message, "error");
-        } else {
-          setUsers(data.data.data);
-          setPagination(data.data.pagination);
-        }
+        fetchUsersByAdmin(params)
+          .then((data) => {
+            setUsers(data.data.data);
+            setPagination(data.data.pagination);
+          })
+          .catch((err) => {
+            showToast(err.message, "error");
+          });
       } catch (err) {
         showToast("Failed to fetch users", "error");
         console.error(err);
@@ -69,7 +70,12 @@ const UserLists = () => {
 
     fetchUsers();
   }, [currentPage, debouncedSearchTerm]);
-
+  for (let user of users) {
+    if (user.profile) {
+      let url = signedUrltoNormalUrl(user.profile);
+      user.profile = url;
+    }
+  }
   const blockUser = async (userId: string) => {
     try {
       const response = await api.patch(`/admin/block-user/${userId}`);

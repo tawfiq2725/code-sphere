@@ -16,13 +16,24 @@ import {
   Tag,
   Receipt,
 } from "lucide-react";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 // Interface for membership order based on your current schema
 interface MembershipOrderDetails {
   _id: string;
   membershipOrderId: string;
-  membershipId: string;
-  userId: string;
+  membershipId:
+    | {
+        _id: string;
+        membershipName: string;
+      }
+    | string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+    profile: string;
+  };
   categoryId: string[];
   membershipPlan: "Basic" | "Standard" | "Premium";
   totalAmount: number;
@@ -61,29 +72,31 @@ export default function MembershipOrderDetailsPage({
         });
     }
   }, [id]);
-
-  // Only run when order?.userId changes (not the entire order object)
-  useEffect(() => {
-    if (order?.userId) {
-      findUserByIdA(order.userId)
-        .then((response) => {
-          console.log(response);
-          setUser(response.data);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch user details", err);
-        });
-    }
-  }, [order?.userId]);
-
+  if (order && order.userId.profile) {
+    order.userId.profile = signedUrltoNormalUrl(order.userId.profile);
+  }
   // Format date function
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+  };
+
+  // Function to render membership ID correctly
+  const renderMembershipId = () => {
+    if (!order) return "N/A";
+
+    if (typeof order.membershipId === "object" && order.membershipId !== null) {
+      return (
+        order.membershipId.membershipName || order.membershipId._id || "N/A"
+      );
+    }
+
+    return order.membershipId || "N/A";
   };
 
   if (isLoading) {
@@ -181,7 +194,7 @@ export default function MembershipOrderDetailsPage({
                   <div className="flex justify-between items-center pb-3 border-b border-gray-700">
                     <span className="text-gray-400">Membership ID</span>
                     <span className="text-white font-medium">
-                      {order.membershipId}
+                      {renderMembershipId()}
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-3 border-b border-gray-700">
@@ -253,29 +266,35 @@ export default function MembershipOrderDetailsPage({
               </div>
             </div>
             <div className="p-6">
-              {user ? (
+              {order.userId ? (
                 <div className="space-y-4">
                   <div className="text-center mb-6">
                     <div className="w-16 h-16 border-purple-500 border-4 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3 overflow-hidden">
-                      <Image
-                        src={user.profile || "default-profile.jpg"}
-                        width={64}
-                        height={64}
-                        priority
-                        alt="User profile picture"
-                        className="w-full h-full object-cover rounded-full"
-                      />
+                      {order.userId.profile ? (
+                        <Image
+                          src={order.userId.profile}
+                          width={64}
+                          height={64}
+                          priority
+                          alt="User profile picture"
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <User size={32} className="text-purple-300" />
+                      )}
                     </div>
                     <h3 className="text-white font-semibold text-lg">
-                      {user.name}
+                      {order.userId.name || "No Name Available"}
                     </h3>
-                    <p className="text-gray-400">{user.email}</p>
+                    <p className="text-gray-400">
+                      {order.userId.email || "No Email Available"}
+                    </p>
                   </div>
                   <div className="border-t border-gray-700 pt-4">
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-400">User ID</span>
                       <span className="text-white font-mono text-sm">
-                        {order.userId}
+                        {order.userId._id}
                       </span>
                     </div>
                   </div>
@@ -319,7 +338,7 @@ export default function MembershipOrderDetailsPage({
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-white font-semibold">Total Paid</span>
                     <span className="text-white text-xl font-bold">
-                      ₹{order.totalAmount}
+                      ₹{order.totalAmount.toLocaleString()}
                     </span>
                   </div>
                 </div>

@@ -46,14 +46,16 @@ export default function LoginPage() {
     try {
       const response = await api.post("/login", { email, password });
       const { data } = response.data;
+      console.log(data);
       if (!data) throw new Error("No data returned");
 
-      const { jwt_token, role } = data;
+      const { jwt_token, role, user } = data;
       localStorage.setItem("userEmail", email);
       dispatch(loginSuccess({ token: jwt_token, role }));
-      let profile = signedUrltoNormalUrl(data.user.profile);
-      data.user.profile = profile;
-      dispatch(getUserDetails({ user: data.user }));
+      if (user.profile) {
+        user.profile = signedUrltoNormalUrl(user.profile);
+      }
+      dispatch(getUserDetails({ user: user }));
       showToast(response.data.message, "success");
 
       const routes: Record<string, string> = {

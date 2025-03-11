@@ -11,6 +11,8 @@ import { useSelector, useDispatch } from "react-redux";
 import Cookies from "js-cookie";
 import api from "@/api/axios";
 import { couponApply, couponRemove } from "@/store/slice/orderSlice";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+import { verifyCoupon } from "@/api/coupon/coupon";
 
 interface Course {
   courseName: string;
@@ -19,7 +21,7 @@ interface Course {
   courseId: string;
   sellingPrice: number;
   category: string;
-  categoryName: string; // This actually contains the category ID, not the name
+  categoryName: string;
   offerPrice?: number;
   discountPercentage?: number;
   offerName?: string;
@@ -67,6 +69,10 @@ export default function CheckoutPage({
   const { user } = useSelector((state: any) => state.auth);
   const { couponApplied, totalAmount, discountAmount, couponUser } =
     useSelector((state: any) => state.order);
+  if (courseData?.thumbnail) {
+    let thumbnail = signedUrltoNormalUrl(courseData?.thumbnail);
+    courseData.thumbnail = thumbnail;
+  }
 
   // Fetch course, categories, and offers
   useEffect(() => {
@@ -102,31 +108,18 @@ export default function CheckoutPage({
     fetchData();
   }, [courseId]);
 
-  // Process course with offer if applicable
   useEffect(() => {
     if (!courseData || !categories.length || !offers.length) return;
-
-    // Get the category ID
     const categoryId = courseData.categoryName || courseData.category;
-
-    // Find matching category
     const category = categories.find((cat) => cat._id === categoryId);
-
-    // Filter active offers
     const activeOffers = offers.filter((offer) => offer.status === true);
-
-    // Find matching offer for this category
     const matchingOffer = activeOffers.find(
       (offer) => offer.categoryId._id === categoryId
     );
-
-    // Create the processed course
     const processed = {
       ...courseData,
       actualCategoryName: category ? category.categoryName : "Unknown Category",
     };
-
-    // Apply offer if available
     if (matchingOffer) {
       console.log(
         `Applying offer to course ${courseData.courseName}:`,
@@ -146,8 +139,6 @@ export default function CheckoutPage({
 
     setProcessedCourse(processed);
   }, [courseData, categories, offers]);
-
-  // Check if user is already enrolled in this course
   useEffect(() => {
     if (user?.user?.courseProgress && courseId) {
       const isEnrolled = user.user.courseProgress.some(
@@ -163,37 +154,16 @@ export default function CheckoutPage({
 
   // Constants for tax and price calculations
   const taxRate = 0.18;
-
-  // Use offerPrice if available, otherwise use original price
   const basePrice =
     processedCourse?.offerPrice || courseData?.sellingPrice || 0;
   const baseTax = Math.round(basePrice * taxRate * 100) / 100;
   const baseTotalAmount = basePrice + baseTax;
-
-  // Use the coupon if it was applied by the current user
   const finalTotal =
     couponApplied && couponUser === user?.user?._id
       ? discountAmount
       : baseTotalAmount;
 
   const [isChecked, setIsChecked] = useState(false);
-  const verifyCoupon = async (code: string) => {
-    try {
-      const response = await api.post(`/api/verify-coupon`, {
-        couponCode: code,
-        courseId: courseId,
-        userId: user.user._id,
-      });
-      const data = await response.data;
-      return data.data;
-    } catch (error) {
-      console.error("Error verifying coupon:", error);
-      return {
-        isValid: false,
-        message: "Error verifying coupon. Please try again.",
-      };
-    }
-  };
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -203,17 +173,15 @@ export default function CheckoutPage({
 
     setIsApplyingCoupon(true);
     try {
-      const result = await verifyCoupon(couponCode);
+      const result = await verifyCoupon(couponCode, courseId, user.user._id);
 
       if (result.couponStatus && result.couponDiscount) {
-        // Calculate discounted price using coupon discount percentage
         const discountPercent = result.couponDiscount / 100;
         const discountValue = basePrice * discountPercent;
         const discountedPrice = basePrice - discountValue;
         const discountedTax = Math.round(discountedPrice * taxRate * 100) / 100;
         const newTotalAmount = discountedPrice + discountedTax;
 
-        // Dispatch to Redux: store the original total, new total, and current user id.
         dispatch(
           couponApply({
             originalTotal: baseTotalAmount,
@@ -259,7 +227,6 @@ export default function CheckoutPage({
       isApplied: couponApplied && couponUser === user.user._id,
       couponCode: appliedCoupon ? appliedCoupon : null,
       couponDiscount: appliedCoupon ? discount : null,
-      // Add offer information if available
       isOfferApplied: !!processedCourse?.offerPrice,
       offerName: processedCourse?.offerName || null,
       offerDiscount: processedCourse?.discountPercentage || null,

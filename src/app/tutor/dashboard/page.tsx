@@ -18,6 +18,12 @@ import {
 import api from "@/api/axios";
 import { showToast } from "@/utils/toastUtil";
 import { useSelector } from "react-redux";
+import { MessageSquare, Bell } from "lucide-react";
+import Link from "next/link";
+import { createSocket } from "@/utils/config/socket";
+import { Socket } from "socket.io-client";
+import Image from "next/image";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 // Register necessary ChartJS components
 ChartJS.register(
@@ -53,6 +59,108 @@ interface Todo {
   text: string;
   completed: boolean;
 }
+
+// Notification component for dashboard
+interface Notification {
+  id: string;
+  studentName: string;
+  studentId: string;
+  message: string;
+  timestamp: Date;
+  studentProfile?: string;
+  read: boolean;
+}
+
+const NotificationPanel: React.FC<{
+  notifications: Notification[];
+  onMarkAsRead: (id: string) => void;
+}> = ({ notifications, onMarkAsRead }) => {
+  for (let user of notifications) {
+    if (user.studentProfile) {
+      let url = signedUrltoNormalUrl(user.studentProfile);
+      user.studentProfile = url;
+    }
+  }
+  return (
+    <div className="bg-gray-800 p-4 rounded-lg shadow-md h-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-white">Recent Messages</h2>
+        <Link href="/tutor/auth/message">
+          <div className="text-green-400 hover:text-green-300 transition-colors flex items-center">
+            <MessageSquare size={16} className="mr-1" />
+            <span>Open Chat</span>
+          </div>
+        </Link>
+      </div>
+
+      <div className="overflow-y-auto max-h-64 custom-scrollbar">
+        {notifications.length === 0 ? (
+          <p className="text-gray-400 text-center py-4">
+            No new messages. All caught up!
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {notifications.map((notification) => (
+              <li
+                key={notification.id}
+                className={`flex items-center bg-gray-700 p-3 rounded transition-colors ${
+                  !notification.read ? "border-l-4 border-l-purple-600" : ""
+                }`}
+              >
+                <div className="flex items-center space-x-3 flex-1">
+                  <div className="relative">
+                    <Image
+                      src={
+                        notification.studentProfile || "/default-profile.jpg"
+                      }
+                      alt={notification.studentName}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-purple-500"
+                      priority
+                    />
+                    {!notification.read && (
+                      <div className="absolute -top-1 -right-1 bg-purple-600 rounded-full p-0.5">
+                        <Bell size={12} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-semibold text-white">
+                        {notification.studentName}
+                      </h3>
+                      <span className="text-xs text-gray-400">
+                        {new Date(notification.timestamp).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-300 truncate mt-1">
+                      {notification.message}
+                    </p>
+                  </div>
+                </div>
+                {!notification.read && (
+                  <button
+                    onClick={() => onMarkAsRead(notification.id)}
+                    className="text-purple-400 hover:text-purple-300 ml-2 text-sm"
+                  >
+                    Mark as read
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const TodoList: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>(() => {
@@ -152,6 +260,14 @@ const TodoList: React.FC = () => {
   );
 };
 
+interface Student {
+  _id: string;
+  name: string;
+  email: string;
+  profile?: string;
+  hasNewMessage?: boolean;
+}
+
 const TutorDashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<any>({
     totalCourses: 0,
@@ -168,10 +284,83 @@ const TutorDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [tutorId, setTutorId] = useState<string>("");
   const { user } = useSelector((state: any) => state.auth);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   useEffect(() => {
     const id = user.user._id;
     setTutorId(id);
   }, [user.user._id]);
+
+  // Setup socket connection
+  useEffect(() => {
+    if (!tutorId) return;
+
+    const s = createSocket();
+    setSocket(s);
+
+    s.on("connect", () => {
+      console.log("Socket connected in dashboard:", s.id);
+      s.emit("register", { type: "tutor", id: tutorId });
+    });
+    s.on(
+      "notification",
+      (notification: {
+        chatId: string;
+        senderType: "student" | "tutor";
+        senderId: string;
+        message: string;
+      }) => {
+        if (notification.senderType === "student") {
+          // Find student in the list
+          const student = students.find((s) => s._id === notification.senderId);
+
+          if (student) {
+            const newNotification: Notification = {
+              id: Date.now().toString(),
+              studentName: student.name,
+              studentId: student._id,
+              message: notification.message,
+              timestamp: new Date(),
+              studentProfile: student.profile,
+              read: false,
+            };
+
+            setNotifications((prev) => [newNotification, ...prev.slice(0, 9)]);
+            setUnreadCount((prev) => prev + 1);
+            showToast(
+              `New message from ${student.name}: ${notification.message}`,
+              "info"
+            );
+          }
+        }
+      }
+    );
+
+    return () => {
+      s.disconnect();
+    };
+  }, [tutorId, students]);
+
+  // Fetch students data
+  useEffect(() => {
+    if (!tutorId) return;
+
+    const fetchStudents = async () => {
+      try {
+        const { data } = await api.get(`/tutor/get-students/${tutorId}`);
+        if (data && data.data) {
+          setStudents(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+
+    fetchStudents();
+  }, [tutorId]);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -199,6 +388,16 @@ const TutorDashboard: React.FC = () => {
 
     fetchDashboardData();
   }, [tutorId]);
+
+  // Function to mark notification as read
+  const markNotificationAsRead = (id: string) => {
+    setNotifications((prevNotifications) =>
+      prevNotifications.map((notif) =>
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
 
   // Prepare enrollment trend data for chart
   const enrollmentTrendData: ChartData<"line"> = {
@@ -298,9 +497,21 @@ const TutorDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
-      <h1 className="text-4xl font-bold text-white mb-8 pl-10">
-        Tutor Dashboard
-      </h1>
+      <div className="flex justify-between items-center mb-8 pl-10 pr-4">
+        <h1 className="text-4xl font-bold text-white">Tutor Dashboard</h1>
+
+        <Link href="/tutor/auth/message">
+          <div className="flex items-center bg-purple-800 hover:bg-purple-700 px-4 py-2 rounded-lg text-white transition-colors cursor-pointer">
+            <MessageSquare size={20} className="mr-2" />
+            <span>Messages</span>
+            {unreadCount > 0 && (
+              <div className="ml-2 bg-purple-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {unreadCount}
+              </div>
+            )}
+          </div>
+        </Link>
+      </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -332,11 +543,11 @@ const TutorDashboard: React.FC = () => {
             />
             <StatCard
               title="Completion Rate"
-              value={`${dashboardData.completionRate}%`}
+              value={`${Math.round(dashboardData.completionRate)}%`}
             />
           </div>
 
-          {/* Charts and Todo Section */}
+          {/* Charts and Notifications Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             {/* Enrollment Trend Chart */}
             <div className="bg-gray-800 p-4 rounded-lg shadow-md">
@@ -354,12 +565,18 @@ const TutorDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Todo List Component */}
-            <TodoList />
+            {/* Notifications Panel (replacing Todo) */}
+            <NotificationPanel
+              notifications={notifications}
+              onMarkAsRead={markNotificationAsRead}
+            />
           </div>
 
-          {/* Additional Charts */}
+          {/* Todo and Chart Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Todo List Component (moved from above) */}
+            <TodoList />
+
             {/* Course Completion Status */}
             <div className="bg-gray-800 p-4 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold text-white mb-4">
@@ -377,16 +594,6 @@ const TutorDashboard: React.FC = () => {
                     },
                   }}
                 />
-              </div>
-            </div>
-
-            {/* Revenue vs Enrollment Chart - replaced Quick Actions */}
-            <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Revenue & Engagement Metrics
-              </h2>
-              <div className="h-64">
-                <Bar data={revenueEnrollmentData} options={barChartOptions} />
               </div>
             </div>
           </div>

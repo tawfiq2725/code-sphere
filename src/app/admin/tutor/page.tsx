@@ -8,6 +8,7 @@ import Search from "@/app/components/common/search";
 import type { IPagination } from "@/interface/pagination";
 import { User, CheckCircle, XCircle, Shield, ShieldOff } from "lucide-react";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -49,7 +50,6 @@ const TutorList = () => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const token = Cookies.get("jwt_token");
         const params = new URLSearchParams({
           page: currentPage.toString(),
           limit: usersPerPage.toString(),
@@ -74,10 +74,14 @@ const TutorList = () => {
 
     fetchUsers();
   }, [currentPage, debouncedSearchTerm]);
-
+  for (let user of users) {
+    if (user.profile) {
+      let url = signedUrltoNormalUrl(user.profile);
+      user.profile = url;
+    }
+  }
   const blockUser = async (userId: string) => {
     try {
-      const token = Cookies.get("jwt_token");
       const response = await api.patch(`/admin/block-user/${userId}`);
       const data = await response.data;
       if (data.success) {

@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import api from "@/api/axios";
 import VideoModal from "@/app/components/common/VideoModal";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function CourseChapterPage({
   params,
@@ -51,6 +52,12 @@ export default function CourseChapterPage({
       showToast("An error occurred while fetching chapters", "error");
     }
   };
+
+  for (let chapter of chapterData) {
+    if (typeof chapter.video === "string") {
+      chapter.video = signedUrltoNormalUrl(chapter.video);
+    }
+  }
 
   useEffect(() => {
     fetchCapterData();
@@ -205,18 +212,17 @@ export default function CourseChapterPage({
     }
 
     try {
-      const response = await fetch(
-        `${backendUrl}/api/course/update-chapter/${currentChapter._id}`,
+      const response = await api.patch(
+        `/api/course/update-chapter/${currentChapter._id}`,
+        formData,
         {
-          method: "PATCH",
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
-          body: formData,
         }
       );
 
-      const data = await response.json();
+      const data = await response.data;
       if (data.success) {
         showToast(data.message, "success");
         fetchCapterData();
@@ -228,7 +234,7 @@ export default function CourseChapterPage({
       console.error("Error updating chapter:", error);
       showToast("An error occurred while updating the chapter", "error");
     } finally {
-      setIsLoading(true);
+      setIsLoading(false);
     }
 
     closeEditModal();
@@ -376,28 +382,26 @@ export default function CourseChapterPage({
               </div>
               {currentChapter.video && (
                 <div>
-                  <p className="text-sm text-gray-300">
-                    Current video:{" "}
-                    {currentChapter.video instanceof File ? (
-                      "File Selected"
-                    ) : (
-                      <div>
-                        <button
-                          onClick={() => setShowModal(true)}
-                          className="text-blue-400 hover:underline"
-                        >
-                          View video
-                        </button>
-
-                        {showModal && (
+                  <p className="text-sm text-gray-300">Current video:</p>
+                  {currentChapter.video instanceof File ? (
+                    <p className="text-sm text-gray-300">File Selected</p>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setShowModal(true)}
+                        className="text-blue-400 hover:underline"
+                      >
+                        View video
+                      </button>
+                      {showModal &&
+                        typeof currentChapter.video === "string" && (
                           <VideoModal
                             videoUrl={currentChapter.video}
                             onClose={() => setShowModal(false)}
                           />
                         )}
-                      </div>
-                    )}
-                  </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
