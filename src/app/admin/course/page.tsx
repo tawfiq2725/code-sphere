@@ -54,7 +54,7 @@ const CourseLists = () => {
   ) => {
     try {
       const response = await api.patch(`/admin/toggle-course/${courseId}`, {
-        isVisble: !isCurrentlyVisible,
+        isVisible: !isCurrentlyVisible,
       });
 
       const data = await response.data;

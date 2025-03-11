@@ -81,8 +81,9 @@ export default function OrderDetailsPage({
         });
     }
   }, [order?.userId]);
-
-  user.profile = signedUrltoNormalUrl(user.profile);
+  if (user) {
+    user.profile = signedUrltoNormalUrl(user.profile);
+  }
 
   // Format date function
   const formatDate = (dateString: string) => {

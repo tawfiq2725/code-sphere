@@ -2,11 +2,9 @@
 
 import { useRef, useEffect, useState, use } from "react";
 import Pagination from "@/app/components/common/pagination";
-import { MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { approveCertificate, getEnrollStudents } from "@/api/tutor";
-import Cookies from "js-cookie";
-import Link from "next/link";
+
 import { toast } from "react-toastify";
 import { ToastConfirm } from "@/app/components/common/Toast";
 import Certificate from "@/app/components/Tutor/Certificate";
@@ -14,7 +12,6 @@ import Modal from "@/app/components/Tutor/canvas";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useSelector } from "react-redux";
-import { set } from "nprogress";
 
 interface CourseProgress {
   courseId: string;
@@ -47,9 +44,8 @@ export default function EnrollStudents({
 }) {
   const { courseId } = use(params);
   const router = useRouter();
-  const token = Cookies.get("jwt_token") || "";
+  const token = localStorage.getItem("jwt_token") || "";
   const { user } = useSelector((state: any) => state.auth);
-
   const [students, setStudents] = useState<Student[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +56,8 @@ export default function EnrollStudents({
   const certificateRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 5;
 
-  useEffect(() => {
+  // Function to fetch enrolled students
+  const fetchEnrolledStudents = () => {
     if (courseId) {
       let course = localStorage.getItem("courseName");
       if (course) setCourseName(course);
@@ -73,6 +70,10 @@ export default function EnrollStudents({
           console.error("Error fetching enrolled students:", error);
         });
     }
+  };
+
+  useEffect(() => {
+    fetchEnrolledStudents();
   }, [courseId, token]);
 
   // Pagination logic
@@ -97,7 +98,8 @@ export default function EnrollStudents({
 
   const openModal = (student: Student) => {
     setSelectedStudent(student);
-    setTutorName("");
+    // Pre-fill with tutor's name from Redux store if available
+    setTutorName(user?.user?.name || "");
     setIsModalOpen(true);
   };
 
@@ -138,6 +140,48 @@ export default function EnrollStudents({
             approveCertificate(formData)
               .then((data) => {
                 toast.success("Certificate approved successfully");
+
+                // Update the local state to reflect the certificate approval
+                setStudents((prevStudents) =>
+                  prevStudents.map((student) => {
+                    if (student._id === selectedStudent?._id) {
+                      // Create a deep copy of the student
+                      const updatedStudent = { ...student };
+
+                      // Initialize CourseCertificate if it doesn't exist
+                      if (!updatedStudent.CourseCertificate) {
+                        updatedStudent.CourseCertificate = [];
+                      }
+
+                      // Find existing certificate for this course
+                      const existingCertIndex =
+                        updatedStudent.CourseCertificate.findIndex(
+                          (cert) => cert.courseId === courseId
+                        );
+
+                      // Create new certificate object
+                      const newCertificate: UserCertificate = {
+                        courseId: courseId,
+                        status: "approved",
+                        issuedDate: new Date(),
+                        approvedBy: user.user.name,
+                        certificateUrl: data?.certificateUrl || undefined,
+                      };
+
+                      // Update or add the certificate
+                      if (existingCertIndex !== -1) {
+                        updatedStudent.CourseCertificate[existingCertIndex] =
+                          newCertificate;
+                      } else {
+                        updatedStudent.CourseCertificate.push(newCertificate);
+                      }
+
+                      return updatedStudent;
+                    }
+                    return student;
+                  })
+                );
+
                 closeModal();
                 setIsLoading(false);
               })
@@ -149,6 +193,7 @@ export default function EnrollStudents({
           } catch (error) {
             console.error("Error generating or sending certificate:", error);
             toast.error("Error approving certificate");
+            setIsLoading(false);
           }
         }}
         onCancel={() => {
@@ -261,11 +306,17 @@ export default function EnrollStudents({
                 })}
               </tbody>
             </table>
-            <Pagination
-              totalPages={Math.ceil(students.length / itemsPerPage)}
-              onPageChange={paginate}
-              currentPage={currentPage}
-            />
+            {students.length > 0 ? (
+              <Pagination
+                totalPages={Math.ceil(students.length / itemsPerPage)}
+                onPageChange={paginate}
+                currentPage={currentPage}
+              />
+            ) : (
+              <div className="text-center text-gray-400 py-4">
+                No students enrolled in this course.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -295,7 +346,7 @@ export default function EnrollStudents({
             <div ref={certificateRef}>
               <Certificate
                 studentName={selectedStudent?.name || ""}
-                courseName={courseName || "Default Course"} // Use fetched course name
+                courseName={courseName || "Default Course"}
                 tutorName={tutorName}
                 date={new Date().toLocaleDateString()}
               />
@@ -310,7 +361,12 @@ export default function EnrollStudents({
             </button>
             <button
               onClick={handleApproveCertificate}
-              className="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded"
+              disabled={!tutorName.trim()}
+              className={`${
+                tutorName.trim()
+                  ? "bg-purple-500 hover:bg-purple-700"
+                  : "bg-purple-300 cursor-not-allowed"
+              } text-white px-4 py-2 rounded`}
             >
               Approve
             </button>

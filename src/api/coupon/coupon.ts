@@ -62,10 +62,6 @@ export const verifyCoupon = async (
     const data = await response.data;
     return data.data;
   } catch (error) {
-    console.error("Error verifying coupon:", error);
-    return {
-      isValid: false,
-      message: "Error verifying coupon. Please try again.",
-    };
+    console.log("Error verifying coupon:", error);
   }
 };

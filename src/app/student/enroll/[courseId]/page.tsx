@@ -99,7 +99,6 @@ export default function CheckoutPage({
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        showToast("Failed to load course data", "error");
       } finally {
         setIsLoading(false);
       }
@@ -158,10 +157,11 @@ export default function CheckoutPage({
     processedCourse?.offerPrice || courseData?.sellingPrice || 0;
   const baseTax = Math.round(basePrice * taxRate * 100) / 100;
   const baseTotalAmount = basePrice + baseTax;
-  const finalTotal =
+  const finalTotal = Math.round(
     couponApplied && couponUser === user?.user?._id
       ? discountAmount
-      : baseTotalAmount;
+      : baseTotalAmount
+  );
 
   const [isChecked, setIsChecked] = useState(false);
 
@@ -202,7 +202,7 @@ export default function CheckoutPage({
         showToast(result.message || "Invalid coupon code", "error");
       }
     } catch (error) {
-      console.error("Error applying coupon:", error);
+      console.log("Error applying coupon:", error);
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -235,7 +235,7 @@ export default function CheckoutPage({
     try {
       const order: any = await createOrder(data);
       if (!order) {
-        showToast("Failed to create order. Try again.", "error");
+        console.log("error");
         return;
       }
       console.log("Order Data:", order);
@@ -450,7 +450,7 @@ export default function CheckoutPage({
               ) : (
                 <>
                   <Shield className="w-4 h-4" />
-                  Pay Now (₹{finalTotal})
+                  Pay Now (₹{Math.round(finalTotal)})
                 </>
               )}
             </button>

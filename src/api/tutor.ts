@@ -1,5 +1,3 @@
-import { backendUrl } from "@/utils/backendUrl";
-import axios from "axios";
 import api from "@/api/axios";
 
 export const getEnrollStudents = async (courseId: string) => {

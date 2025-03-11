@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Header from "@/app/components/header";
 import Link from "next/link";
 import { getCourses } from "@/api/course";
@@ -8,6 +8,18 @@ import { getAllCategories } from "@/api/category";
 import Pagination from "@/app/components/common/pagination";
 import { getOffers } from "@/api/user/user";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+
+// Custom hook for debouncing a value
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export default function Courses() {
   interface Category {
@@ -55,7 +67,10 @@ export default function Courses() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Fetch all required data
+  // Use debounced search value to reduce frequent filtering
+  const debouncedSearch = useDebounce(search, 500);
+
+  // Fetch all required data and process thumbnail conversion immediately
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -64,17 +79,19 @@ export default function Courses() {
           await Promise.all([getCourses(), getAllCategories(), getOffers()]);
 
         if (coursesResponse && coursesResponse.data) {
-          setCourseData(coursesResponse.data);
+          // Convert thumbnail URLs when setting course data
+          const updatedCourses = coursesResponse.data.map((course: Course) => ({
+            ...course,
+            thumbnail: signedUrltoNormalUrl(course.thumbnail),
+          }));
+          setCourseData(updatedCourses);
         }
 
         if (categoriesResponse) {
           setCategories(categoriesResponse);
         }
-        console.log(offersResponse.data, "Tawfiq");
-        // Extract offers data
-        if (offersResponse && offersResponse.data && offersResponse.data) {
+        if (offersResponse && offersResponse.data) {
           setOffers(offersResponse.data);
-          console.log("Offers loaded:", offersResponse.data.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -85,33 +102,20 @@ export default function Courses() {
 
     fetchData();
   }, []);
-  for (let course of courseData) {
-    course.thumbnail = signedUrltoNormalUrl(course.thumbnail);
-  }
-  // Process courses with offers and category names
+
+  // Process courses: map category names and apply active offers
   useEffect(() => {
     if (!courseData.length || !categories.length) return;
 
-    console.log("Processing courses with offers");
-
-    // Filter active offers
     const activeOffers = offers.filter((offer) => offer.status === true);
 
-    console.log("Active offers:", activeOffers);
-
     const processed = courseData.map((course) => {
-      // Get the category ID (either from category or categoryName field)
       const categoryId = course.categoryName;
-
-      // Find matching category
       const category = categories.find((cat) => cat._id === categoryId);
-
-      // Find matching offer for this category
       const matchingOffer = activeOffers.find(
         (offer) => offer.categoryId._id === categoryId
       );
 
-      // Create the base processed course
       const processedCourse = {
         ...course,
         actualCategoryName: category
@@ -119,26 +123,13 @@ export default function Courses() {
           : "Unknown Category",
       };
 
-      // Apply offer if available
       if (matchingOffer) {
-        console.log(
-          `Applying offer to course ${course.courseName}:`,
-          matchingOffer
-        );
-
-        // Calculate discounted price
         const discount = matchingOffer.discount;
         const discountAmount = (course.sellingPrice * discount) / 100;
-        const discountedPrice = Math.floor(
+        processedCourse.offerPrice = Math.floor(
           course.sellingPrice - discountAmount
         );
-
-        processedCourse.offerPrice = discountedPrice;
         processedCourse.discountPercentage = discount;
-
-        console.log(
-          `Original price: ${course.sellingPrice}, Discount: ${discount}%, Final price: ${discountedPrice}`
-        );
       }
 
       return processedCourse;
@@ -147,19 +138,23 @@ export default function Courses() {
     setProcessedCourses(processed);
   }, [courseData, categories, offers]);
 
-  // Filter courses based on category and search
-  const filteredCourses = processedCourses.filter(
-    (course) =>
-      (filter === "All Courses" || course.actualCategoryName === filter) &&
-      course.courseName.toLowerCase().includes(search.toLowerCase())
-  );
+  // Memoize filtered courses based on category filter and debounced search
+  const filteredCourses = useMemo(() => {
+    return processedCourses.filter(
+      (course) =>
+        (filter === "All Courses" || course.actualCategoryName === filter) &&
+        course.courseName.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [processedCourses, filter, debouncedSearch]);
 
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
-  const currentCourses = filteredCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const currentCourses = useMemo(() => {
+    return filteredCourses.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredCourses, currentPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -198,7 +193,10 @@ export default function Courses() {
           <div className="flex flex-col md:flex-row justify-between gap-5 items-center mb-8">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
             >
               <option value="All Courses">All Courses</option>
@@ -214,7 +212,10 @@ export default function Courses() {
                 type="text"
                 placeholder="Search Courses"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full md:w-64 p-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -257,7 +258,10 @@ export default function Courses() {
         <div className="flex flex-col md:flex-row justify-between gap-5 items-center mb-8">
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
           >
             <option value="All Courses">All Courses</option>
@@ -273,7 +277,10 @@ export default function Courses() {
               type="text"
               placeholder="Search Courses"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full md:w-64 p-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
             <Link

@@ -3,7 +3,6 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
-import { backendUrl } from "@/utils/backendUrl";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { getUserDetails } from "@/store/slice/authSlice";
@@ -38,7 +37,6 @@ const TutorProfile = () => {
   const [editedFields, setEditedFields] = useState<Record<string, boolean>>({});
   const [currentCertificateIndex, setCurrentCertificateIndex] = useState(0);
   const dispatch = useDispatch();
-  const token = Cookies.get("jwt_token");
   const email = localStorage.getItem("userEmail");
 
   const fetchProfile = async () => {
@@ -49,6 +47,10 @@ const TutorProfile = () => {
       const { data, success, message } = await response.data;
       let profile = signedUrltoNormalUrl(data.profile);
       data.profile = profile;
+      data.certificates = data.certificates.map((cert: string) =>
+        signedUrltoNormalUrl(cert)
+      );
+
       dispatch(getUserDetails({ user: data }));
 
       localStorage.setItem("tutor_id", data._id);
