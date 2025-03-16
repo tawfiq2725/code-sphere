@@ -1,4 +1,3 @@
-import { toast } from "react-toastify";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { logout } from "@/store/slice/authSlice";
