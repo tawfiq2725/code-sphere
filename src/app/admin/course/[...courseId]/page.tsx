@@ -25,8 +25,7 @@ export default function CourseChapterPage({
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
-  console.log("courseId", courseId);
-  console.log(courseId[0], courseId[1]);
+
   const thumbnail = localStorage.getItem("thumbnail");
   const courseName = localStorage.getItem("courseName");
   const token = Cookies.get("jwt_token") || "";
@@ -41,12 +40,11 @@ export default function CourseChapterPage({
     isListed: boolean;
   }
 
-  console.log(`${backendUrl}/api/course/get-chapters/${courseId[0]}`);
   const fetchCapterData = async () => {
     try {
       const response = await api.get(`/api/course/get-chapters/${courseId[0]}`);
       const data = await response.data;
-      console.log(data.data);
+
       if (data.success) {
         setChapterData(data.data);
       } else {
@@ -67,8 +65,6 @@ export default function CourseChapterPage({
     if (typeof chapter.video === "string")
       chapter.video = signedUrltoNormalUrl(chapter.video);
   }
-
-  console.log(chapterData);
 
   const openEditModal = (chapter: Chapter) => {
     setCurrentChapter({

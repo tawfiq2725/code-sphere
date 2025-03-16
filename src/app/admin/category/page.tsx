@@ -5,13 +5,12 @@ import {
   addCategory as addCategoryApi,
   getCategories as getCategoriesApi,
   updateCategory as updateCategoryApi,
-  toggleVisiblity as toggleVisibilityApi,
 } from "@/api/category";
 import Cookies from "js-cookie";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
 import { showToast } from "@/utils/toastUtil";
-import { User, CheckCircle, XCircle, Edit, Eye, EyeOff } from "lucide-react";
+import { User, Edit, Eye, EyeOff } from "lucide-react";
 
 interface Category {
   categoryName: string;
@@ -58,7 +57,6 @@ export default function Category() {
     setIsLoading(true);
     try {
       const data = await getCategoriesApi();
-      // You could filter by search term here if your API doesn't support it
       const filteredData = searchTerm
         ? data.filter(
             (cat: Category) =>
@@ -209,9 +207,6 @@ export default function Category() {
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Description
                     </th>
-                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
-                      Visibility
-                    </th>
 
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Edit
@@ -232,19 +227,6 @@ export default function Category() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-gray-300">
                         {category.description}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {category.status ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/20 text-green-300 text-sm">
-                            <Eye size={14} />
-                            Listed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-sm">
-                            <EyeOff size={14} />
-                            Unlisted
-                          </span>
-                        )}
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -370,24 +352,7 @@ export default function Category() {
                 rows={3}
               ></textarea>
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2 font-medium">
-                Visibility
-              </label>
-              <select
-                value={editingCategory.status.toString()}
-                onChange={(e) =>
-                  setEditingCategory({
-                    ...editingCategory,
-                    status: e.target.value === "true",
-                  })
-                }
-                className="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-              >
-                <option value="true">Listed</option>
-                <option value="false">Unlisted</option>
-              </select>
-            </div>
+
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setIsEditModalOpen(false)}

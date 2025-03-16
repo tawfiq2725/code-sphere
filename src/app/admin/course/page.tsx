@@ -33,7 +33,6 @@ const CourseLists = () => {
     setIsLoading(true);
     getCourseDataByAdmin()
       .then((data) => {
-        console.log(data);
         setCourses(data);
         setFilteredCourses(data);
       })
@@ -122,7 +121,7 @@ const CourseLists = () => {
     indexOfFirstCourse,
     indexOfLastCourse
   );
-  console.log(currentCourses);
+
   const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
 
   const handlePageChange = (page: number) => {

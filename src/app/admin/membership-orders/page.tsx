@@ -45,7 +45,6 @@ export default function MembershipManagement() {
         showToast("Failed to fetch membership orders", "error");
       })
       .finally(() => {
-        console.log("Membership orders fetched");
         setIsLoading(false);
       });
   }, [token]);

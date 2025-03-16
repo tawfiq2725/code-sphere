@@ -26,7 +26,6 @@ export default function CourseDetailsAndChapters({
   useEffect(() => {
     getChaptersById(courseId)
       .then((data: Chapter[]) => {
-        console.log(data);
         const chaptersWithStatus = data.map((chapter) => ({
           ...chapter,
           completed: false,
@@ -58,14 +57,10 @@ export default function CourseDetailsAndChapters({
         chapterId,
       });
       let data = await response.data;
-      console.log(data);
       if (data.success) {
-        console.log("Chapter progress updated successfully");
-
         const updateUser = await api.get(`/api/user/find-user/${userId}`);
         const userData = await updateUser.data;
 
-        console.log(userData, "roshan");
         dispatch(getUserDetails({ user: userData.data }));
       } else {
         console.log("Chapter progress update failed");

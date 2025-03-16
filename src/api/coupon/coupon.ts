@@ -1,9 +1,6 @@
-import { backendUrl } from "@/utils/backendUrl";
-import axios from "axios";
 import api from "@/api/axios";
 export const addCoupon = async (data: any) => {
   try {
-    console.log("checking the data", data);
     const response = await api.post(`/api/course/create-coupon`, data);
     return response.data;
   } catch (err) {
@@ -14,7 +11,7 @@ export const addCoupon = async (data: any) => {
 export const getCoupons = async () => {
   try {
     const response = await api.get(`/api/course/get-coupons`);
-    console.log(response.data);
+
     return response.data;
   } catch (error) {
     console.log(error);

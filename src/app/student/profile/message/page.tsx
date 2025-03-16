@@ -56,10 +56,8 @@ export default function StudentChat() {
         return [...prev, message];
       });
     });
-    // Add listeners for blocked user events
     s.on("chat:blocked", (data: { error: string }) => {
       showToast(data.error, "error");
-      // Optionally reset selected tutor
       setSelectedTutor(null);
     });
 

@@ -75,7 +75,6 @@ export const getUserCertficates = async (userId: string) => {
 export const getOffers = async () => {
   try {
     const response = await api.get("/api/offers");
-    console.log(response.data.data);
     return response.data.data;
   } catch (err) {
     console.log(err);

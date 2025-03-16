@@ -1,12 +1,12 @@
 import { showToast } from "@/utils/toastUtil";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { backendUrl } from "@/utils/backendUrl";
 import api from "@/api/axios";
 import { auth } from "@/utils/config/firebase";
 import { useDispatch } from "react-redux";
 import { getUserDetails, loginSuccess } from "@/store/slice/authSlice";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export const SignIn = () => {
   const dispatch = useDispatch();
@@ -22,7 +22,7 @@ export const SignIn = () => {
       const res = await api.post("/api/auth/google", { idToken });
       const { data, message } = await res.data;
 
-      const { isNewUser, userId, email, role, jwt_token: token } = data;
+      const { isNewUser, userId, email, role, jwt_token: token, user } = data;
 
       localStorage.setItem("UserId", userId);
       localStorage.setItem("userEmail", email);
@@ -31,7 +31,10 @@ export const SignIn = () => {
         router.push(`/auth/role-page`);
       } else {
         dispatch(loginSuccess({ token, role }));
-        dispatch(getUserDetails({ user: data.user }));
+        if (user.profile) {
+          user.profile = signedUrltoNormalUrl(user.profile);
+        }
+        dispatch(getUserDetails({ user: user }));
         showToast(message, "success");
         const roleRoutes: { [key: string]: string } = {
           student: "/student",

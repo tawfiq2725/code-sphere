@@ -53,7 +53,6 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     dashboardData()
       .then((data) => {
-        console.log(data);
         setData(data);
       })
       .catch((error) => {
@@ -153,7 +152,7 @@ const AdminDashboard: React.FC = () => {
       setError(null);
       try {
         const response = await api.get("/api/reports/get-toptutors");
-        console.log(response.data.data);
+
         if (response.data.success) {
           const labels = response.data.data.map(
             (tutor: any) => tutor.tutorName

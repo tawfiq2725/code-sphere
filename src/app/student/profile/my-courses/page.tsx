@@ -6,7 +6,6 @@ import Link from "next/link";
 import { findUserById } from "@/api/user/user";
 import { getCourses } from "@/api/course";
 import { useSelector } from "react-redux";
-import Cookies from "js-cookie";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 export default function Courses() {

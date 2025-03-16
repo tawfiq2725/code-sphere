@@ -3,6 +3,7 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { logout } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
+import { showToast } from "@/utils/toastUtil";
 
 const axiosInstance = axios.create({
   baseURL: backendUrl,
@@ -15,8 +16,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     const token = localStorage.getItem("jwt_token");
-    console.log(token, "check");
-    console.log("Auth Token (Before Request):", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,11 +28,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    console.log("working.......1");
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log("accessToken expired trying to refresh.....");
+    const status = error.response?.status;
+
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      console.log("working.......2");
 
       try {
         const { data } = await axiosInstance.post(
@@ -41,24 +39,24 @@ axiosInstance.interceptors.response.use(
           {},
           { withCredentials: true }
         );
-        console.log("working.......3");
-        console.log("New Access Token:", data.data);
         localStorage.setItem("jwt_token", data.data);
         const decodedToken = jwtDecode(data.data) as { role: string };
-        console.log("working.......4");
-        console.log("Decoded Role:", decodedToken.role);
-        let role = decodedToken.role;
-        localStorage.setItem("role", role);
-        console.log("working.......5");
+        localStorage.setItem("role", decodedToken.role);
         originalRequest.headers.Authorization = `Bearer ${data.data}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        toast.error("Session expired. Please login again.");
+        showToast("Session expired. Please login again.", "error");
         localStorage.clear();
+        logout();
         window.location.reload();
       }
+    } else if (status === 403) {
+      showToast("Access denied. Logging out.", "error");
+      localStorage.clear();
+      logout();
+      window.location.reload();
     } else {
-      toast.error(error.response.data.message);
+      showToast(error.response?.data.message, "error");
       logout();
     }
     return Promise.reject(error);

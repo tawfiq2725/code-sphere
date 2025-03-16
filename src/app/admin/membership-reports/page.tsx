@@ -21,7 +21,7 @@ export default function Page() {
     if (!startDate || !endDate) {
       return showToast("Please select both start and end date", "error");
     }
-    console.log(`Searching from ${startDate} to ${endDate}`);
+
     try {
       const res = await api.get(`/api/reports/get-reports/member/orders`, {
         params: {
@@ -30,9 +30,9 @@ export default function Page() {
         },
       });
       const data = await res.data;
-      console.log(data.data);
+
       setMembershipData(data.data);
-      setCurrentPage(1); // Reset to first page after new search
+      setCurrentPage(1);
     } catch (error) {
       console.error(error);
       showToast("Failed to fetch data", "error");

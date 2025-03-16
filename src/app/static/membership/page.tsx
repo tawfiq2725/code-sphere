@@ -12,7 +12,6 @@ export default function Pricing() {
   useEffect(() => {
     getMemberships()
       .then((data) => {
-        console.log(data);
         setMemberships(data);
       })
       .catch((err) => {

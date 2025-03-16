@@ -153,7 +153,6 @@ export default function UserProfile() {
         message: string;
       }) => {
         if (notification.senderType === "tutor") {
-          // Find student in the list
           const student = students.find((s) => s._id === notification.senderId);
 
           if (student) {
@@ -209,7 +208,6 @@ export default function UserProfile() {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
-  console.log(user.user);
   const userProfile = user.user;
 
   const email = userProfile.email;
@@ -369,7 +367,7 @@ export default function UserProfile() {
       : 0;
 
   let googleId = user.user.googleId ? true : false;
-  console.log(googleId);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col items-center py-12 px-4">
       {/* Header with profile image and name */}

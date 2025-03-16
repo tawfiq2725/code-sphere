@@ -27,12 +27,3 @@ export const getCourseById = async (courseId: string) => {
     console.log(err);
   }
 };
-
-// export const approveCertificate = async()=>{
-//   try {
-//     const res = await api.post(`/api/tutor/approveCertificate`, {studentId, courseId, tutorName});
-//     return res.data.data;
-//   } catch (err) {
-//     console.log(err);
-//   }
-// }

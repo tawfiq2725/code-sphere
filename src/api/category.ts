@@ -25,17 +25,9 @@ export const updateCategory = async (category: Category, id: string) => {
   return response.data;
 };
 
-export const toggleVisiblity = async (id: string, token: string) => {
-  console.log("Token:", token);
-
-  const response = await axios.patch(
-    `${backendUrl}/api/course/chapter/toggle-visibility/${id}`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+export const toggleVisiblity = async (id: string) => {
+  const response = await api.patch(
+    `/api/course/chapter/toggle-visibility/${id}`
   );
   return response.data;
 };

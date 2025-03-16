@@ -3,8 +3,6 @@
 import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
 import { showToast } from "@/utils/toastUtil";
-import { backendUrl } from "@/utils/backendUrl";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import api from "@/api/axios";
 import VideoModal from "@/app/components/common/VideoModal";
@@ -17,11 +15,8 @@ export default function CourseChapterPage({
 }) {
   const { courseId } = use(params);
 
-  console.log("courseId", courseId);
-  console.log(courseId[0], courseId[1]);
   const thumbnail = localStorage.getItem("thumbnail");
   const courseName = localStorage.getItem("courseName");
-  const token = Cookies.get("jwt_token") || "";
   interface Chapter {
     _id: string;
     serialNo: number;
@@ -34,13 +29,12 @@ export default function CourseChapterPage({
   }
 
   const [chapterData, setChapterData] = useState<Chapter[]>([]);
-  console.log(`${backendUrl}/api/course/get-chapters/${courseId[0]}`);
+
   const fetchCapterData = async () => {
     try {
       const response = await api.get(`/api/course/get-chapters/${courseId[0]}`);
       const data = await response.data;
-      console.log("----------------------", data);
-      console.log(data.data);
+
       if (data.success) {
         setChapterData(data.data);
       } else {
@@ -62,8 +56,6 @@ export default function CourseChapterPage({
   useEffect(() => {
     fetchCapterData();
   }, []);
-
-  console.log(chapterData);
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

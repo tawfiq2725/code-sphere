@@ -23,7 +23,6 @@ const CourseAction = ({ courseId }: CourseActionProps) => {
         courseStatus: action,
         percentage: percent,
       };
-      console.log("Payload:", payload);
 
       const response = await api.patch(
         `/admin/api/approve-or-reject-course/${courseId}`,

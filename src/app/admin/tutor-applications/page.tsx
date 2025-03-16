@@ -61,14 +61,11 @@ const TutorList = () => {
           search: debouncedSearchTerm,
         });
 
-        console.log("Requesting with params:", params.toString());
-
         const response = await api.get(`/admin/get-tutors/applications`, {
           params,
         });
 
         const { success, message, data } = await response.data;
-        console.log("API Response:", { success, message, data });
 
         if (!success) {
           showToast(message, "error");
@@ -88,7 +85,6 @@ const TutorList = () => {
   }, [currentPage, debouncedSearchTerm]);
   for (let user of users) {
     if (user.profile) {
-      console.log(user.profile);
       let url = signedUrltoNormalUrl(user.profile);
       user.profile = url;
     }

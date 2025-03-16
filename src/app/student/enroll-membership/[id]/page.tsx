@@ -68,9 +68,8 @@ export default function MembershipCheckoutPage({
       });
     getMembershipById(id)
       .then((data) => {
-        console.log("Membership retrieved:", data);
         setSelectedMembership(data);
-        membershipPrice += data.price; // update membershipPrice if needed
+        membershipPrice += data.price;
         membershipName = data.membershipName;
       })
       .catch((err) => {
@@ -79,7 +78,6 @@ export default function MembershipCheckoutPage({
 
     getAllCategoriesUser(user.user._id)
       .then((data) => {
-        console.log("Categories:", data);
         const filteredCategories = data.filter(
           (category: Category) =>
             !userMembershipCategoryIds.includes(category._id)
@@ -105,7 +103,6 @@ export default function MembershipCheckoutPage({
     categoryId: selectedCategory,
     membershipPlan: selectedMembership?.membershipPlan,
   };
-  console.log(dataForOrder);
 
   const handleProceed = async () => {
     if (!isChecked) {
@@ -126,7 +123,7 @@ export default function MembershipCheckoutPage({
         showToast("Failed to create order. Try again.", "error");
         return;
       }
-      console.log("Order Data:", order);
+
       openRazorpay(order);
     } catch (error) {
       console.error(error);
@@ -138,7 +135,6 @@ export default function MembershipCheckoutPage({
     userId: user.user._id,
     categoryId: selectedCategory,
   };
-  console.log(details);
 
   const openRazorpay = (orderData: any) => {
     interface RazorpayOptions {
@@ -166,11 +162,8 @@ export default function MembershipCheckoutPage({
       description: `Payment for ${membershipName}`,
       order_id: orderData.id,
       handler: async function (response: any) {
-        console.log("Payment Response:", response);
         const verify = await verifyMembershipOrder(response, details);
-        console.log("Verify Response:", verify);
         if (verify.success) {
-          // Clear existing data after successful verification
           localStorage.removeItem("membershipId");
           localStorage.removeItem("membershipName");
 

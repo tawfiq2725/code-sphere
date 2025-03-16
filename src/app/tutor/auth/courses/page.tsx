@@ -46,7 +46,6 @@ export default function SimpleCourseManagement() {
   useEffect(() => {
     getCourseData(id)
       .then((data) => {
-        console.log(data.data);
         setCourses(data.data);
       })
       .catch((error) => {
@@ -67,7 +66,6 @@ export default function SimpleCourseManagement() {
       try {
         const response = await api.get("/api/course/get-categories");
         setCategories(response.data.data);
-        console.log(response.data.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
         showToast("Failed to load categories", "error");
@@ -123,7 +121,6 @@ export default function SimpleCourseManagement() {
       );
       const data = await response.data;
       if (data.success) {
-        console.log(data);
         showToast("Course updated successfully", "success");
         setCourses((prevCourses) =>
           prevCourses.map((course) =>
@@ -151,7 +148,6 @@ export default function SimpleCourseManagement() {
       );
 
       const data = await response.data;
-      console.log(data);
 
       if (data.success) {
         showToast("Course deleted successfully", "success");
@@ -179,7 +175,6 @@ export default function SimpleCourseManagement() {
           );
         }}
         onCancel={() => {
-          console.log("Delete operation cancelled");
           showToast("Delete operation cancelled", "info");
         }}
       />,
@@ -202,7 +197,6 @@ export default function SimpleCourseManagement() {
 
   // Change page
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-  console.log(courses.length);
   if (courses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-black">
@@ -316,10 +310,7 @@ export default function SimpleCourseManagement() {
                               <form
                                 onSubmit={(e) => {
                                   e.preventDefault();
-                                  console.log(
-                                    "Updated course:",
-                                    selectedCourse
-                                  );
+
                                   setIsModalOpen(false);
                                   handlesubmitUpdateData();
                                 }}

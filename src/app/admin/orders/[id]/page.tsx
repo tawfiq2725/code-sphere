@@ -73,7 +73,6 @@ export default function OrderDetailsPage({
     if (order?.userId) {
       findUserByIdA(order.userId)
         .then((response) => {
-          console.log(response);
           setUser(response.data);
         })
         .catch((err) => {

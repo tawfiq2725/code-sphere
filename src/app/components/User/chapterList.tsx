@@ -14,7 +14,6 @@ export function ChapterList({
   onSelectChapter,
 }: ChapterListProps) {
   const { user } = useSelector((state: any) => state.auth);
-  console.log(user.user);
 
   const completedChapters =
     user?.user.courseProgress && user.user.courseProgress.length > 0

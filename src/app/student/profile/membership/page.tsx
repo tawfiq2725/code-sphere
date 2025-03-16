@@ -46,7 +46,6 @@ export default function Courses() {
     setLoading(true);
     getMembershipByUserOId(userId)
       .then((response) => {
-        console.log(response, "Membership data");
         setMembershipData(response || []);
         setLoading(false);
       })

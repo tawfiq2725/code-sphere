@@ -3,7 +3,7 @@ import api from "@/api/axios";
 export const createOrder = async (data: any) => {
   try {
     const response = await api.post(`/api/order/create-order`, data);
-    console.log(response.data);
+
     localStorage.setItem("orderId", response.data.data.orderId);
     return response.data.data.order;
   } catch (err) {
@@ -19,7 +19,6 @@ export const verifyOrder = async (data: any, courseDetails: any) => {
       orderId,
       courseDetails,
     });
-    console.log("safaana id", response.data);
     return response.data;
   } catch (err) {
     console.log(err);

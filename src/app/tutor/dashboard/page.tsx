@@ -355,7 +355,7 @@ const TutorDashboard: React.FC = () => {
           setStudents(data.data);
         }
       } catch (error) {
-        console.error("Error fetching students:", error);
+        console.log("Error fetching students:", error);
       }
     };
 
@@ -378,9 +378,8 @@ const TutorDashboard: React.FC = () => {
           setError("Failed to fetch dashboard data");
         }
       } catch (err) {
-        showToast("An error occurred while fetching data", "error");
         setError("An error occurred while fetching data");
-        console.error(err);
+        console.log(err);
       } finally {
         setLoading(false);
       }

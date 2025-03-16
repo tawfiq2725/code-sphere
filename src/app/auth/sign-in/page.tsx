@@ -46,7 +46,7 @@ export default function LoginPage() {
     try {
       const response = await api.post("/login", { email, password });
       const { data } = response.data;
-      console.log(data);
+
       if (!data) throw new Error("No data returned");
 
       const { jwt_token, role, user } = data;

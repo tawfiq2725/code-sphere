@@ -64,7 +64,6 @@ export default function EnrollStudents({
       getEnrollStudents(courseId)
         .then((response) => {
           setStudents(response);
-          console.log("Enrolled students:", response);
         })
         .catch((error) => {
           console.error("Error fetching enrolled students:", error);

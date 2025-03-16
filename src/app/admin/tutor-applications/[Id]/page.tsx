@@ -35,13 +35,12 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
       try {
         const response = await api.get(`/admin/tutor/certificates/${Id}`);
         const { success, message, data } = await response.data;
-        if (success && Array.isArray(data)) {
-          for (let certificate of data) {
+        if (success) {
+          for (let certificate of data.certificates) {
             const signedUrl = certificate;
             const normalUrl = signedUrltoNormalUrl(signedUrl);
             setUploadedCertificates((prev) => [...prev, normalUrl]);
           }
-          showToast("Certificates fetched successfully", "success");
         } else {
           showToast(message || "Unexpected response format", "error");
         }
@@ -72,6 +71,10 @@ const TutorCertificates = ({ params }: { params: Promise<Params> }) => {
   };
 
   const handleAccept = async () => {
+    if (uploadedCertificates.length === 0) {
+      showToast("Tutor has no certificates found");
+      return;
+    }
     try {
       const response = await api.patch(`/admin/approve-tutor/${tutorId}`);
       const data = await response.data;

@@ -120,11 +120,6 @@ export default function CheckoutPage({
       actualCategoryName: category ? category.categoryName : "Unknown Category",
     };
     if (matchingOffer) {
-      console.log(
-        `Applying offer to course ${courseData.courseName}:`,
-        matchingOffer
-      );
-
       const offerDiscount = matchingOffer.discount;
       const discountAmount = (courseData.sellingPrice * offerDiscount) / 100;
       const discountedPrice = Math.floor(
@@ -238,7 +233,6 @@ export default function CheckoutPage({
         console.log("error");
         return;
       }
-      console.log("Order Data:", order);
       openRazorpay(order);
     } catch (error) {
       console.error(error);
@@ -280,9 +274,7 @@ export default function CheckoutPage({
       description: `Payment for ${courseData?.courseName}`,
       order_id: orderData.id,
       handler: async function (response: any) {
-        console.log("Payment Response:", response);
         const verify = await verifyOrder(response, details);
-        console.log("Verify Response:", verify);
         if (verify.success) {
           showToast("Payment Successful", "success");
           router.push("/student/confirmation-page");

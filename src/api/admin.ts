@@ -22,7 +22,6 @@ export const addMembership = async (data: any) => {
 export const updateMembership = async (id: any, data: any) => {
   try {
     const response = await api.patch(`/admin/edit-membership/${id}`, data);
-    console.log("Membership updated successfully:", response.data.data);
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to update membership:", error);
@@ -32,7 +31,6 @@ export const updateMembership = async (id: any, data: any) => {
 export const toggleStatusMembership = async (id: any) => {
   try {
     const response = await api.patch(`/admin/toggle-membership/${id}`);
-    console.log("Membership status toggled successfully:", response.data.data);
     return response.data.data;
   } catch (error: any) {
     console.log("Failed to toggle membership status:", error);

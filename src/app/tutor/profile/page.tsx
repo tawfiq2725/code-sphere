@@ -97,11 +97,6 @@ const TutorProfile = () => {
       certificates.forEach((file) => formData.append("certificates", file));
       formData.append("email", profile.email);
 
-      // Debug: Log formData contents
-      for (const pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
       const response = await api.patch("/tutor/profile/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
