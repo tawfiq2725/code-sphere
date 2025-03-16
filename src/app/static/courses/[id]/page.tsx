@@ -177,7 +177,7 @@ export default function CourseDetailsPage({
       </div>
     );
   }
-
+  console.log(courseData.thumbnail);
   return (
     <>
       <Header />
