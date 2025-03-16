@@ -35,7 +35,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         const { data } = await axiosInstance.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/refresh`,
+          `${backendUrl}/refresh`,
           {},
           { withCredentials: true }
         );
