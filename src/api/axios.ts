@@ -3,7 +3,8 @@ import { jwtDecode } from "jwt-decode";
 import { logout } from "@/store/slice/authSlice";
 import { backendUrl } from "@/utils/backendUrl";
 import { showToast } from "@/utils/toastUtil";
-
+import { useDispatch } from "react-redux";
+const dispatch = useDispatch();
 const axiosInstance = axios.create({
   baseURL: backendUrl,
   withCredentials: true,
@@ -46,17 +47,17 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         showToast("Session expired. Please login again.", "error");
         localStorage.clear();
-        logout();
+        dispatch(logout());
         window.location.reload();
       }
     } else if (status === 403) {
       showToast("Access denied. Logging out.", "error");
       localStorage.clear();
-      logout();
+      dispatch(logout());
       window.location.reload();
     } else {
       showToast(error.response?.data.message, "error");
-      logout();
+      dispatch(logout());
     }
     return Promise.reject(error);
   }

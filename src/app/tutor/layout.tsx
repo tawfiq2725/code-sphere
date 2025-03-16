@@ -14,7 +14,7 @@ export default function TutorLayout({
   const router = useRouter();
   const { isAuthenticated, role } = useSelector((state: any) => state.auth);
   useEffect(() => {
-    dispatch(loadAuthFromCookies());
+    // dispatch(loadAuthFromCookies());
     if (!isAuthenticated || role !== "tutor") {
       router.push("/auth/sign-in");
     }

@@ -15,7 +15,7 @@ export default function AdminLayout({
   const { isAuthenticated, role } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
-    dispatch(loadAuthFromCookies());
+    // dispatch(loadAuthFromCookies());
     if (!isAuthenticated || role !== "admin") {
       router.push("/auth/sign-in");
     }

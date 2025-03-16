@@ -14,7 +14,7 @@ export default function StudentLayout({
   const router = useRouter();
   const { isAuthenticated, role } = useSelector((state: any) => state.auth);
   useEffect(() => {
-    dispatch(loadAuthFromCookies());
+    // dispatch(loadAuthFromCookies());
     if (!isAuthenticated || role !== "student") {
       router.push("/auth/sign-in");
     }
