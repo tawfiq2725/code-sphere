@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import Pagination from "@/app/components/common/pagination";
 import { showToast } from "@/utils/toastUtil";
-import { useSelector } from "react-redux";
 import { getAllorders } from "@/api/order/order";
 import Link from "next/link";
 import { InfoIcon, ShoppingCart, CreditCard, FileText } from "lucide-react";
@@ -21,7 +19,6 @@ export default function SimpleCourseManagement() {
     paymentStatus: string;
     orderStatus: string;
   }
-  const token: any = Cookies.get("jwt_token");
 
   const [orders, setOrders] = useState<Orders[]>([]);
   const [currentPage, setCurrentPage] = useState(1);

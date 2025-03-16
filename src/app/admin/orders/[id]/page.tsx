@@ -16,13 +16,11 @@ import {
   CheckCircle,
   XCircle,
   BookOpen,
-  Calendar,
   Tag,
   Receipt,
 } from "lucide-react";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
-// Enhanced interface for the order details
 interface OrderDetails {
   _id: string;
   orderId: string;
@@ -68,7 +66,6 @@ export default function OrderDetailsPage({
     }
   }, [id]);
 
-  // Only run when order?.userId changes (not the entire order object)
   useEffect(() => {
     if (order?.userId) {
       findUserByIdA(order.userId)

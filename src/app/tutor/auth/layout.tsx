@@ -14,7 +14,7 @@ export default function TutorLayout({
   const router = useRouter();
   const { user } = useSelector((state: any) => state.auth);
   useEffect(() => {
-    // dispatch(loadAuthFromCookies());
+    dispatch(loadAuthFromCookies());
     if (!user.user.isTutor) {
       showToast("Just verify your details first", "error");
       router.push("/tutor/profile");

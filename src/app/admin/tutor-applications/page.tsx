@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import Link from "next/link";
 import Pagination from "@/app/components/common/pagination";
