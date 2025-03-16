@@ -1,5 +1,3 @@
-import { backendUrl } from "@/utils/backendUrl";
-import axios from "axios";
 import api from "@/api/axios";
 
 interface Category {
@@ -38,7 +36,7 @@ export const getByNameById = async (id: string) => {
 };
 
 export const getAllCategories = async () => {
-  const response = await axios.get(`${backendUrl}/api/course/get-category-all`);
+  const response = await api.get(`/api/course/get-category-all`);
   return response.data.data;
 };
 export const getAllCategoriesUser = async (id: string) => {

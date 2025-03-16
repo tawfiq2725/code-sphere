@@ -1,5 +1,3 @@
-import { backendUrl } from "@/utils/backendUrl";
-import axios from "axios";
 import api from "@/api/axios";
 
 export const getCourseData = async (id: string) => {
@@ -14,7 +12,7 @@ export const getCourseDataByAdmin = async () => {
 };
 
 export const getCourses = async () => {
-  const response = await axios.get(`${backendUrl}/api/course/get-course-data`);
+  const response = await api.get(`/api/course/get-course-data`);
   return response.data;
 };
 
