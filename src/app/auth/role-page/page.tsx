@@ -4,8 +4,9 @@ import { showToast } from "@/utils/toastUtil";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "@/store/slice/authSlice";
+import { getUserDetails, loginSuccess } from "@/store/slice/authSlice";
 import api from "@/api/axios";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 const page = () => {
   const router = useRouter();
   const [role, setRole] = React.useState("");
@@ -41,6 +42,10 @@ const page = () => {
             role: data.role,
           })
         );
+        if (data.user.profile) {
+          data.user.profile = signedUrltoNormalUrl(data.user.profile);
+        }
+        dispatch(getUserDetails({ user: data.user }));
 
         showToast(message, "success");
 
