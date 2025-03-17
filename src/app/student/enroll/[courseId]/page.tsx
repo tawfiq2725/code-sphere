@@ -13,6 +13,7 @@ import api from "@/api/axios";
 import { couponApply, couponRemove } from "@/store/slice/orderSlice";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 import { verifyCoupon } from "@/api/coupon/coupon";
+import CouponList from "@/app/components/common/Coupons";
 
 interface Course {
   courseName: string;
@@ -276,6 +277,7 @@ export default function CheckoutPage({
       handler: async function (response: any) {
         const verify = await verifyOrder(response, details);
         if (verify.success) {
+          dispatch(couponRemove());
           showToast("Payment Successful", "success");
           router.push("/student/confirmation-page");
         }
@@ -412,7 +414,7 @@ export default function CheckoutPage({
                 )}
               </div>
             </div>
-
+            <CouponList />
             {/* Terms & Conditions */}
             <label className="flex items-start gap-3 cursor-pointer group">
               <input

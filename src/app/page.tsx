@@ -7,6 +7,7 @@ import TrustedSection from "./components/User/end-hero";
 import { useEffect } from "react";
 import { showToast } from "@/utils/toastUtil";
 import Header from "@/app/components/header";
+import Link from "next/link";
 
 export default function Home() {
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function Home() {
                 skills with a clear path to success.
               </p>
               <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-lg text-lg">
-                Start Learning
+                <Link href={`/static/courses`}>Start Learning</Link>
               </button>
             </div>
             <div className="relative">

@@ -1,7 +1,6 @@
 "use client";
 import type React from "react";
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
@@ -104,6 +103,8 @@ const TutorProfile = () => {
       });
 
       const { success, message, data } = await response.data;
+      const url = signedUrltoNormalUrl(data.profile);
+      data.profile = url;
       if (!success) {
         showToast(message, "error");
       } else {
