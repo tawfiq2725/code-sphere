@@ -97,7 +97,6 @@ export default function EnrollStudents({
 
   const openModal = (student: Student) => {
     setSelectedStudent(student);
-    // Pre-fill with tutor's name from Redux store if available
     setTutorName(user?.user?.name || "");
     setIsModalOpen(true);
   };

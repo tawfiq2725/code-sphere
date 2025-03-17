@@ -9,6 +9,7 @@ import type { IPagination } from "@/interface/pagination";
 import { User, CheckCircle, XCircle, Shield, ShieldOff } from "lucide-react";
 import api from "@/api/axios";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+import { ConfirmationDialog } from "@/app/components/common/Confirmation";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -43,6 +44,15 @@ const TutorList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmButtonText: "",
+    confirmButtonClass: "",
+    onConfirm: () => {},
+  });
+
   const usersPerPage = 5;
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -74,12 +84,48 @@ const TutorList = () => {
 
     fetchUsers();
   }, [currentPage, debouncedSearchTerm]);
+
   for (let user of users) {
     if (user.profile) {
       let url = signedUrltoNormalUrl(user.profile);
       user.profile = url;
     }
   }
+
+  const handleBlockUser = (userId: string, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Block Tutor",
+      message: `Are you sure you want to block ${userName}? This tutor will no longer be able to access the platform.`,
+      confirmButtonText: "Block",
+      confirmButtonClass:
+        "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700",
+      onConfirm: () => {
+        blockUser(userId);
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const handleUnblockUser = (userId: string, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Unblock Tutor",
+      message: `Are you sure you want to unblock ${userName}? This will restore their access to the platform.`,
+      confirmButtonText: "Unblock",
+      confirmButtonClass:
+        "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700",
+      onConfirm: () => {
+        unblockUser(userId);
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+  };
+
   const blockUser = async (userId: string) => {
     try {
       const response = await api.patch(`/admin/block-user/${userId}`);
@@ -249,8 +295,8 @@ const TutorList = () => {
                           }`}
                           onClick={() =>
                             user.isBlocked
-                              ? unblockUser(user._id)
-                              : blockUser(user._id)
+                              ? handleUnblockUser(user._id, user.name)
+                              : handleBlockUser(user._id, user.name)
                           }
                         >
                           {user.isBlocked ? (
@@ -294,6 +340,17 @@ const TutorList = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={closeConfirmDialog}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmButtonText={confirmDialog.confirmButtonText}
+        confirmButtonClass={confirmDialog.confirmButtonClass}
+      />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Eye as EyeIcon, EyeOff } from "lucide-react";
 interface EyeProps {
   showPassword: boolean;
