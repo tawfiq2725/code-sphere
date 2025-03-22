@@ -5,7 +5,7 @@ import Link from "next/link";
 import Pagination from "@/app/components/common/pagination";
 import Search from "@/app/components/common/search";
 import api from "@/api/axios";
-import { User, FileCheck, Info, CheckCircle, XCircle } from "lucide-react";
+import { User, FileCheck, Info, CheckCircle, XCircle, X } from "lucide-react";
 import { IPagination } from "@/interface/pagination";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
@@ -36,6 +36,7 @@ const TutorList = () => {
     subjects: string[];
     certfications: string[];
     profile: string;
+    reason?: string;
   }
 
   const [users, setUsers] = useState<User[]>([]);
@@ -46,6 +47,9 @@ const TutorList = () => {
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "rejected">(
     "all"
   );
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
   const usersPerPage = 5;
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -82,12 +86,14 @@ const TutorList = () => {
 
     fetchUsers();
   }, [currentPage, debouncedSearchTerm]);
+
   for (let user of users) {
     if (user.profile) {
       let url = signedUrltoNormalUrl(user.profile);
       user.profile = url;
     }
   }
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     setCurrentPage(1);
@@ -98,6 +104,18 @@ const TutorList = () => {
     if (activeTab === "all") return true;
     return user.tutorStatus === activeTab;
   });
+
+  // Open modal with the selected user's rejection reason
+  const openReasonModal = (user: User) => {
+    setSelectedUser(user);
+    setShowReasonModal(true);
+  };
+
+  // Close the modal
+  const closeReasonModal = () => {
+    setShowReasonModal(false);
+    setSelectedUser(null);
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-900 text-white p-6">
@@ -176,12 +194,12 @@ const TutorList = () => {
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                    {/* <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Qualification
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Experience
-                    </th>
+                    </th> */}
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Subjects
                     </th>
@@ -190,6 +208,10 @@ const TutorList = () => {
                     </th>
                     <th className="px-6 py-4 text-center font-semibold tracking-wider">
                       Application Status
+                    </th>
+                    {/* New column for reason button */}
+                    <th className="px-6 py-4 text-center font-semibold tracking-wider">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -208,12 +230,12 @@ const TutorList = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-center text-gray-300">
                         {user.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-white">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-center text-white">
                         {user.qualification || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-white">
                         {user.experience || "-"}
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         {user.subjects && user.subjects.length > 0 ? (
                           <span className="inline-flex flex-wrap justify-center gap-1">
@@ -266,6 +288,25 @@ const TutorList = () => {
                           </span>
                         </div>
                       </td>
+                      {/* New column for reason button */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {(user.tutorStatus === "rejected" ||
+                          user.tutorStatus === "pending") && (
+                          <button
+                            onClick={() => openReasonModal(user)}
+                            className={`px-3 py-1.5 ${
+                              user.tutorStatus === "rejected"
+                                ? "bg-red-500/30 hover:bg-red-500/50 text-red-300"
+                                : "bg-blue-500/30 hover:bg-blue-500/50 text-blue-300"
+                            } rounded-lg font-medium transition duration-300 inline-flex items-center gap-1`}
+                          >
+                            <Info size={14} />
+                            {user.tutorStatus === "rejected"
+                              ? "Reason"
+                              : "Details"}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -296,6 +337,63 @@ const TutorList = () => {
           </div>
         )}
       </div>
+
+      {/* Rejection Reason Modal */}
+      {showReasonModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-xl max-w-lg w-full p-6 relative animate-fadeIn">
+            <button
+              onClick={closeReasonModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="mb-4 flex items-center">
+              <XCircle size={24} className="text-red-400 mr-2" />
+              <h3 className="text-xl font-bold text-white">Rejection Reason</h3>
+            </div>
+
+            <div className="my-4">
+              <p className="text-sm text-gray-400 mb-2">Tutor Name</p>
+              <p className="text-white font-medium">{selectedUser.name}</p>
+            </div>
+
+            <div className="my-4">
+              <p className="text-sm text-gray-400 mb-2">Email</p>
+              <p className="text-white">{selectedUser.email}</p>
+            </div>
+            <div className="my-4">
+              <p className="text-sm text-gray-400 mb-2">Experience</p>
+              <p className="text-white">
+                {selectedUser.experience ?? "Not Updated"}
+              </p>
+            </div>
+            <div className="my-4">
+              <p className="text-sm text-gray-400 mb-2">Qualification</p>
+              <p className="text-white">
+                {selectedUser.qualification ?? "Not Updated"}
+              </p>
+            </div>
+
+            <div className="my-4">
+              <p className="text-sm text-gray-400 mb-2">Reason for Rejection</p>
+              <div className="bg-gray-700/50 rounded-lg p-4 text-white">
+                {selectedUser.reason || "No reason provided."}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeReasonModal}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

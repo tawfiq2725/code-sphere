@@ -1,6 +1,5 @@
 "use client";
-import { backendUrl } from "@/utils/backendUrl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Orders } from "@/interface/order";
 import pdfMake from "pdfmake/build/pdfmake";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
@@ -15,8 +14,23 @@ export default function Page() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [orderData, setOrderData] = useState<Orders[]>([]);
-  const [currentPage, setCurrentPage] = useState(1); // State for current page
-  const itemsPerPage = 5; // Number of items per page (adjust as needed)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [successOrdersCount, setSuccessOrdersCount] = useState(0);
+  const [successOrdersTotal, setSuccessOrdersTotal] = useState(0);
+  const itemsPerPage = 5;
+
+  // Calculate success order metrics whenever orderData changes
+  useEffect(() => {
+    const successOrders = orderData.filter(
+      (order) => order.orderStatus === "success"
+    );
+    setSuccessOrdersCount(successOrders.length);
+
+    const totalAmount = successOrders.reduce((sum, order) => {
+      return sum + parseFloat(order.totalAmount);
+    }, 0);
+    setSuccessOrdersTotal(totalAmount);
+  }, [orderData]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,10 +158,57 @@ export default function Page() {
             vLineColor: () => "#aaaaaa",
           },
         },
+        {
+          text: "Summary",
+          style: "subheader",
+          margin: [0, 20, 0, 10],
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ["*", "*"],
+            body: [
+              [
+                {
+                  text: "Metric",
+                  bold: true,
+                  fillColor: "#4a4a4a",
+                  color: "white",
+                },
+                {
+                  text: "Value",
+                  bold: true,
+                  fillColor: "#4a4a4a",
+                  color: "white",
+                },
+              ],
+              ["Total Success Orders", successOrdersCount],
+              [
+                "Total Amount from Success Orders",
+                `₹${successOrdersTotal.toFixed(2)}`,
+              ],
+            ],
+          },
+          layout: {
+            fillColor: (rowIndex: number) =>
+              rowIndex === 0
+                ? "#4a4a4a"
+                : rowIndex % 2 === 0
+                ? "#f2f2f2"
+                : "white",
+            hLineColor: () => "#aaaaaa",
+            vLineColor: () => "#aaaaaa",
+          },
+        },
       ],
       styles: {
         header: {
           fontSize: 18,
+          bold: true,
+          color: "#2d2d2d",
+        },
+        subheader: {
+          fontSize: 14,
           bold: true,
           color: "#2d2d2d",
         },
@@ -171,6 +232,10 @@ export default function Page() {
     setCurrentPage(page);
   };
 
+  // Custom CSS class for date inputs
+  const dateInputClass =
+    "bg-black border border-gray-600 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all w-full sm:w-auto";
+
   return (
     <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8">
       {/* Header */}
@@ -184,17 +249,19 @@ export default function Page() {
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="bg-black border border-gray-600 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all w-full sm:w-auto"
+          className={dateInputClass}
+          style={{ colorScheme: "dark", accentColor: "#8b5cf6" }}
         />
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="bg-black border border-gray-600 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all w-full sm:w-auto"
+          className={dateInputClass}
+          style={{ colorScheme: "dark", accentColor: "#8b5cf6" }}
         />
         <button
           onClick={handleSearch}
-          className="bg-gradient-to-r from-gray-700 to-gray-900 text-white py-2 px-4 rounded-md hover:from-gray-600 hover:to-gray-800 transition-all duration-300 w-full sm:w-auto"
+          className="bg-gradient-to-r from-purple-700 to-purple-900 text-white py-2 px-4 rounded-md hover:from-purple-600 hover:to-purple-800 transition-all duration-300 w-full sm:w-auto"
         >
           Search
         </button>
@@ -275,6 +342,31 @@ export default function Page() {
           </tbody>
         </table>
       </div>
+
+      {/* Order Summary Section */}
+      {orderData.length > 0 && (
+        <div className="mt-8 bg-gray-900 rounded-lg p-6 shadow-lg">
+          <h2 className="text-xl font-bold mb-4 text-purple-300">
+            Order Summary
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-black p-4 rounded-lg border border-gray-700">
+              <p className="text-gray-400 text-sm">Total Success Orders</p>
+              <p className="text-2xl font-bold text-white">
+                {successOrdersCount}
+              </p>
+            </div>
+            <div className="bg-black p-4 rounded-lg border border-gray-700">
+              <p className="text-gray-400 text-sm">
+                Total Amount (Success Orders)
+              </p>
+              <p className="text-2xl font-bold text-white">
+                ₹{successOrdersTotal.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {orderData.length > 0 && (

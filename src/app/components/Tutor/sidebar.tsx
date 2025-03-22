@@ -8,14 +8,16 @@ import {
   X,
   Book,
   UserIcon,
-  BookDownIcon,
   BookUser,
   MessageCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slice/authSlice";
 import { showToast } from "@/utils/toastUtil";
+import { usePathname } from "next/navigation";
 
 const navigation = [
   { name: "Dashboard", href: "/tutor/dashboard", icon: LayoutDashboard },
@@ -25,78 +27,169 @@ const navigation = [
   { name: "Message", href: "/tutor/auth/message", icon: MessageCircle },
 ];
 
-export default function Sidebar() {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [active, setActive] = React.useState("/dashboard");
+interface SidebarProps {
+  onStateChange?: (state: { collapsed: boolean; mobileOpen: boolean }) => void;
+  unreadCount: number;
+  onMessageVisit?: () => void;
+}
+
+export default function Sidebar({ unreadCount, onMessageVisit }: SidebarProps) {
+  const [collapsed, setCollapsed] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [messageVisited, setMessageVisited] = React.useState(false);
+
+  const pathname = usePathname();
   const dispatch = useDispatch();
+  const isOnMessagePage = pathname === "/tutor/auth/message";
+
+  React.useEffect(() => {
+    if (isOnMessagePage && !messageVisited) {
+      setMessageVisited(true);
+      if (onMessageVisit) {
+        onMessageVisit();
+      }
+    } else if (!isOnMessagePage) {
+      setMessageVisited(false);
+    }
+  }, [pathname, messageVisited, onMessageVisit, isOnMessagePage]);
+
   const handleLogout = () => {
     dispatch(logout());
     showToast("Logged out successfully", "success");
   };
+
+  const isMobile = () =>
+    typeof window !== "undefined" && window.innerWidth < 768;
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (isMobile()) {
+        setCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const toggleSidebar = () => {
+    if (isMobile()) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
+
+  const sidebarWidth = collapsed ? "w-20" : "w-64";
+  const sidebarClass = `fixed inset-y-0 left-0 z-40 flex flex-col bg-gray-900 text-white shadow-lg transition-all duration-300 ${
+    isMobile()
+      ? mobileOpen
+        ? "translate-x-0"
+        : "-translate-x-full"
+      : sidebarWidth
+  }`;
+
+  const displayUnreadCount = !isOnMessagePage ? unreadCount : 0;
+
   return (
     <>
-      {/* Toggle Button - Always Visible */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-4 top-4 z-50 rounded-md bg-gray-800 p-2 text-white"
+        onClick={toggleSidebar}
+        className="fixed left-4 top-4 z-50 rounded-md bg-purple-700 p-2 text-white md:hidden"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {mobileOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar */}
-      {isOpen && (
-        <>
-          {/* Overlay to close sidebar when clicked */}
-          <div
-            className="fixed inset-0 z-40 bg-black/50"
-            onClick={() => setIsOpen(false)} // Close sidebar on overlay click
-          />
+      <div className="flex">
+        <aside className={sidebarClass}>
+          <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
+            {!collapsed ? (
+              <div className="flex items-center gap-2">
+                <LayoutDashboard className="h-6 w-6 text-purple-500" />
+                <span className="text-xl font-bold">Tutor Portal</span>
+              </div>
+            ) : (
+              <LayoutDashboard className="mx-auto h-6 w-6 text-purple-500" />
+            )}
+            <button
+              onClick={toggleSidebar}
+              className="hidden rounded-full bg-gray-800 p-1 text-gray-300 hover:bg-gray-700 hover:text-white md:block"
+            >
+              {collapsed ? (
+                <ChevronRight size={20} />
+              ) : (
+                <ChevronLeft size={20} />
+              )}
+            </button>
+          </div>
 
-          <aside className="fixed inset-y-0 left-0 z-50  flex flex-col bg-gray-900 text-white shadow-lg transition-transform">
-            {/* Logo/Header */}
-            <div className="flex h-16 items-center gap-2 border-b border-gray-800 px-6">
-              <LayoutDashboard className="h-6 w-6" />
-              <span className="text-xl font-bold">Tutor Portal</span>
-            </div>
+          <nav className="flex-1 space-y-1 px-2 py-4">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
 
-            {/* Navigation Links */}
-            <nav className="flex-1 space-y-1 px-2 py-4">
-              {navigation.map((item) => {
-                const isActive = active === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => {
-                      setActive(item.href);
-                      setIsOpen(false);
-                    }}
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-800 ${
-                      isActive
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:text-white"
-                    }`}
-                  >
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => {
+                    if (item.name === "Message" && onMessageVisit) {
+                      onMessageVisit();
+                    }
+                    if (isMobile()) {
+                      setMobileOpen(false);
+                    }
+                  }}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-800 ${
+                    isActive
+                      ? "bg-purple-700 text-white"
+                      : "text-gray-300 hover:text-white"
+                  } ${collapsed ? "justify-center" : ""}`}
+                >
+                  {item.name === "Message" ? (
+                    <div className="relative">
+                      <item.icon className="h-5 w-5" />
+                      {displayUnreadCount > 0 && (
+                        <div className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          {displayUnreadCount}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
                     <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
+                  )}
+                  {!collapsed && <span>{item.name}</span>}
+                </Link>
+              );
+            })}
+          </nav>
 
-            {/* Logout Button */}
-            <div className="border-t border-gray-800 p-4">
-              <button
-                onClick={() => handleLogout()}
-                className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-gray-800"
-              >
-                <LogOut className="h-5 w-5" />
-                Logout
-              </button>
-            </div>
-          </aside>
-        </>
-      )}
+          <div className="border-t border-gray-800 p-4">
+            <button
+              onClick={handleLogout}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-gray-800 ${
+                collapsed ? "justify-center w-full" : "w-full"
+              }`}
+            >
+              <LogOut className="h-5 w-5" />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </div>
+        </aside>
+
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        <div
+          className={`transition-all duration-300 ${
+            isMobile() ? "ml-0" : collapsed ? "ml-20" : "ml-64"
+          }`}
+        ></div>
+      </div>
     </>
   );
 }

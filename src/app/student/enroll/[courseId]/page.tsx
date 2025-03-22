@@ -14,6 +14,7 @@ import { couponApply, couponRemove } from "@/store/slice/orderSlice";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 import { verifyCoupon } from "@/api/coupon/coupon";
 import CouponList from "@/app/components/common/Coupons";
+import { getUserDetails } from "@/store/slice/authSlice";
 
 interface Course {
   courseName: string;
@@ -140,10 +141,6 @@ export default function CheckoutPage({
         (course: any) => course.courseId === courseId
       );
       setIsAlreadyEnrolled(isEnrolled);
-
-      if (isEnrolled) {
-        showToast("You are already enrolled in this course", "info");
-      }
     }
   }, [user, courseId]);
 
@@ -277,7 +274,13 @@ export default function CheckoutPage({
       handler: async function (response: any) {
         const verify = await verifyOrder(response, details);
         if (verify.success) {
+          console.log(verify, verify.success, verify.data, verify.data.user);
           dispatch(couponRemove());
+          if (verify.data.user.profile) {
+            let url = signedUrltoNormalUrl(verify.data.user.profile);
+            verify.data.user.profile = url;
+          }
+          dispatch(getUserDetails({ user: verify.data.user }));
           showToast("Payment Successful", "success");
           router.push("/student/confirmation-page");
         }

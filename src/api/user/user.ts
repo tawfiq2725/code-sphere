@@ -80,3 +80,41 @@ export const getOffers = async () => {
     console.log(err);
   }
 };
+
+export const getOrderReview = async (orderId: string) => {
+  try {
+    const response = await api.get(`/api/course/get/review/${orderId}`);
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching review:", error);
+    throw error;
+  }
+};
+
+export const addOrderReview = async (
+  orderId: string,
+  reviewData: { rating: number; description: string }
+) => {
+  try {
+    const response = await api.patch(
+      `/api/course/review/${orderId}`,
+      reviewData
+    );
+
+    const data = await response.data;
+    return data;
+  } catch (error) {
+    console.error("Error submitting review:", error);
+    throw error;
+  }
+};
+
+export const getRecentMessage = async (id: string) => {
+  try {
+    const response = await api.get(`/students/get-recent/${id}`);
+    return response.data;
+  } catch (err) {
+    console.log(err);
+  }
+};

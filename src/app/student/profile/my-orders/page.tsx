@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import Cookies from "js-cookie";
+import { useEffect, useRef, useState } from "react";
 import Pagination from "@/app/components/common/pagination";
 import { getUserOrders } from "@/api/user/user";
 import { showToast } from "@/utils/toastUtil";
@@ -31,7 +29,6 @@ export default function EnhancedOrderManagement() {
     razorpayPaymentId?: string;
   }
 
-  const token: any = Cookies.get("jwt_token");
   const { user } = useSelector((state: any) => state.auth);
   const [regularOrders, setRegularOrders] = useState<Order[]>([]);
   const [membershipOrders, setMembershipOrders] = useState<MembershipOrder[]>(
@@ -42,26 +39,29 @@ export default function EnhancedOrderManagement() {
   const [activeTab, setActiveTab] = useState<"orders" | "memberships">(
     "orders"
   );
+  const [isLoading, setIsLoading] = useState(true);
   const userId: string = user.user._id;
 
   useEffect(() => {
     fetchOrders();
-  }, [token]);
+  }, []);
 
   const fetchOrders = async () => {
+    setIsLoading(true);
     try {
       const response = await getUserOrders(userId);
 
       if (response.success) {
         setRegularOrders(response.data.orders || []);
         setMembershipOrders(response.data.membershipOrders || []);
-        showToast("Orders fetched successfully", "success");
       } else {
         showToast("Failed to fetch orders", "error");
       }
     } catch (err) {
       console.error(err);
       showToast("Failed to fetch orders", "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -74,7 +74,6 @@ export default function EnhancedOrderManagement() {
     });
   };
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
@@ -133,7 +132,20 @@ export default function EnhancedOrderManagement() {
     </div>
   );
 
+  const renderLoadingState = () => (
+    <div className="p-6 text-center">
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+        <h3 className="text-xl font-medium text-gray-300">Loading orders...</h3>
+      </div>
+    </div>
+  );
+
   const renderOrdersTable = () => {
+    if (isLoading) {
+      return renderLoadingState();
+    }
+
     if (currentItems.length === 0) {
       return renderEmptyState();
     }
@@ -160,9 +172,7 @@ export default function EnhancedOrderManagement() {
               )}
               <th className="p-3 border-b border-gray-700">Amount</th>
               <th className="p-3 border-b border-gray-700">Payment</th>
-              <th className="p-3 border-b border-gray-700 rounded-tr-lg">
-                Status
-              </th>
+              <th className="p-3 border-b border-gray-700">Status</th>
             </tr>
           </thead>
           <tbody>

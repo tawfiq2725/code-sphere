@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, ArrowLeft, MessageSquare, Bell } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  MessageSquare,
+  Bell,
+  ArrowDownAZ,
+  ArrowUpZA,
+  Clock,
+} from "lucide-react";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { Message, User } from "@/interface/user";
@@ -20,14 +28,17 @@ export default function TutorChat() {
   const { user } = useSelector((state: any) => state.auth);
   const [chatId, setChatId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [sortOption, setSortOption] = useState<string>("recent"); // Default sorting by recent messages
 
   const storedUserId = user.user._id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to the latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentMessages]);
 
+  // Initialize socket connection
   useEffect(() => {
     const s = createSocket();
     setSocket(s);
@@ -48,14 +59,40 @@ export default function TutorChat() {
       }
     });
 
-    s.on("message:receive", (message: Message) => {
+    s.on("message:receive", (message: Message & { userId?: string }) => {
+      console.log("New message received:", message);
       setCurrentMessages((prev) => {
         if (prev.some((msg) => msg._id === message._id)) return prev;
         return [...prev, message];
       });
+      // Update last message and time in student list
+      if (message.userId) {
+        setStudents((prevStudents) =>
+          prevStudents.map((student) =>
+            student._id === message.userId
+              ? {
+                  ...student,
+                  lastMessage: message.message,
+                  lastMessageTime: message.createdAt,
+                }
+              : student
+          )
+        );
+      } else if (selectedStudent) {
+        setStudents((prevStudents) =>
+          prevStudents.map((student) =>
+            student._id === selectedStudent._id
+              ? {
+                  ...student,
+                  lastMessage: message.message,
+                  lastMessageTime: message.createdAt,
+                }
+              : student
+          )
+        );
+      }
     });
 
-    // Listen for notifications from students
     s.on(
       "notification",
       (notification: {
@@ -73,7 +110,6 @@ export default function TutorChat() {
             )
           );
         }
-        showToast(notification.message, "info");
       }
     );
 
@@ -82,28 +118,61 @@ export default function TutorChat() {
     };
   }, [selectedStudent]);
 
-  // Register the current user for notifications
+  // Register tutor with socket
   useEffect(() => {
     if (socket && storedUserId) {
       socket.emit("register", { type: "tutor", id: storedUserId });
     }
   }, [socket, storedUserId]);
 
+  // Fetch students and recent messages
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStudentsAndMessages = async () => {
       try {
-        const { data } = await api.get(`/tutor/get-students/${storedUserId}`);
-        setStudents(data.data);
+        // Fetch students
+        const { data: studentData } = await api.get(
+          `/tutor/get-students/${storedUserId}`
+        );
+        let updatedStudents = studentData.data;
+
+        // Fetch recent messages
+        const { data: recentData } = await api.get(
+          `/get-recent/tutor/${storedUserId}`
+        );
+        const recents = recentData.data;
+
+        // Merge recent message data with students
+        updatedStudents = updatedStudents.map((student: User) => {
+          const recent = recents.find((r: any) => r.studentId === student._id);
+          if (recent) {
+            return {
+              ...student,
+              chatId: recent.chatId,
+              lastMessage: recent.latestMessage,
+              lastMessageTime: recent.latestMessageTime,
+            };
+          }
+          return student;
+        });
+
+        setStudents(updatedStudents);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching students or recent messages:", error);
       }
     };
-    fetchData();
+
+    if (storedUserId) {
+      fetchStudentsAndMessages();
+    }
   }, [storedUserId]);
+
+  // Convert signed URLs for student profiles
   for (const student of students) {
     if (student.profile)
       student.profile = signedUrltoNormalUrl(student.profile);
   }
+
+  // Handle chat joining when a student is selected
   useEffect(() => {
     if (socket && selectedStudent && storedUserId) {
       if (chatId) {
@@ -116,7 +185,7 @@ export default function TutorChat() {
         tutorId: storedUserId,
       });
 
-      // Reset hasNewMessage for the selected student
+      // Reset new message notification for selected student
       setStudents((prevStudents) =>
         prevStudents.map((student) =>
           student._id === selectedStudent._id
@@ -127,10 +196,12 @@ export default function TutorChat() {
     }
   }, [selectedStudent, socket, storedUserId]);
 
+  // Handle student selection
   const handleStudentSelect = (student: User) => {
     setSelectedStudent(student);
   };
 
+  // Handle sending a message
   const handleSendMessage = () => {
     if (selectedStudent?.isBlocked) {
       return showToast(
@@ -148,8 +219,47 @@ export default function TutorChat() {
       type: "txt",
     });
 
+    // Update last message and time for the selected student
+    setStudents((prevStudents) =>
+      prevStudents.map((student) =>
+        student._id === selectedStudent._id
+          ? {
+              ...student,
+              lastMessage: inputMessage,
+              lastMessageTime: new Date().toISOString(),
+            }
+          : student
+      )
+    );
+
     setInputMessage("");
   };
+
+  // Sorting logic for students
+  const getSortedStudents = () => {
+    const studentsCopy = [...students];
+
+    switch (sortOption) {
+      case "az":
+        return studentsCopy.sort((a, b) => a.name.localeCompare(b.name));
+      case "za":
+        return studentsCopy.sort((a, b) => b.name.localeCompare(a.name));
+      case "recent":
+        return studentsCopy.sort((a, b) => {
+          const dateA = a.lastMessageTime
+            ? new Date(a.lastMessageTime).getTime()
+            : 0;
+          const dateB = b.lastMessageTime
+            ? new Date(b.lastMessageTime).getTime()
+            : 0;
+          return dateB - dateA; // Most recent first
+        });
+      default:
+        return studentsCopy;
+    }
+  };
+
+  const sortedStudents = getSortedStudents();
 
   return (
     <div className="flex h-screen bg-black items-center justify-center p-4">
@@ -164,8 +274,43 @@ export default function TutorChat() {
             </div>
           </div>
 
+          {/* Sorting Buttons */}
+          <div className="bg-gray-900 p-2 flex items-center justify-between border-b border-purple-900">
+            <div className="text-white text-sm">Sort by:</div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setSortOption("az")}
+                className={`p-2 rounded-md ${
+                  sortOption === "az" ? "bg-purple-700" : "bg-gray-800"
+                } text-white flex items-center`}
+              >
+                <ArrowDownAZ size={16} className="mr-1" />
+                <span className="text-xs">A-Z</span>
+              </button>
+              <button
+                onClick={() => setSortOption("za")}
+                className={`p-2 rounded-md ${
+                  sortOption === "za" ? "bg-purple-700" : "bg-gray-800"
+                } text-white flex items-center`}
+              >
+                <ArrowUpZA size={16} className="mr-1" />
+                <span className="text-xs">Z-A</span>
+              </button>
+              <button
+                onClick={() => setSortOption("recent")}
+                className={`p-2 rounded-md ${
+                  sortOption === "recent" ? "bg-purple-700" : "bg-gray-800"
+                } text-white flex items-center`}
+              >
+                <Clock size={16} className="mr-1" />
+                <span className="text-xs">Recent</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Student List */}
           <div className="custom-scrollbar flex-1 overflow-y-auto bg-gray-950 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-900">
-            {students.map((student) => (
+            {sortedStudents.map((student) => (
               <div
                 key={student._id}
                 className={`p-4 border-b border-gray-800 hover:bg-gray-900 cursor-pointer transition-all duration-200 ${
@@ -196,9 +341,22 @@ export default function TutorChat() {
                       <h3 className="font-semibold text-white truncate">
                         {student.name}
                       </h3>
+                      <span className="text-xs text-gray-400">
+                        {student.lastMessageTime &&
+                        !isNaN(new Date(student.lastMessageTime).getTime())
+                          ? new Date(
+                              student.lastMessageTime
+                            ).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-400 truncate mt-1">
-                      {student.email}
+                      {student.lastMessage
+                        ? student.lastMessage
+                        : "No messages yet"}
                     </p>
                   </div>
                 </div>

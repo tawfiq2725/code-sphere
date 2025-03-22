@@ -17,6 +17,8 @@ export interface User {
   profile?: string;
   bio?: string;
   hasNewMessage?: boolean;
+  lastMessage?: string;
+  lastMessageTime?: string;
 }
 
 export interface Message {

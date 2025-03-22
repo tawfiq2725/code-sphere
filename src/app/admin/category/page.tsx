@@ -107,10 +107,11 @@ export default function Category() {
           setNewCategoryDescription("");
           setIsAddModalOpen(false);
           showToast("Category added successfully", "success");
+        } else {
+          showToast(res.message, "error");
         }
       } catch (error) {
-        console.error("Error adding category:", error);
-        showToast("Failed to add category", "error");
+        console.log("Error adding category:", error);
       }
     }
   };

@@ -44,11 +44,15 @@ const TutorProfile = () => {
         params: { email },
       });
       const { data, success, message } = await response.data;
-      let profile = signedUrltoNormalUrl(data.profile);
-      data.profile = profile;
-      data.certificates = data.certificates.map((cert: string) =>
-        signedUrltoNormalUrl(cert)
-      );
+      if (data.profile) {
+        let profile = signedUrltoNormalUrl(data.profile);
+        data.profile = profile;
+      }
+      if (data.certificates) {
+        data.certificates = data.certificates.map((cert: string) =>
+          signedUrltoNormalUrl(cert)
+        );
+      }
 
       dispatch(getUserDetails({ user: data }));
 
@@ -96,15 +100,22 @@ const TutorProfile = () => {
       certificates.forEach((file) => formData.append("certificates", file));
       formData.append("email", profile.email);
 
-      const response = await api.patch("/tutor/profile/", formData, {
+      const response = await api.patch("/tutor/profile", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
       const { success, message, data } = await response.data;
-      const url = signedUrltoNormalUrl(data.profile);
-      data.profile = url;
+      if (data.profile) {
+        const url = signedUrltoNormalUrl(data.profile);
+        data.profile = url;
+      }
+      if (data.certificates) {
+        data.certificates = data.certificates.map((cert: string) =>
+          signedUrltoNormalUrl(cert)
+        );
+      }
       if (!success) {
         showToast(message, "error");
       } else {

@@ -1,15 +1,30 @@
 "use client";
 
-import { findUserById, getChaptersById, getCoursById } from "@/api/course";
+import {
+  findUserById,
+  getChaptersById,
+  getCoursById,
+  getCourseReviwes,
+} from "@/api/course";
 import { getByNameById } from "@/api/category";
 import { getOffers } from "@/api/user/user";
-import { use, useEffect, useState } from "react";
-import { Clock, IndianRupee, BookOpen, HelpCircle } from "lucide-react";
+import { use, useEffect, useRef, useState } from "react";
+import {
+  Clock,
+  IndianRupee,
+  BookOpen,
+  HelpCircle,
+  StarIcon,
+  MessageCircleReply,
+  Lock,
+} from "lucide-react";
 import Header from "@/app/components/header";
 import Image from "next/image";
 import Link from "next/link";
-import ChapterAccordion from "@/app/components/common/ChapterAccordian";
+import { ChapterAccordion } from "@/app/components/common/ChapterAccordian";
 import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+import TutorCard from "@/app/components/User/TutorCard";
+import { User } from "@/interface/user";
 
 interface Course {
   _id: string;
@@ -24,18 +39,13 @@ interface Course {
   sellingPrice: number;
   tutorId: string;
   categoryName: string;
+  averageRating: number;
+  reviewCount: number;
 }
 
 interface CourseWithOffer extends Course {
   offerPrice?: number;
   discountPercentage?: number;
-}
-
-interface Tutor {
-  name: string;
-  bio: string;
-  profile: string;
-  email: string;
 }
 
 interface Offer {
@@ -61,16 +71,17 @@ export default function CourseDetailsPage({
   const [courseData, setCourseData] = useState<CourseWithOffer>();
   const [tutorId, setTutorId] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
-  const [tutorData, setTutorData] = useState<Tutor>();
+  const [tutorData, setTutorData] = useState<User>();
   const [category, setCategory] = useState<string>();
   const [categoryData, setCategoryData] = useState<any>();
   const [chapters, setChapters] = useState<any>();
+  const [reviews, setReviews] = useState<string[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [hasOffer, setHasOffer] = useState(false);
   const [offerPrice, setOfferPrice] = useState<number>();
   const [discountPercentage, setDiscountPercentage] = useState<number>();
+  const [visibleReviews, setVisibleReviews] = useState(3);
 
-  // Fetch course details
   useEffect(() => {
     getCoursById(id)
       .then((data) => {
@@ -80,6 +91,13 @@ export default function CourseDetailsPage({
       })
       .finally(() => {
         setIsLoading(false);
+      });
+    getCourseReviwes(id)
+      .then((data) => {
+        setReviews(data.data);
+      })
+      .catch((err) => {
+        console.error(err);
       });
   }, [id]);
 
@@ -103,26 +121,19 @@ export default function CourseDetailsPage({
       });
   }, []);
 
-  // Apply offer to course if applicable
   useEffect(() => {
     if (courseData && category && offers && offers.length > 0) {
-      // Filter active offers
       const activeOffers = offers.filter((offer) => offer.status === true);
-
-      // Find matching offer for this category
       const matchingOffer = activeOffers.find(
         (offer) => offer.categoryId._id === category
       );
 
       if (matchingOffer) {
-        // Calculate discounted price
         const discount = matchingOffer.discount;
         const discountAmount = (courseData.sellingPrice * discount) / 100;
         const discountedPrice = Math.floor(
           courseData.sellingPrice - discountAmount
         );
-
-        // Don't update courseData directly
         setOfferPrice(discountedPrice);
         setDiscountPercentage(discount);
         setHasOffer(true);
@@ -161,7 +172,11 @@ export default function CourseDetailsPage({
       });
     }
   }, [category]);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
+  const scrollToTop = () => {
+    sectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -181,7 +196,7 @@ export default function CourseDetailsPage({
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-black text-white">
+      <div ref={sectionRef} className="min-h-screen bg-black text-white">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="grid md:grid-cols-2 gap-8 items-center mb-16">
             <div>
@@ -223,7 +238,10 @@ export default function CourseDetailsPage({
             <div className="flex justify-end relative">
               {courseData.thumbnail ? (
                 <>
-                  <img
+                  <Image
+                    width={50}
+                    height={50}
+                    priority
                     src={courseData.thumbnail || "/placeholder.svg"}
                     alt={courseData.courseName}
                     className="w-full max-w-md rounded-lg object-cover"
@@ -270,6 +288,22 @@ export default function CourseDetailsPage({
                     )}
                   </span>
                 </li>
+                <li className="flex items-center space-x-3">
+                  <StarIcon className="w-4 h-4 text-purple-600" />
+                  <span>Ratings:</span>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, index) => (
+                      <StarIcon
+                        key={index}
+                        className={`w-4 h-4 ${
+                          index < Math.round(courseData.averageRating)
+                            ? "text-purple-600"
+                            : "text-gray-600"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </li>
                 {hasOffer && discountPercentage && (
                   <li className="flex items-center space-x-3">
                     <div className="w-4 h-4 flex items-center justify-center text-purple-600">
@@ -297,18 +331,42 @@ export default function CourseDetailsPage({
                   </p>
                 </div>
               </section>
-              <section>
+              <section className="bg-gray-900 p-6 rounded-lg">
                 <div className="flex items-center space-x-2 mb-6">
-                  <h2 className="text-2xl font-bold">Chapters</h2>
+                  <h2 className="text-2xl font-bold text-white">Chapters</h2>
                   <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center">
-                    <HelpCircle className="w-4 h-4" />
+                    <HelpCircle className="w-4 h-4 text-white" />
                   </div>
                 </div>
+
                 <div className="prose prose-invert max-w-none">
-                  {chapters?.map((chapter: any, index: number) => (
-                    <ChapterAccordion key={index} chapter={chapter} />
+                  {chapters?.map((chapter: any, index: any) => (
+                    <ChapterAccordion
+                      key={index}
+                      chapter={chapter}
+                      index={index}
+                      isFirstChapter={index === 0}
+                      scrollToTop={scrollToTop}
+                    />
                   ))}
                 </div>
+
+                {chapters && chapters.length > 1 && (
+                  <div className="mt-6 bg-purple-900 bg-opacity-30 p-4 rounded-lg border border-purple-800">
+                    <div className="flex items-center">
+                      <Lock className="w-5 h-5 text-purple-400 mr-3" />
+                      <p className="text-white">
+                        Unlock all chapters by upgrading to premium
+                      </p>
+                    </div>
+                    <button
+                      onClick={scrollToTop}
+                      className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors"
+                    >
+                      Upgrade Now
+                    </button>
+                  </div>
+                )}
               </section>
 
               <section>
@@ -331,44 +389,56 @@ export default function CourseDetailsPage({
                     <h3 className="font-semibold mb-2">More Info</h3>
                     <p className="text-gray-400">{courseData.info}</p>
                   </div>
-                  <div className="bg-gray-900/50 p-6 rounded-lg ">
-                    <h3 className="font-semibold mb-2">Tutor Details</h3>
-                    <div className="flex flex-col justify-center">
-                      <div className="w-20 h-20 mb-4 rounded-full overflow-hidden border-2 border-gray-600 shadow-sm">
-                        <Image
-                          src={tutorData?.profile || "/default-profile.jpg"}
-                          alt={tutorData?.name || "Tutor"}
-                          width={80}
-                          height={80}
-                          className="object-cover w-full h-full"
-                          priority
-                        />
-                      </div>
+                  <TutorCard tutorData={tutorData} />
+                </div>
+              </section>
 
-                      <h2 className="text-xl font-bold text-white mb-2">
-                        {tutorData?.name || "Tutor Name"}
-                      </h2>
-
-                      {tutorData?.bio ? (
-                        <p className="text-gray-400 text-pretty mb-4">
-                          {tutorData.bio}
-                        </p>
-                      ) : (
-                        <p className="text-gray-400 text-center mb-4 italic">
-                          No bio provided.
-                        </p>
-                      )}
-
-                      <div className="flex flex-col justify-center space-y-1">
-                        <p className="text-gray-500">
-                          <span className="font-semibold text-gray-300">
-                            Email:
-                          </span>{" "}
-                          {tutorData?.email || "Not provided"}
-                        </p>
-                      </div>
-                    </div>
+              <section>
+                <div className="flex items-center space-x-2 mb-6">
+                  <h2 className="text-2xl font-bold">Reviews</h2>
+                  <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center">
+                    <MessageCircleReply className="w-4 h-4" />
                   </div>
+                </div>
+                <div className="space-y-4">
+                  {reviews.length > 0 ? (
+                    <>
+                      {reviews
+                        .slice(0, visibleReviews)
+                        .filter((review: any) => review.description?.length > 1)
+                        .map((review: any, index: number) => (
+                          <div
+                            key={index}
+                            className="bg-gray-900/50 p-4 rounded-lg"
+                          >
+                            <div className="flex items-center mb-2">
+                              <div className="flex items-center">
+                                {[...Array(review.rating)].map((_, i) => (
+                                  <StarIcon
+                                    key={i}
+                                    className="w-4 h-4 text-purple-600"
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-gray-300 ml-2">
+                                {review.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      {reviews.filter((r: any) => r.description?.length > 1)
+                        .length > visibleReviews && (
+                        <button
+                          onClick={() => setVisibleReviews((prev) => prev + 3)}
+                          className="mt-4 text-purple-400 hover:text-purple-300"
+                        >
+                          Load More Reviews
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-gray-400">No reviews yet</p>
+                  )}
                 </div>
               </section>
             </div>

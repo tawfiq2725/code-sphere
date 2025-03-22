@@ -1,35 +1,92 @@
-"use client";
-
-import { useState } from "react";
+import React, { useState, useRef } from "react";
+import { HelpCircle, Lock, ChevronDown, ChevronUp, Play } from "lucide-react";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
 
 interface Chapter {
-  chapterName: string;
-  chapterDescription: string;
+  title: string;
+  duration: string;
+  video?: string;
+  description: string;
 }
 
 interface ChapterAccordionProps {
   chapter: Chapter;
+  index: number;
+  isFirstChapter: boolean;
+  scrollToTop: () => void;
 }
 
-const ChapterAccordion: React.FC<ChapterAccordionProps> = ({ chapter }) => {
+export const ChapterAccordion = ({
+  chapter,
+  index,
+  isFirstChapter,
+  scrollToTop,
+}: ChapterAccordionProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const toggleAccordion = () => {
+    if (isFirstChapter) {
+      setIsOpen(!isOpen);
+    } else {
+      scrollToTop();
+    }
+  };
+  if (chapter.video) chapter.video = signedUrltoNormalUrl(chapter?.video);
+
   return (
-    <div className="border border-gray-700 rounded mb-4 overflow-hidden shadow-lg">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex justify-between items-center p-4 bg-black text-white hover:bg-gray-800 transition-colors"
+    <div className="border border-purple-800 rounded-md mb-4 bg-black bg-opacity-60 overflow-hidden">
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer"
+        onClick={toggleAccordion}
       >
-        <span className="text-lg font-bold">{chapter.chapterName}</span>
-        <span className="text-2xl font-bold">{isOpen ? "–" : "+"}</span>
-      </button>
-      {isOpen && (
-        <div className="p-4 bg-black text-white border-t border-gray-700">
-          <p>{chapter.chapterDescription}</p>
+        <div className="flex items-center">
+          <div className="w-8 h-8 rounded-full bg-purple-900 flex items-center justify-center mr-3">
+            {isFirstChapter ? (
+              <Play className="w-4 h-4 text-white" />
+            ) : (
+              <Lock className="w-4 h-4 text-white" />
+            )}
+          </div>
+          <div>
+            <h3 className="text-white font-medium text-lg">{chapter.title}</h3>
+            <p className="text-gray-400 text-sm">{chapter.duration}</p>
+          </div>
+        </div>
+
+        {isFirstChapter && (
+          <div className="text-purple-400">
+            {isOpen ? (
+              <ChevronUp className="w-5 h-5" />
+            ) : (
+              <ChevronDown className="w-5 h-5" />
+            )}
+          </div>
+        )}
+      </div>
+
+      {isFirstChapter && isOpen && (
+        <div className="px-4 pb-4">
+          {chapter.video ? (
+            <div className="aspect-video rounded-md overflow-hidden bg-black">
+              <iframe
+                src={chapter.video}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          ) : (
+            <div className="bg-gray-900 text-gray-400 p-4 rounded text-center">
+              Video not available
+            </div>
+          )}
+
+          <div className="mt-4 text-gray-300">
+            <p>{chapter.description}</p>
+          </div>
         </div>
       )}
     </div>
   );
 };
-
-export default ChapterAccordion;

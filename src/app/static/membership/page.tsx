@@ -56,7 +56,6 @@ export default function Pricing() {
               <div className="text-5xl font-extrabold mb-6">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-600">
                   ₹{membership.price || 500}
-                  <span className="text-xl text-gray-400">/year</span>
                 </span>
               </div>
 

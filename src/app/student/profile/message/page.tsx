@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, ArrowLeft, MessageSquare, Bell } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  MessageSquare,
+  Bell,
+  ArrowDownAZ,
+  ArrowUpZA,
+  Clock,
+} from "lucide-react";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { Message, User } from "@/interface/user";
@@ -20,14 +28,17 @@ export default function StudentChat() {
   const { user } = useSelector((state: any) => state.auth);
   const [chatId, setChatId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [sortOption, setSortOption] = useState<string>("recent"); // Default sorting by recent messages
 
   const storedUserId = user.user._id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentMessages]);
 
+  // Create and configure the socket connection
   useEffect(() => {
     const s = createSocket();
     setSocket(s);
@@ -38,24 +49,61 @@ export default function StudentChat() {
 
     s.on("chat:history", (chat: any) => {
       console.log("Chat history received:", chat);
-      if (
-        chat &&
-        chat._id &&
-        selectedTutor &&
-        chat.tutorId === selectedTutor._id
-      ) {
-        setChatId(chat._id);
-        setCurrentMessages(chat.messages || []);
+      if (chat && chat._id && chat.tutorId) {
+        if (selectedTutor && chat.tutorId === selectedTutor._id) {
+          setChatId(chat._id);
+          setCurrentMessages(chat.messages || []);
+        }
+        if (chat.messages && chat.messages.length > 0) {
+          const lastMsg = chat.messages[chat.messages.length - 1];
+          setTutors((prevTutors) =>
+            prevTutors.map((tutor) =>
+              tutor._id === chat.tutorId
+                ? {
+                    ...tutor,
+                    lastMessage: lastMsg.message,
+                    lastMessageTime: lastMsg.createdAt,
+                  }
+                : tutor
+            )
+          );
+        }
       }
     });
 
-    s.on("message:receive", (message: Message) => {
+    s.on("message:receive", (message: Message & { tutorId?: string }) => {
       console.log("New message received:", message);
       setCurrentMessages((prev) => {
         if (prev.some((msg) => msg._id === message._id)) return prev;
         return [...prev, message];
       });
+      if (message.tutorId) {
+        setTutors((prevTutors) =>
+          prevTutors.map((tutor) =>
+            tutor._id === message.tutorId
+              ? {
+                  ...tutor,
+                  lastMessage: message.message,
+                  lastMessageTime: message.createdAt,
+                }
+              : tutor
+          )
+        );
+      } else if (selectedTutor) {
+        setTutors((prevTutors) =>
+          prevTutors.map((tutor) =>
+            tutor._id === selectedTutor._id
+              ? {
+                  ...tutor,
+                  lastMessage: message.message,
+                  lastMessageTime: message.createdAt,
+                }
+              : tutor
+          )
+        );
+      }
     });
+
     s.on("chat:blocked", (data: { error: string }) => {
       showToast(data.error, "error");
       setSelectedTutor(null);
@@ -68,6 +116,7 @@ export default function StudentChat() {
     s.on("message:error", (data: { error: string }) => {
       showToast(data.error, "error");
     });
+
     s.on(
       "notification",
       (notification: {
@@ -100,22 +149,61 @@ export default function StudentChat() {
     }
   }, [socket, storedUserId]);
 
+  // Fetch tutors and recent messages together
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTutorsAndMessages = async () => {
       try {
-        const { data } = await api.get(`/student/tutor/${storedUserId}`);
-        setTutors(data.data);
+        // Fetch tutors
+        const { data: tutorData } = await api.get(
+          `/student/tutor/${storedUserId}`
+        );
+        let updatedTutors = tutorData.data;
+
+        // Fetch recent messages
+        const { data: recentData } = await api.get(
+          `/students/get-recent/${storedUserId}`
+        );
+        const recents = recentData.data;
+
+        // Update tutors with recent message info
+        updatedTutors = updatedTutors.map((tutor: any) => {
+          const recent = recents.find((r: any) => r.tutorId === tutor._id);
+          if (recent) {
+            return {
+              ...tutor,
+              chatId: recent.chatId,
+              lastMessage: recent.latestMessage,
+              lastMessageTime: recent.latestMessageTime,
+            };
+          }
+          return tutor;
+        });
+
+        setTutors(updatedTutors);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching tutors or recent messages:", error);
       }
     };
-    fetchData();
+
+    if (storedUserId) {
+      fetchTutorsAndMessages();
+    }
   }, [storedUserId]);
 
-  for (const student of tutors) {
-    if (student.profile)
-      student.profile = signedUrltoNormalUrl(student.profile);
+  for (const tutor of tutors) {
+    if (tutor.profile) tutor.profile = signedUrltoNormalUrl(tutor.profile);
   }
+
+  useEffect(() => {
+    if (socket && tutors.length > 0 && storedUserId) {
+      tutors.forEach((tutor) => {
+        socket.emit("get:chatHistory", {
+          tutorId: tutor._id,
+          userId: storedUserId,
+        });
+      });
+    }
+  }, [socket, tutors, storedUserId]);
 
   useEffect(() => {
     if (socket && selectedTutor && storedUserId) {
@@ -128,8 +216,6 @@ export default function StudentChat() {
         tutorId: selectedTutor._id,
         userId: storedUserId,
       });
-
-      // Reset hasNewMessage for the selected tutor
       setTutors((prevTutors) =>
         prevTutors.map((tutor) =>
           tutor._id === selectedTutor._id
@@ -170,8 +256,47 @@ export default function StudentChat() {
       type: "txt",
     });
 
+    setTutors((prevTutors) =>
+      prevTutors.map((tutor) =>
+        tutor._id === selectedTutor._id
+          ? {
+              ...tutor,
+              lastMessage: inputMessage,
+              lastMessageTime: new Date().toISOString(),
+            }
+          : tutor
+      )
+    );
+
     setInputMessage("");
   };
+
+  // Function to sort tutors based on selected option
+  const getSortedTutors = () => {
+    const tutorsCopy = [...tutors];
+
+    switch (sortOption) {
+      case "az":
+        return tutorsCopy.sort((a, b) => a.name.localeCompare(b.name));
+      case "za":
+        return tutorsCopy.sort((a, b) => b.name.localeCompare(a.name));
+      case "recent":
+        return tutorsCopy.sort((a, b) => {
+          const dateA = a.lastMessageTime
+            ? new Date(a.lastMessageTime).getTime()
+            : 0;
+          const dateB = b.lastMessageTime
+            ? new Date(b.lastMessageTime).getTime()
+            : 0;
+          return dateB - dateA; // Sort by most recent first
+        });
+      default:
+        return tutorsCopy;
+    }
+  };
+
+  // Get sorted tutors based on current sort option
+  const sortedTutors = getSortedTutors();
 
   return (
     <div className="flex h-screen bg-black items-center justify-center p-4">
@@ -187,10 +312,44 @@ export default function StudentChat() {
             </div>
           </div>
 
+          {/* Sorting Options */}
+          <div className="bg-gray-900 p-2 flex items-center justify-between border-b border-purple-900">
+            <div className="text-white text-sm">Sort by:</div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setSortOption("az")}
+                className={`p-2 rounded-md ${
+                  sortOption === "az" ? "bg-purple-700" : "bg-gray-800"
+                } text-white flex items-center`}
+              >
+                <ArrowDownAZ size={16} className="mr-1" />
+                <span className="text-xs">A-Z</span>
+              </button>
+              <button
+                onClick={() => setSortOption("za")}
+                className={`p-2 rounded-md ${
+                  sortOption === "za" ? "bg-purple-700" : "bg-gray-800"
+                } text-white flex items-center`}
+              >
+                <ArrowUpZA size={16} className="mr-1" />
+                <span className="text-xs">Z-A</span>
+              </button>
+              <button
+                onClick={() => setSortOption("recent")}
+                className={`p-2 rounded-md ${
+                  sortOption === "recent" ? "bg-purple-700" : "bg-gray-800"
+                } text-white flex items-center`}
+              >
+                <Clock size={16} className="mr-1" />
+                <span className="text-xs">Recent</span>
+              </button>
+            </div>
+          </div>
+
           <div className="custom-scrollbar flex-1 overflow-y-auto bg-gray-950 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-900">
-            {tutors.map((tutor, index) => (
+            {sortedTutors.map((tutor) => (
               <div
-                key={index}
+                key={tutor._id}
                 className={`p-4 border-b border-gray-800 hover:bg-gray-900 cursor-pointer transition-all duration-200 ${
                   selectedTutor?._id === tutor._id
                     ? "bg-gray-900 border-l-4 border-l-purple-600"
@@ -219,9 +378,23 @@ export default function StudentChat() {
                       <h3 className="font-semibold text-white truncate">
                         {tutor.name}
                       </h3>
+                      <span className="text-xs text-gray-400">
+                        {tutor.lastMessageTime &&
+                        !isNaN(new Date(tutor.lastMessageTime).getTime())
+                          ? new Date(tutor.lastMessageTime).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )
+                          : ""}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-400 truncate mt-1">
-                      {tutor.email}
+                      {tutor.lastMessage
+                        ? tutor.lastMessage
+                        : "No messages yet"}
                     </p>
                   </div>
                 </div>
@@ -334,8 +507,7 @@ export default function StudentChat() {
                 </h1>
                 <p className="text-gray-300 mb-8 text-lg">
                   Select a conversation from the left to start chatting with
-                  your healthcare provider. All your medical conversations are
-                  secure and encrypted.
+                  your tutor. All your conversations are secure and encrypted.
                 </p>
               </div>
             </div>
