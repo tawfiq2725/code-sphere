@@ -72,6 +72,7 @@ export default function CourseDetailsAndChapters({
       const data = await updateChapters(userId, courseId, chapterId);
       if (data.success) {
         const userData = await userGetsByCourse(userId);
+        console.log(userData);
         dispatch(getUserDetails({ user: userData.data }));
 
         const currentIndex = chapters.findIndex(

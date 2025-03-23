@@ -53,11 +53,13 @@ export const updateChapters = async (
 export const userGetsByCourse = async (userId: string) => {
   try {
     const updateUser = await api.get(`/api/user/find-user/${userId}`);
-    updateUser.data.data.profile = signedUrltoNormalUrl(
-      updateUser.data.data.profile
-    );
-    const userData = await updateUser.data;
-    return userData;
+    console.log("check this", updateUser);
+    if (updateUser.data.data.profile) {
+      updateUser.data.data.profile = signedUrltoNormalUrl(
+        updateUser.data.data.profile
+      );
+    }
+    return updateUser.data;
   } catch (err) {
     console.log(err);
   }
