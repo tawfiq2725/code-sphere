@@ -81,9 +81,11 @@ export const getOffers = async () => {
   }
 };
 
-export const getOrderReview = async (orderId: string) => {
+export const getOrderReview = async (orderId: string, courseId: string) => {
   try {
-    const response = await api.get(`/api/course/get/review/${orderId}`);
+    const response = await api.get(
+      `/api/course/get/review/${orderId}/${courseId}`
+    );
     const data = response.data;
     return data;
   } catch (error) {

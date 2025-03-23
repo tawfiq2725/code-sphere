@@ -56,7 +56,7 @@ export function ChapterList({
   const fetchExistingReview = async () => {
     setIsLoadingReview(true);
     try {
-      const response = await getOrderReview(userId);
+      const response = await getOrderReview(userId, courseId);
       if (response.success && response.data) {
         setRating(response.data.rating);
         setDescription(response.data.description);
