@@ -107,18 +107,20 @@ const TutorProfile = () => {
       });
 
       const { success, message, data } = await response.data;
-      if (data.profile) {
-        const url = signedUrltoNormalUrl(data.profile);
-        data.profile = url;
-      }
-      if (data.certificates) {
-        data.certificates = data.certificates.map((cert: string) =>
-          signedUrltoNormalUrl(cert)
-        );
-      }
+
       if (!success) {
         showToast(message, "error");
       } else {
+        if (data.profile) {
+          const url = signedUrltoNormalUrl(data.profile);
+          data.profile = url;
+        }
+        if (data.certificates) {
+          const updatedCertificates = data.certificates.map((cert: string) =>
+            signedUrltoNormalUrl(cert)
+          );
+          data.certificates = updatedCertificates;
+        }
         setUploadedCertificates(data.certificates);
         showToast("Profile updated successfully", "success");
         dispatch(getUserDetails({ user: data }));

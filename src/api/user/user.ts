@@ -94,7 +94,7 @@ export const getOrderReview = async (orderId: string) => {
 
 export const addOrderReview = async (
   orderId: string,
-  reviewData: { rating: number; description: string }
+  reviewData: { rating: number; description: string; userId: string }
 ) => {
   try {
     const response = await api.patch(

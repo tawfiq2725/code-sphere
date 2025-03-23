@@ -42,7 +42,7 @@ export function ChapterList({
   const [courseReview, setCourseReview] = useState<ReviewData | null>(null);
   const [hasExistingReview, setHasExistingReview] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+  const userId = user.user._id;
   const completedChapters =
     user?.user.courseProgress?.find(
       (progress: { courseId: string; completedChapters: string[] }) =>
@@ -56,7 +56,7 @@ export function ChapterList({
   const fetchExistingReview = async () => {
     setIsLoadingReview(true);
     try {
-      const response = await getOrderReview(courseId);
+      const response = await getOrderReview(userId);
       if (response.success && response.data) {
         setRating(response.data.rating);
         setDescription(response.data.description);
@@ -115,6 +115,7 @@ export function ChapterList({
       const reviewData = {
         rating,
         description,
+        userId,
       };
 
       const response = await addOrderReview(courseId, reviewData);

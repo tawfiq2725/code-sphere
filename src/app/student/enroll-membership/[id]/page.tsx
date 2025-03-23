@@ -1,13 +1,16 @@
 "use client";
 
 import { getMembershipById, getMemberships } from "@/api/user/user";
-import { getAllCategories, getAllCategoriesUser } from "@/api/category";
+import { getAllCategoriesUser } from "@/api/category";
 import { membershipOrder, verifyMembershipOrder } from "@/api/order/order";
 import { showToast } from "@/utils/toastUtil";
 import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { signedUrltoNormalUrl } from "@/utils/presignedUrl";
+import { getUserDetails } from "@/store/slice/authSlice";
+import { useDispatch } from "react-redux";
 
 interface Membership {
   _id: string;
@@ -31,12 +34,12 @@ export default function MembershipCheckoutPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const dispatch = useDispatch();
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
   const [selectedMembership, setSelectedMembership] =
     useState<Membership | null>(null);
-  // selectedCategory is either a string (for non-Premium plans) or string[] (for Premium)
   const [selectedCategory, setSelectedCategory] = useState<string | string[]>(
     []
   );
@@ -166,12 +169,15 @@ export default function MembershipCheckoutPage({
         if (verify.success) {
           localStorage.removeItem("membershipId");
           localStorage.removeItem("membershipName");
-
-          // Reset states if needed
           setSelectedCategory(
             selectedMembership?.membershipPlan === "Premium" ? [] : ""
           );
           setIsChecked(false);
+          if (verify.data.user.profile) {
+            let url = signedUrltoNormalUrl(verify.data.user.profile);
+            verify.data.user.profile = url;
+          }
+          dispatch(getUserDetails({ user: verify.data.user }));
 
           showToast("Payment Successful", "success");
           router.push("/student/confirmation-page");
