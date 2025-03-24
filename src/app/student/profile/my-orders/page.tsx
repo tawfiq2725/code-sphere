@@ -51,15 +51,12 @@ export default function EnhancedOrderManagement() {
     try {
       const response = await getUserOrders(userId);
 
-      if (response.success) {
+      if (response.success && response.data) {
         setRegularOrders(response.data.orders || []);
         setMembershipOrders(response.data.membershipOrders || []);
-      } else {
-        showToast("Failed to fetch orders", "error");
       }
     } catch (err) {
-      console.error(err);
-      showToast("Failed to fetch orders", "error");
+      console.log(err);
     } finally {
       setIsLoading(false);
     }

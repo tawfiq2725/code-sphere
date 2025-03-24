@@ -325,7 +325,7 @@ export default function MembershipCheckoutPage({
             <div className="aspect-[4/3] bg-gray-900/50 rounded-lg overflow-hidden relative group">
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                  src={"/membership.png"}
+                  src={"/membership.PNG"}
                   alt={"Membership Thumbnail"}
                   className="w-full h-full object-contain"
                 />

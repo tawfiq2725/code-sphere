@@ -210,7 +210,7 @@ export default function Courses() {
                     and track your progress here.
                   </p>
                   <Link
-                    href="/student/courses"
+                    href="/static/courses"
                     className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-700 hover:from-pink-500 hover:to-purple-600 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-pink-500/30 font-medium"
                   >
                     Browse Courses

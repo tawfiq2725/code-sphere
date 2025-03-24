@@ -401,10 +401,10 @@ export default function StudentChat() {
               </div>
             ))}
           </div>
-          <Link href={`/tutor/auth/enroll-student`}>
+          <Link href={`/student/profile/my-profile`}>
             <button className="mx-4 my-4 p-3 text-white rounded-lg border border-purple-600 hover:bg-purple-900/30 flex items-center justify-center space-x-2 transition-all duration-200">
               <ArrowLeft size={20} />
-              <span className="font-medium">Back to Dashboard</span>
+              <span className="font-medium">Back to Profile</span>
             </button>
           </Link>
         </div>
