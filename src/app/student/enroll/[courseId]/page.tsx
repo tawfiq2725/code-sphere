@@ -100,7 +100,7 @@ export default function CheckoutPage({
           setOffers(offersResponse.data);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.log("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -233,7 +233,7 @@ export default function CheckoutPage({
       }
       openRazorpay(order);
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   };
 
@@ -283,6 +283,12 @@ export default function CheckoutPage({
           dispatch(getUserDetails({ user: verify.data.user }));
           showToast("Payment Successful", "success");
           router.push("/student/confirmation-page");
+        } else {
+          showToast(
+            verify.message || "Payment Failed while creating order",
+            "error"
+          );
+          router.refresh();
         }
       },
       prefill: {
