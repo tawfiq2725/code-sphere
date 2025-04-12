@@ -9,6 +9,7 @@ import {
   ArrowDownAZ,
   ArrowUpZA,
   Clock,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
@@ -29,7 +30,8 @@ export default function StudentChat() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [sortOption, setSortOption] = useState<string>("recent"); // Default sorting by recent messages
-
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const storedUserId = user.user._id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -55,13 +57,18 @@ export default function StudentChat() {
           setCurrentMessages(chat.messages || []);
         }
         if (chat.messages && chat.messages.length > 0) {
-          const lastMsg = chat.messages[chat.messages.length - 1];
+          // Find the last non-deleted message
+          const nonDeletedMessages = chat.messages.filter((msg: Message) => !msg.deleted);
+          const lastMsg = nonDeletedMessages.length > 0 
+            ? nonDeletedMessages[nonDeletedMessages.length - 1] 
+            : chat.messages[chat.messages.length - 1];
+          
           setTutors((prevTutors) =>
             prevTutors.map((tutor) =>
               tutor._id === chat.tutorId
                 ? {
                     ...tutor,
-                    lastMessage: lastMsg.message,
+                    lastMessage: lastMsg.deleted ? "This message was deleted" : lastMsg.message,
                     lastMessageTime: lastMsg.createdAt,
                   }
                 : tutor
@@ -137,6 +144,54 @@ export default function StudentChat() {
         showToast(notification.message, "info");
       }
     );
+    
+    s.on("message:updated", (data: { messageId: string; deleted: boolean }) => {
+      if (data.deleted) {
+        setCurrentMessages((prevMessages) => {
+          const updatedMessages = prevMessages.map((msg) =>
+            msg._id === data.messageId
+              ? { ...msg, deleted: true, message: "This message was deleted" }
+              : msg
+          );
+          
+          // Check if the deleted message was the last message for the tutor
+          if (selectedTutor) {
+            // Find the deleted message
+            const deletedMessageIndex = updatedMessages.findIndex(msg => msg._id === data.messageId);
+            
+            // Check if it's the last message in the chat
+            if (deletedMessageIndex === updatedMessages.length - 1) {
+              setTutors((prevTutors) =>
+                prevTutors.map((tutor) =>
+                  tutor._id === selectedTutor._id
+                    ? { ...tutor, lastMessage: "This message was deleted" }
+                    : tutor
+                )
+              );
+            } else {
+              // Find the last non-deleted message
+              const nonDeletedMessages = updatedMessages.filter(msg => !msg.deleted);
+              if (nonDeletedMessages.length > 0) {
+                const lastNonDeletedMsg = nonDeletedMessages[nonDeletedMessages.length - 1];
+                setTutors((prevTutors) =>
+                  prevTutors.map((tutor) =>
+                    tutor._id === selectedTutor._id
+                      ? { 
+                          ...tutor, 
+                          lastMessage: lastNonDeletedMsg.message,
+                          lastMessageTime: lastNonDeletedMsg.createdAt
+                        }
+                      : tutor
+                  )
+                );
+              }
+            }
+          }
+          
+          return updatedMessages;
+        });
+      }
+    });
 
     return () => {
       s.disconnect();
@@ -148,6 +203,53 @@ export default function StudentChat() {
       socket.emit("register", { type: "student", id: storedUserId });
     }
   }, [socket, storedUserId]);
+
+  const showDeleteModal = (messageId: string) => {
+    setMessageToDelete(messageId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteMessage = () => {
+    if (!chatId || !socket || !storedUserId || !messageToDelete) return;
+    
+    // Find the message that's being deleted
+    const messageToBeDeleted = currentMessages.find(msg => msg._id === messageToDelete);
+    
+    socket.emit("message:delete", {
+      chatId,
+      messageId: messageToDelete,
+      sender: "student",
+    });
+    
+    // If deleting the most recent message, update the tutor list preview
+    if (selectedTutor && messageToBeDeleted) {
+      const messageIndex = currentMessages.findIndex(msg => msg._id === messageToDelete);
+      
+      if (messageIndex === currentMessages.length - 1) {
+        // This is the last message, so we need to update the preview
+        // Find the previous non-deleted message or use "This message was deleted"
+        const previousMessages = currentMessages.slice(0, messageIndex).filter(msg => !msg.deleted);
+        const newLastMessage = previousMessages.length > 0 
+          ? previousMessages[previousMessages.length - 1] 
+          : null;
+        
+        setTutors((prevTutors) =>
+          prevTutors.map((tutor) =>
+            tutor._id === selectedTutor._id
+              ? { 
+                  ...tutor, 
+                  lastMessage: newLastMessage ? newLastMessage.message : "This message was deleted",
+                  lastMessageTime: newLastMessage ? newLastMessage.createdAt : messageToBeDeleted.createdAt 
+                }
+              : tutor
+          )
+        );
+      }
+    }
+    
+    setShowDeleteConfirm(false);
+    setMessageToDelete(null);
+  };
 
   // Fetch tutors and recent messages together
   useEffect(() => {
@@ -169,10 +271,11 @@ export default function StudentChat() {
         updatedTutors = updatedTutors.map((tutor: any) => {
           const recent = recents.find((r: any) => r.tutorId === tutor._id);
           if (recent) {
+            // Check if the latest message was deleted
             return {
               ...tutor,
               chatId: recent.chatId,
-              lastMessage: recent.latestMessage,
+              lastMessage: recent.isDeleted ? "This message was deleted" : recent.latestMessage,
               lastMessageTime: recent.latestMessageTime,
             };
           }
@@ -379,6 +482,7 @@ export default function StudentChat() {
                         {tutor.name}
                       </h3>
                       <span className="text-xs text-gray-400">
+                        
                         {tutor.lastMessageTime &&
                         !isNaN(new Date(tutor.lastMessageTime).getTime())
                           ? new Date(tutor.lastMessageTime).toLocaleTimeString(
@@ -441,38 +545,94 @@ export default function StudentChat() {
                         hour: "2-digit",
                         minute: "2-digit",
                       });
+
+                  const isStudent = message.sender === "student";
+                  const isUserMessage = message.sender === "student"; // Update this if your actual user role is different
+
                   return (
                     <div
                       key={index}
                       className={`flex ${
-                        message.sender === "student"
-                          ? "justify-end"
-                          : "justify-start"
+                        isStudent ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <div
-                        className={`max-w-[80%] rounded-2xl p-4 shadow-xl ${
-                          message.sender === "student"
-                            ? "bg-purple-600 text-white rounded-tr-none"
-                            : "bg-purple-200 text-gray-900 rounded-tl-none"
-                        }`}
-                      >
-                        <p className="text-base">{message.message}</p>
+                      <div className="relative group w-fit max-w-[80%]">
+                        {/* Message bubble */}
                         <div
-                          className={`text-xs mt-2 ${
-                            message.sender === "student"
-                              ? "text-purple-200"
-                              : "text-gray-700"
+                          className={`rounded-2xl p-4 shadow-xl ${
+                            isStudent
+                              ? "bg-purple-600 text-white rounded-tr-none"
+                              : "bg-purple-200 text-gray-900 rounded-tl-none"
                           }`}
                         >
-                          {timeString}
+                          {message.deleted ? (
+                            <p className="text-base italic text-gray-50 break-words">
+                              This message was deleted
+                            </p>
+                          ) : (
+                            <>
+                              <p className="text-base">{message.message}</p>
+                              <div
+                                className={`text-xs mt-2 ${
+                                  isStudent
+                                    ? "text-purple-200"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                {timeString}
+                              </div>
+                            </>
+                          )}
                         </div>
+
+                        {/* Delete button on hover */}
+                        {!message.deleted && isUserMessage && (
+                          <div
+                            className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            onClick={() => showDeleteModal(message._id)}
+                          >
+                            <button className="p-1.5 bg-red-100 hover:bg-red-200 rounded-full text-red-600 transition-colors">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
                 <div ref={messagesEndRef} />
               </div>
+              {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+                  <div className="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full animate-fadeIn transform transition-all">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                      Delete Message
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Are you sure you want to delete this message? This action
+                      cannot be undone.
+                    </p>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setMessageToDelete(null);
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDeleteMessage}
+                        className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                      >
+                        <Trash2 size={16} className="mr-2" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="p-4 border-t border-gray-800 bg-gray-950">
                 <div className="flex items-center space-x-2">
