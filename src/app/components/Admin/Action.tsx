@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import { showToast } from "@/utils/toastUtil";
-import { backendUrl } from "@/utils/backendUrl";
 import api from "@/api/axios";
 interface CourseActionProps {
   courseId: string;
