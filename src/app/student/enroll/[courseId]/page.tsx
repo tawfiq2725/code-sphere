@@ -265,7 +265,7 @@ export default function CheckoutPage({
     }
 
     const options: RazorpayOptions = {
-      key_id: "rzp_test_NUlntIlFuC9puI",
+      key_id: "rzp_test_o355ve5UjoMN7W",
       amount: orderData.amount,
       currency: orderData.currency,
       name: "Code Sphere",
